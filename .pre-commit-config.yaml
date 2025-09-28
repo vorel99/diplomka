@@ -1,0 +1,29 @@
+repos:
+  - repo: local
+    hooks:
+      - id: jupyter-nb-clear-output
+        name: jupyter-nb-clear-output
+        files: \.ipynb$
+        stages: [pre-commit]
+        language: system
+        entry: jupyter nbconvert --ClearOutputPreprocessor.enabled=True --inplace
+
+      - id: ruff-lint
+        name: ruff-lint
+        entry: ruff check
+        language: system
+        args: [--fix]
+        require_serial: true
+        files: \.py$|\.ipynb$
+
+      - id: ruff-format
+        name: ruff-format
+        entry: ruff format
+        language: system
+        require_serial: true
+        files: \.py$|\.ipynb$
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0  # Use the ref you want to point at
+    hooks:
+    -   id: check-added-large-files
