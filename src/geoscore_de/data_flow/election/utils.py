@@ -44,7 +44,7 @@ def load_election_zip(url: str) -> str:
     return temp_dir
 
 
-def move_extracted_file(temp_dir: str, dest_path: str, extract_files: list) -> None:
+def move_extracted_file(temp_dir: str, dest_path: str) -> None:
     """Move the extracted file from the temporary directory to the destination path.
 
     Args:
@@ -58,12 +58,11 @@ def move_extracted_file(temp_dir: str, dest_path: str, extract_files: list) -> N
     # Ensure destination directory exists
     dest_path_obj.mkdir(parents=True, exist_ok=True)
 
-    for file_name in extract_files:
-        src_file = temp_path / file_name
-        dest_file = dest_path_obj / file_name
+    for src_file in temp_path.iterdir():
+        dest_file = dest_path_obj / src_file.name
         if src_file.exists():
             # Use copy2 to preserve metadata, then remove source
             shutil.copy2(src_file, dest_file)
-            print(f"Successfully moved {file_name} to {dest_file}")
+            print(f"Successfully moved {src_file.name} to {dest_file}")
         else:
-            print(f"Warning: {file_name} not found in extracted files")
+            print(f"Warning: {src_file.name} not found in extracted files")

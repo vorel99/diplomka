@@ -3,11 +3,6 @@ from pathlib import Path
 
 from geoscore_de.data_flow.election.utils import load_election_zip, move_extracted_file
 
-EXTRACT_FILES = [
-    "btw21_wbz_ergebnisse.csv",
-    "btw21_wbz_dsb_ergebnisse.pdf",
-]
-
 ZIP_URL = "https://www.bundeswahlleiterin.de/en/dam/jcr/c2cd99e6-064e-4ebc-b634-f86b5c0e14b3/btw21_wbz.zip"
 
 
@@ -22,7 +17,7 @@ def load_election_21_data(url: str = ZIP_URL, dest_path: str = "data/raw/electio
     try:
         # Ensure destination directory exists
         Path(dest_path).mkdir(parents=True, exist_ok=True)
-        move_extracted_file(temp_dir, dest_path, EXTRACT_FILES)
+        move_extracted_file(temp_dir, dest_path)
     finally:
         # Clean up temporary directory
         shutil.rmtree(temp_dir, ignore_errors=True)
