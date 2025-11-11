@@ -11,3 +11,4 @@ venv/
 
 data/raw/*
 !data/raw/unemployment.csv
+!data/raw/municipalities_2022.csv
