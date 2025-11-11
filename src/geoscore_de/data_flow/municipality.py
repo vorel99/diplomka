@@ -11,5 +11,8 @@ def load_municipality_data(path: str) -> pd.DataFrame:
     df.rename(columns={"Unnamed: 0": "MU_ID", "Unnamed: 1": "Municipality"}, inplace=True)
     # drop first two rows which contain metadata about the file
     df = df.iloc[2:]
-    df
+
+    # Create AGS column by removing the Verbandsgemeinde (collective municipality) level from MU_ID
+    df["AGS"] = df["MU_ID"].str.slice(0, 5) + df["MU_ID"].str.slice(9, 12)
+
     return df
