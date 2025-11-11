@@ -3,8 +3,8 @@ requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "PROJECT_NAME"
-description = "TEMPLATE_DESCRIPTION"
+name = "geoscore-de"
+description = "GeoScore Germany"
 version = "0.1"
 dependencies = [
     "plotnine",
