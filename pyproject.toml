@@ -12,6 +12,7 @@ dependencies = [
     "scipy",
     "numpy",
     "pandas",
+    "geopandas",
     "requests",
     "typer",
 ]
