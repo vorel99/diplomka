@@ -1,23 +1,16 @@
-VENV = venv
+VENV = .venv
 PYTHON = $(VENV)/bin/python
-ACTIVATE = $(VENV)/bin/activate
-
 
 install_dev:
-	python3 -m venv $(VENV)
-	$(PYTHON) -m pip install --upgrade pip
-	$(PYTHON) -m pip install -e ".[dev]"
-	source $(ACTIVATE) && pre-commit install
+	# uv installed in devcontainer
+	# setup venv and install package in editable mode with dev dependencies
+	uv venv $(VENV) --clear --python 3.10
 
-compile:
-	$(PYTHON) -m piptools compile --resolver=backtracking --extra dev --no-emit-index-url -o requirements-dev.txt pyproject.toml
-	$(PYTHON) -m piptools compile --resolver=backtracking --no-emit-index-url -o requirements.txt pyproject.toml
+	# Install monorepo workspace with dev dependencies
+	uv sync --all-packages
 
-sync:
-	$(PYTHON) -m piptools sync requirements-dev.txt
-	$(PYTHON) -m pip install -e ".[dev]"
-
-up: compile sync
+	# install pre-commit hooks
+	$(PYTHON) -m pre_commit install
 
 clean:
 	find . -type d -name .pytest_cache | xargs --no-run-if-empty -t rm -r
