@@ -1,9 +1,14 @@
-venv/
-.venv/
-
 # cache
 *.egg-info/
 __pycache__/
 *.pyc
 *.pyo
 .DS_Store
+
+# virtual environments
+venv/
+.venv/
+
+data/raw/*
+!data/raw/unemployment.csv
+!data/raw/municipalities_2022.csv
