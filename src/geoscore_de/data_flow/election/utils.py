@@ -50,7 +50,6 @@ def move_extracted_file(temp_dir: str, dest_path: str) -> None:
     Args:
         temp_dir (str): Path to the temporary directory containing the extracted file.
         dest_path (str): Destination path where the file should be moved.
-        extract_files (list): List of filenames to be moved from temp_dir to dest_path.
     """
     temp_path = Path(temp_dir)
     dest_path_obj = Path(dest_path)
