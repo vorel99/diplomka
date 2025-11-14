@@ -6,6 +6,9 @@ def load_municipality_data(path: str) -> pd.DataFrame:
 
     Args:
         path (str): Path to the CSV file.
+
+    Returns:
+        pd.DataFrame: DataFrame containing the loaded municipality data.
     """
     df = pd.read_csv(path, skiprows=3, sep=";", skipfooter=4, engine="python")
     df.rename(columns={"Unnamed: 0": "MU_ID", "Unnamed: 1": "Municipality"}, inplace=True)
