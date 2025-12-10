@@ -22,7 +22,7 @@ def load_population_data(path: str) -> pd.DataFrame:
     df.rename(
         columns={
             "Unnamed: 0": "date",
-            "Unnamed: 1": "AGS",
+            "Unnamed: 1": "MU_ID",
             "Unnamed: 2": "Municipality",
             "Unnamed: 3": "age_group",
             "Insgesamt": "people_count",
@@ -31,5 +31,8 @@ def load_population_data(path: str) -> pd.DataFrame:
         },
         inplace=True,
     )
+
+    # add AGS column by filling MU_ID to have trailing zeros if necessary (to have 8 characters)
+    df["AGS"] = df["MU_ID"].str.ljust(8, "0")
 
     return df
