@@ -22,7 +22,7 @@ def load_population_data(path: str) -> pd.DataFrame:
     df.rename(
         columns={
             "Unnamed: 0": "date",
-            "Unnamed: 1": "MU_ID",
+            "Unnamed: 1": "AGS",
             "Unnamed: 2": "Municipality",
             "Unnamed: 3": "age_group",
             "Insgesamt": "people_count",
@@ -31,8 +31,5 @@ def load_population_data(path: str) -> pd.DataFrame:
         },
         inplace=True,
     )
-
-    # Create AGS column by removing the Verbandsgemeinde (collective municipality) level from MU_ID
-    df["AGS"] = df["MU_ID"].str.slice(0, 5) + df["MU_ID"].str.slice(9, 12)
 
     return df
