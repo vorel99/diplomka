@@ -2,7 +2,7 @@
 
 # GeoScore Framework for Predicting Municipal Risks in Germany
 
-Geographic location is a strong predictor of many social, economic, and environmental outcomes. In Germany, a wide range of open data is available at the municipality level (approximately 11,000 municipalities), covering aspects such as demographics, economic structure, infrastructure, and environment. However, these datasets are often heterogeneous, incomplete, and vary in quality.
+Geographic location is a strong predictor of many social, economic, and environmental outcomes. For example, default rates on loans. In Germany, a wide range of open data is available at the municipality level (approximately 11,000 municipalities), covering aspects such as demographics, economic structure, infrastructure, and environment. However, these datasets are often heterogeneous, incomplete, and vary in quality.
 
 The concept of a GeoScore is to transform such heterogeneous, location-based open data into a unified feature representation that can be used by machine learning models to predict negative target variables, for example unemployment rate, crime rate, school dropout rate, or business insolvency.
 
