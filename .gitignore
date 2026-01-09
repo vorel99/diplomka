@@ -9,6 +9,11 @@ __pycache__/
 venv/
 .venv/
 
+# configs
+configs/*.env
+!configs/example.env
+
+# data files
 data/raw/*
 !data/raw/unemployment.csv
 !data/raw/municipalities_2022.csv
