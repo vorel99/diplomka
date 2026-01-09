@@ -46,3 +46,38 @@ def test_mapy_com_struct_address_retriever():
         struct_address = retriever.get_struct_address(addr)
 
         assert struct_address == expected_struct_address
+
+
+def test_mapy_com_struct_address_retriever_no_results():
+    """
+    Test MapyComStructAddressRetriever with no results from the API.
+    Testing that the retriever returns None when no results are found.
+    """
+    addr = "NON_EXISTENT_ADDRESS"
+
+    mock_response = {"items": []}
+
+    with patch("requests.get") as mock_get:
+        mock_get.return_value.status_code = 200
+        mock_get.return_value.json.return_value = mock_response
+
+        retriever = MapyComStructAddressRetriever(api_key="dummy_key")
+        struct_address = retriever.get_struct_address(addr)
+
+        assert struct_address is None
+
+
+def test_mapy_com_struct_address_retriever_api_error():
+    """
+    Test MapyComStructAddressRetriever with an API error response.
+    Testing that the retriever returns None when the API returns a non-200 status code.
+    """
+    addr = "TEST"
+
+    with patch("requests.get") as mock_get:
+        mock_get.return_value.status_code = 500  # Simulate server error
+
+        retriever = MapyComStructAddressRetriever(api_key="dummy_key")
+        struct_address = retriever.get_struct_address(addr)
+
+        assert struct_address is None
