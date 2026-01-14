@@ -91,9 +91,12 @@ def transform_population_data(
     tform_df.rename(columns=age_group_rename_map, inplace=True)
 
     # Change all columns from absolute counts to proportions of the total population
+    # Replace 0 with NaN to avoid division by zero (inf values)
+    total_pop = tform_df["total_population"].replace(0, pd.NA)
+
     for col in tform_df.columns:
         if col != "AGS" and col != "total_population":
-            tform_df[col] = tform_df[col] / tform_df["total_population"]
+            tform_df[col] = tform_df[col] / total_pop
 
     tform_df.drop(columns=["total_population"], inplace=True)
 
