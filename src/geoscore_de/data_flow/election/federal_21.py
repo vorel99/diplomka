@@ -45,3 +45,44 @@ def load_raw_election_21_data(url: str = ZIP_URL, dest_path: str = DEFAULT_RAW_D
     df["AGS"] = df["Land"] + df["Regierungsbezirk"] + df["Kreis"] + df["Gemeinde"].str.zfill(3)
 
     return df
+
+
+def transform_election_21_data(
+    in_path: str = DEFAULT_RAW_DATA_PATH,
+    out_path: str = DEFAULT_TFORM_DATA_PATH,
+) -> pd.DataFrame:
+    """Transform raw election 21 data to include only relevant columns.
+
+    - group data by municipality
+    - replace absolute vote counts with proportions in each municipality.
+
+    Args:
+        in_path (str): Path to the input raw election data folder.
+        out_path (str): Path to save the transformed election data.
+
+    Returns:
+        pd.DataFrame: Transformed DataFrame with relevant election data.
+    """
+    df = load_raw_election_21_data(dest_path=in_path)
+
+    # TODO: rename columns
+    df.rename(
+        columns={
+            "Wahlberechtigte (A)": "eligible_voters",
+            "Wähler (B)": "total_voters",
+            # first votes
+            "E_Ungültige": "E_invalid_votes",
+            # second votes
+            "Z_Ungültige": "Z_invalid_votes",
+        },
+        inplace=True,
+    )
+
+    # TODO: group by municipality (AGS)
+
+    # TODO: relative votes per party in each municipality
+
+    # Save the transformed DataFrame to CSV
+    df.to_csv(out_path, index=False)
+
+    return df
