@@ -6,8 +6,14 @@ from geoscore_de.address.models import Position, StructAddress
 
 
 class BaseStructAddressRetriever(metaclass=ABCMeta):
+    # Cache GeoDataFrames by their source path to avoid re-reading the same file
+    _geojson_cache = {}
+
     def __init__(self, geojson_path: str = "data/gemeinden_simplify200.geojson") -> None:
-        self.geojson = gpd.read_file(geojson_path)
+        # Lazy-load and cache the GeoJSON file per path
+        if geojson_path not in self.__class__._geojson_cache:
+            self.__class__._geojson_cache[geojson_path] = gpd.read_file(geojson_path)
+        self.geojson = self.__class__._geojson_cache[geojson_path]
 
     @abstractmethod
     def _get_struct_address(self, raw_address: str) -> StructAddress | None:
