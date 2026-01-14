@@ -20,9 +20,9 @@ class LookupResponse(BaseModel):
 
 @router.get("", response_model=LookupResponse)
 async def lookup_area(
+    app_request: Request,
     latitude: float = Query(..., description="Latitude coordinate"),
     longitude: float = Query(..., description="Longitude coordinate"),
-    app_request: Request,
 ):
     """Look up area metadata for GPS coordinates.
 
