@@ -37,10 +37,16 @@ async def geocode_address(request: GeocodeRequest, app_request: Request):
     Returns:
         Structured address with AGS code or error message
     """
-    settings: Settings = app_request.app.state.settings
+    state = app_request.app.state
+    settings: Settings = state.settings
 
     try:
-        retriever = MapyComStructAddressRetriever(api_key=settings.mapy_com_api_key, geojson_path=settings.geojson_path)
+        if not hasattr(state, "mapy_com_retriever"):
+            state.mapy_com_retriever = MapyComStructAddressRetriever(
+                api_key=settings.mapy_com_api_key,
+                geojson_path=settings.geojson_path,
+            )
+        retriever = state.mapy_com_retriever
 
         result = retriever.get_struct_address(request.address)
 
