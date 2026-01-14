@@ -9,6 +9,8 @@ def load_municipality_data(path: str) -> pd.DataFrame:
 
     Returns:
         pd.DataFrame: DataFrame containing the loaded municipality data.
+            DataFrame includes columns `AGS` with 8-character municipality codes.
+            `MU_ID`, `Municipality`, `Persons`, `Area`, `Population Density` and `AGS`.
     """
     df = pd.read_csv(path, skiprows=3, sep=";", skipfooter=4, engine="python")
     df.rename(columns={"Unnamed: 0": "MU_ID", "Unnamed: 1": "Municipality"}, inplace=True)

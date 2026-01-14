@@ -10,6 +10,8 @@ def load_population_data(path: str) -> pd.DataFrame:
 
     Returns:
         pd.DataFrame: DataFrame containing the loaded population data.
+            Dataframe includes columns: `AGS` with 8-character municipality codes,
+            `age_group` with age group descriptions, `people_count`, `male_count`, `female_count`.
     """
     df = pd.read_csv(
         path,
