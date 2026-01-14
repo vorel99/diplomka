@@ -7,6 +7,7 @@ class Position(BaseModel):
 
 
 class StructAddress(BaseModel):
+    AGS: str | None = Field(None, description="AGS code of the address")
     name: str = Field(..., description="Full name of the address from the geocoding service")
     street: str = Field(..., description="Street name of the address")
     municipality: str = Field(..., description="Municipality of the address")

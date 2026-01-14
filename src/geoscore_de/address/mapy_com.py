@@ -11,11 +11,12 @@ logger = logging.getLogger(__name__)
 class MapyComStructAddressRetriever(BaseStructAddressRetriever):
     """Retriever for structured addresses using the mapy.com API."""
 
-    def __init__(self, api_key: str):
+    def __init__(self, api_key: str, geojson_path: str = "data/gemeinden_simplify200.geojson") -> None:
         self.api_key = api_key
         self.base_url = "https://api.mapy.com/v1/geocode"
+        super().__init__(geojson_path=geojson_path)
 
-    def get_struct_address(self, raw_address: str) -> StructAddress | None:
+    def _get_struct_address(self, raw_address: str) -> StructAddress | None:
         params = {
             "query": raw_address,
             "lang": "en",
