@@ -1,4 +1,9 @@
+import logging
+from pathlib import Path
+
 import pandas as pd
+
+logger = logging.getLogger(__name__)
 
 DEFAULT_RAW_DATA_PATH = "data/raw/features/population.csv"
 DEFAULT_TFORM_DATA_PATH = "data/tform/features/population.csv"
@@ -90,5 +95,21 @@ def transform_population_data(
 
     tform_df.drop(columns=["total_population"], inplace=True)
 
-    tform_df.to_csv(out_path, index=False)
+    # Ensure output directory exists
+    output_path = Path(out_path)
+    try:
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        logger.info(f"Saving transformed data to {out_path}")
+        tform_df.to_csv(out_path, index=False)
+        logger.info(f"Successfully saved {len(tform_df)} rows to {out_path}")
+    except PermissionError as e:
+        logger.error(f"Permission denied when writing to {out_path}: {e}")
+        raise
+    except OSError as e:
+        logger.error(f"OS error when writing to {out_path}: {e}")
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error when writing to {out_path}: {e}")
+        raise
+
     return tform_df
