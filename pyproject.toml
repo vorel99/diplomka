@@ -16,6 +16,10 @@ dependencies = [
     "requests",
     "typer",
     "pydantic",
+    # app
+    "fastapi",
+    "uvicorn[standard]",
+    "pydantic-settings",
 ]
 
 [dependency-groups]
@@ -34,6 +38,7 @@ precommit = [
 ]
 test = [
     "pytest",
+    "httpx",
 ]
 
 [tool.ruff]
