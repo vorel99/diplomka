@@ -72,7 +72,7 @@ class BaseStructAddressRetriever(metaclass=ABCMeta):
         # Perform spatial join to find which polygon contains the point
         result = gpd.sjoin(point_gdf, self.geojson, how="left", predicate="within")
 
-        if result.empty:
+        if result.empty or gpd.pd.isna(result.iloc[0].get("AGS")):
             return None
 
         # Get the first matching area and return all its properties as a dictionary
