@@ -3,7 +3,7 @@ import pandas as pd
 
 def load_unemployment_data(path: str):
     """Load unemployment data from a CSV file.
-    Data were obtained from https://www.regionalstatistik.de/genesis/online?operation=previous&levelindex=2&step=1&titel=Tabellenaufbau&levelid=1765296626951&levelid=1765296564668#abreadcrumb
+    Data were obtained from https://www.regionalstatistik.de/genesis//online?operation=table&code=13211-01-03-5&bypass=true&levelindex=1&levelid=1768376127943#abreadcrumb
 
     Args:
         path (str): Path to the CSV file.

@@ -3,7 +3,7 @@ import pandas as pd
 
 def load_migration_data(path: str) -> pd.DataFrame:
     """Load migration data from a CSV file.
-    Data were obtained from https://www.regionalstatistik.de/genesis/online?operation=previous&levelindex=2&step=1&titel=Tabellenaufbau&levelid=1765296626951&levelid=1765296564668#abreadcrumb
+    Data were obtained from https://www.regionalstatistik.de/genesis//online?operation=table&code=12711-91-01-5&bypass=true&levelindex=0&levelid=1768376496916#abreadcrumb
 
     Args:
         path (str): Path to the CSV file.
