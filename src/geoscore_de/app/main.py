@@ -4,6 +4,7 @@ from fastapi import FastAPI
 
 from geoscore_de.app.api.routes import api_router
 from geoscore_de.app.config import Settings
+from geoscore_de.app.middleware import lifespan
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -25,6 +26,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         docs_url="/api/docs",
         redoc_url="/api/redoc",
         openapi_url="/api/openapi.json",
+        lifespan=lifespan,
     )
 
     # Store settings in app state

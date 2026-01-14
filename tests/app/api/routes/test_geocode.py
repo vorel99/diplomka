@@ -1,6 +1,6 @@
 """Tests for geocoding API endpoint."""
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 from fastapi.testclient import TestClient
@@ -23,9 +23,17 @@ def test_settings():
 
 
 @pytest.fixture
-def client(test_settings):
-    """Create test client with test settings."""
+def mock_retriever():
+    """Create a mock retriever for testing."""
+    return MagicMock()
+
+
+@pytest.fixture
+def client(test_settings, mock_retriever):
+    """Create test client with test settings and mocked retriever."""
     app = create_app(settings=test_settings)
+    # Replace the retriever in app state with our mock
+    app.state.mapy_com_retriever = mock_retriever
     return TestClient(app)
 
 
@@ -45,70 +53,58 @@ def mock_struct_address():
     )
 
 
-def test_geocode_success(client, mock_struct_address):
+def test_geocode_success(client, mock_struct_address, mock_retriever):
     """Test successful geocoding of an address."""
-    with patch("geoscore_de.app.api.routes.geocode.MapyComStructAddressRetriever") as mock_retriever_class:
-        # Setup mock
-        mock_retriever = MagicMock()
-        mock_retriever.get_struct_address.return_value = mock_struct_address
-        mock_retriever_class.return_value = mock_retriever
 
-        # Make request
-        response = client.post("/api/v1/geocode", json={"address": "Hauptstraße 1, Kiel"})
+    mock_retriever.get_struct_address.return_value = mock_struct_address
 
-        # Assertions
-        assert response.status_code == 200
-        data = response.json()
-        assert data["success"] is True
-        assert data["address"] is not None
-        assert data["address"]["AGS"] == "01001000"
-        assert data["address"]["municipality"] == "Kiel"
-        assert data["address"]["street"] == "Hauptstraße 1"
-        assert data["error"] is None
+    # Make request
+    response = client.post("/api/v1/geocode", json={"address": "Hauptstraße 1, Kiel"})
 
-        # Verify retriever was called correctly
-        mock_retriever_class.assert_called_once_with(api_key="test-api-key", geojson_path="test/path/data.geojson")
-        mock_retriever.get_struct_address.assert_called_once_with("Hauptstraße 1, Kiel")
+    # Assertions
+    assert response.status_code == 200
+    data = response.json()
+    assert data["success"] is True
+    assert data["address"] is not None
+    assert data["address"]["AGS"] == "01001000"
+    assert data["address"]["municipality"] == "Kiel"
+    assert data["address"]["street"] == "Hauptstraße 1"
+    assert data["error"] is None
+
+    # Verify retriever was called correctly
+    mock_retriever.get_struct_address.assert_called_once_with("Hauptstraße 1, Kiel")
 
 
-def test_geocode_address_not_found(client):
+def test_geocode_address_not_found(client, mock_retriever):
     """Test geocoding when address cannot be found."""
-    with patch("geoscore_de.app.api.routes.geocode.MapyComStructAddressRetriever") as mock_retriever_class:
-        # Setup mock to return None
-        mock_retriever = MagicMock()
-        mock_retriever.get_struct_address.return_value = None
-        mock_retriever_class.return_value = mock_retriever
+    mock_retriever.get_struct_address.return_value = None
 
-        # Make request
-        response = client.post("/api/v1/geocode", json={"address": "NonexistentAddress123"})
+    # Make request
+    response = client.post("/api/v1/geocode", json={"address": "NonexistentAddress123"})
 
-        # Assertions
-        assert response.status_code == 200
-        data = response.json()
-        assert data["success"] is False
-        assert data["address"] is None
-        assert "Could not geocode address" in data["error"]
-        assert "NonexistentAddress123" in data["error"]
+    # Assertions
+    assert response.status_code == 200
+    data = response.json()
+    assert data["success"] is False
+    assert data["address"] is None
+    assert "Could not geocode address" in data["error"]
+    assert "NonexistentAddress123" in data["error"]
 
 
-def test_geocode_error_handling(client):
+def test_geocode_error_handling(client, mock_retriever):
     """Test error handling when geocoding raises an exception."""
-    with patch("geoscore_de.app.api.routes.geocode.MapyComStructAddressRetriever") as mock_retriever_class:
-        # Setup mock to raise exception
-        mock_retriever = MagicMock()
-        mock_retriever.get_struct_address.side_effect = Exception("API connection error")
-        mock_retriever_class.return_value = mock_retriever
+    mock_retriever.get_struct_address.side_effect = Exception("API connection error")
 
-        # Make request
-        response = client.post("/api/v1/geocode", json={"address": "Test Address"})
+    # Make request
+    response = client.post("/api/v1/geocode", json={"address": "Test Address"})
 
-        # Assertions
-        assert response.status_code == 200
-        data = response.json()
-        assert data["success"] is False
-        assert data["address"] is None
-        assert "Error geocoding address" in data["error"]
-        assert "API connection error" in data["error"]
+    # Assertions
+    assert response.status_code == 200
+    data = response.json()
+    assert data["success"] is False
+    assert data["address"] is None
+    assert "Error geocoding address" in data["error"]
+    assert "API connection error" in data["error"]
 
 
 def test_geocode_missing_address_field(client):
@@ -121,22 +117,19 @@ def test_geocode_missing_address_field(client):
     assert "detail" in data
 
 
-def test_geocode_empty_address(client, mock_struct_address):
+def test_geocode_empty_address(client, mock_struct_address, mock_retriever):
     """Test geocoding with an empty address string."""
-    with patch("geoscore_de.app.api.routes.geocode.MapyComStructAddressRetriever") as mock_retriever_class:
-        mock_retriever = MagicMock()
-        mock_retriever.get_struct_address.return_value = mock_struct_address
-        mock_retriever_class.return_value = mock_retriever
+    mock_retriever.get_struct_address.return_value = mock_struct_address
 
-        # Make request with empty string
-        response = client.post("/api/v1/geocode", json={"address": ""})
+    # Make request with empty string
+    response = client.post("/api/v1/geocode", json={"address": ""})
 
-        # Should return 422 Unprocessable Entity for validation error
-        assert response.status_code == 422
-        mock_retriever.get_struct_address.assert_not_called()
+    # Should return 422 Unprocessable Entity for validation error
+    assert response.status_code == 422
+    mock_retriever.get_struct_address.assert_not_called()
 
 
-def test_geocode_address_without_ags(client):
+def test_geocode_address_without_ags(client, mock_retriever):
     """Test geocoding when address has no AGS code."""
     address_without_ags = StructAddress(
         AGS=None,
@@ -150,35 +143,29 @@ def test_geocode_address_without_ags(client):
         position=Position(latitude=48.8566, longitude=2.3522),
     )
 
-    with patch("geoscore_de.app.api.routes.geocode.MapyComStructAddressRetriever") as mock_retriever_class:
-        mock_retriever = MagicMock()
-        mock_retriever.get_struct_address.return_value = address_without_ags
-        mock_retriever_class.return_value = mock_retriever
+    mock_retriever.get_struct_address.return_value = address_without_ags
 
-        response = client.post("/api/v1/geocode", json={"address": "Paris, France"})
+    response = client.post("/api/v1/geocode", json={"address": "Paris, France"})
 
-        assert response.status_code == 200
-        data = response.json()
-        assert data["success"] is True
-        assert data["address"]["AGS"] is None
-        assert data["address"]["municipality"] == "Paris"
+    assert response.status_code == 200
+    data = response.json()
+    assert data["success"] is True
+    assert data["address"]["AGS"] is None
+    assert data["address"]["municipality"] == "Paris"
 
 
-def test_geocode_special_characters(client, mock_struct_address):
+def test_geocode_special_characters(client, mock_struct_address, mock_retriever):
     """Test geocoding with special characters in address."""
-    with patch("geoscore_de.app.api.routes.geocode.MapyComStructAddressRetriever") as mock_retriever_class:
-        mock_retriever = MagicMock()
-        mock_retriever.get_struct_address.return_value = mock_struct_address
-        mock_retriever_class.return_value = mock_retriever
+    mock_retriever.get_struct_address.return_value = mock_struct_address
 
-        # Address with umlauts and special characters
-        address = "Münchner Straße 123, München"
-        response = client.post("/api/v1/geocode", json={"address": address})
+    # Address with umlauts and special characters
+    address = "Münchner Straße 123, München"
+    response = client.post("/api/v1/geocode", json={"address": address})
 
-        assert response.status_code == 200
-        data = response.json()
-        assert data["success"] is True
-        mock_retriever.get_struct_address.assert_called_once_with(address)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["success"] is True
+    mock_retriever.get_struct_address.assert_called_once_with(address)
 
 
 def test_geocode_invalid_json(client):
@@ -188,32 +175,29 @@ def test_geocode_invalid_json(client):
     assert response.status_code == 422
 
 
-def test_geocode_response_model_structure(client, mock_struct_address):
+def test_geocode_response_model_structure(client, mock_struct_address, mock_retriever):
     """Test that response follows the expected model structure."""
-    with patch("geoscore_de.app.api.routes.geocode.MapyComStructAddressRetriever") as mock_retriever_class:
-        mock_retriever = MagicMock()
-        mock_retriever.get_struct_address.return_value = mock_struct_address
-        mock_retriever_class.return_value = mock_retriever
+    mock_retriever.get_struct_address.return_value = mock_struct_address
 
-        response = client.post("/api/v1/geocode", json={"address": "Test"})
+    response = client.post("/api/v1/geocode", json={"address": "Test"})
 
-        assert response.status_code == 200
-        data = response.json()
+    assert response.status_code == 200
+    data = response.json()
 
-        # Verify response structure
-        assert "success" in data
-        assert "address" in data
-        assert "error" in data
+    # Verify response structure
+    assert "success" in data
+    assert "address" in data
+    assert "error" in data
 
-        # Verify address structure when present
-        assert "AGS" in data["address"]
-        assert "name" in data["address"]
-        assert "street" in data["address"]
-        assert "municipality" in data["address"]
-        assert "region" in data["address"]
-        assert "postal_code" in data["address"]
-        assert "country" in data["address"]
-        assert "country_code" in data["address"]
-        assert "position" in data["address"]
-        assert "latitude" in data["address"]["position"]
-        assert "longitude" in data["address"]["position"]
+    # Verify address structure when present
+    assert "AGS" in data["address"]
+    assert "name" in data["address"]
+    assert "street" in data["address"]
+    assert "municipality" in data["address"]
+    assert "region" in data["address"]
+    assert "postal_code" in data["address"]
+    assert "country" in data["address"]
+    assert "country_code" in data["address"]
+    assert "position" in data["address"]
+    assert "latitude" in data["address"]["position"]
+    assert "longitude" in data["address"]["position"]

@@ -3,7 +3,7 @@
 from fastapi import APIRouter, Query, Request
 from pydantic import BaseModel
 
-from geoscore_de.address.mapy_com import MapyComStructAddressRetriever
+from geoscore_de.address.base import BaseStructAddressRetriever
 from geoscore_de.address.models import Position
 
 router = APIRouter()
@@ -35,16 +35,9 @@ async def lookup_area(
         AGS code and area metadata or error message
     """
     state = app_request.app.state
-    settings = state.settings
 
     try:
-        if not hasattr(state, "mapy_com_retriever"):
-            state.mapy_com_retriever = MapyComStructAddressRetriever(
-                api_key=settings.mapy_com_api_key,
-                geojson_path=settings.geojson_path,
-            )
-        retriever = state.mapy_com_retriever
-
+        retriever: BaseStructAddressRetriever = state.mapy_com_retriever
         position = Position(latitude=latitude, longitude=longitude)
         ags = retriever.get_ags(position)
 
