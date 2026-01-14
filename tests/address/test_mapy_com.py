@@ -43,7 +43,7 @@ def test_mapy_com_struct_address_retriever():
         mock_get.return_value.json.return_value = mock_response
 
         retriever = MapyComStructAddressRetriever(api_key="dummy_key")
-        struct_address = retriever.get_struct_address(addr)
+        struct_address = retriever._get_struct_address(addr)
 
         assert struct_address == expected_struct_address
 
@@ -62,7 +62,7 @@ def test_mapy_com_struct_address_retriever_no_results():
         mock_get.return_value.json.return_value = mock_response
 
         retriever = MapyComStructAddressRetriever(api_key="dummy_key")
-        struct_address = retriever.get_struct_address(addr)
+        struct_address = retriever._get_struct_address(addr)
 
         assert struct_address is None
 
@@ -78,6 +78,6 @@ def test_mapy_com_struct_address_retriever_api_error():
         mock_get.return_value.status_code = 500  # Simulate server error
 
         retriever = MapyComStructAddressRetriever(api_key="dummy_key")
-        struct_address = retriever.get_struct_address(addr)
+        struct_address = retriever._get_struct_address(addr)
 
         assert struct_address is None

@@ -15,6 +15,7 @@ dependencies = [
     "geopandas",
     "requests",
     "typer",
+    "pydantic",
 ]
 
 [dependency-groups]
