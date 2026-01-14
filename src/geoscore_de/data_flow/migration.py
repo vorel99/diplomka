@@ -39,7 +39,7 @@ def load_migration_data(path: str) -> pd.DataFrame:
     df["in_migration"] = pd.to_numeric(df["in_migration"])
     df["out_migration"] = pd.to_numeric(df["out_migration"])
 
-    # fill MU_ID to have trailing zeros if necessary (to have 8 characters)
+    # fill MU_ID on the right with zeros to a total length of 8 characters
     df["AGS"] = df["MU_ID"].str.ljust(8, "0")
 
     return df
