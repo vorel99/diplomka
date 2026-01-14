@@ -38,6 +38,7 @@ precommit = [
 ]
 test = [
     "pytest",
+    "httpx",
 ]
 
 [tool.ruff]
