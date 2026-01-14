@@ -17,6 +17,7 @@ def load_population_data(path: str) -> pd.DataFrame:
         encoding="latin1",
         skiprows=5,
         skipfooter=4,
+        engine="python",
         na_values=["-", "."],
     )
     df.rename(
@@ -32,7 +33,7 @@ def load_population_data(path: str) -> pd.DataFrame:
         inplace=True,
     )
 
-    # add AGS column by filling MU_ID to have trailing zeros if necessary (to have 8 characters)
+    # add AGS column by right-padding MU_ID with zeros to 8 characters (adds trailing zeros if necessary)
     df["AGS"] = df["MU_ID"].str.ljust(8, "0")
 
     return df
