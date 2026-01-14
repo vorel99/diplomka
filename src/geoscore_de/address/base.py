@@ -39,7 +39,7 @@ class BaseStructAddressRetriever(metaclass=ABCMeta):
         return struct_address
 
     def get_ags(self, position: Position) -> str | None:
-        """Get AGS code from raw address string.
+        """Get AGS code from GPS coordinates.
 
         Args:
             position (Position): Position with latitude and longitude.
