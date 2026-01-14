@@ -20,22 +20,12 @@ def load_raw_population_data(path: str = DEFAULT_RAW_DATA_PATH) -> pd.DataFrame:
         path,
         sep=";",
         encoding="latin1",
-        skiprows=5,
+        skiprows=6,
         skipfooter=4,
         engine="python",
         na_values=["-", "."],
-    )
-    df.rename(
-        columns={
-            "Unnamed: 0": "date",
-            "Unnamed: 1": "MU_ID",
-            "Unnamed: 2": "Municipality",
-            "Unnamed: 3": "age_group",
-            "Insgesamt": "people_count",
-            "männlich": "male_count",
-            "weiblich": "female_count",
-        },
-        inplace=True,
+        names=["date", "MU_ID", "Municipality", "age_group", "people_count", "male_count", "female_count"],
+        header=None,
     )
 
     # add AGS column by right-padding MU_ID with zeros to 8 characters (adds trailing zeros if necessary)
