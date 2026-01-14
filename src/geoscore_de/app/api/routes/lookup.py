@@ -22,7 +22,7 @@ class LookupResponse(BaseModel):
 async def lookup_area(
     latitude: float = Query(..., description="Latitude coordinate"),
     longitude: float = Query(..., description="Longitude coordinate"),
-    app_request: Request = None,
+    app_request: Request,
 ):
     """Look up area metadata for GPS coordinates.
 
