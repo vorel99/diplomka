@@ -5,6 +5,7 @@ from pydantic import BaseModel
 
 from geoscore_de.address.mapy_com import MapyComStructAddressRetriever
 from geoscore_de.address.models import StructAddress
+from geoscore_de.app.config import Settings
 
 router = APIRouter()
 
@@ -34,7 +35,7 @@ async def geocode_address(request: GeocodeRequest, app_request: Request):
     Returns:
         Structured address with AGS code or error message
     """
-    settings = app_request.app.state.settings
+    settings: Settings = app_request.app.state.settings
 
     try:
         retriever = MapyComStructAddressRetriever(api_key=settings.mapy_com_api_key, geojson_path=settings.geojson_path)
