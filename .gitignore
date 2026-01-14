@@ -10,6 +10,6 @@ venv/
 .venv/
 
 data/raw/*
-!data/raw/unemployment.csv
+!data/raw/target/
 !data/raw/population.csv
 !data/raw/municipalities_2022.csv
