@@ -1,7 +1,10 @@
 import pandas as pd
 
+DEFAULT_RAW_DATA_PATH = "data/raw/features/population.csv"
+DEFAULT_TFORM_DATA_PATH = "data/tform/features/population.csv"
 
-def load_population_data(path: str) -> pd.DataFrame:
+
+def load_raw_population_data(path: str = DEFAULT_RAW_DATA_PATH) -> pd.DataFrame:
     """Load population data from a CSV file.
     Data were obtained from https://www.regionalstatistik.de/genesis//online?operation=table&code=12411-02-03-5&bypass=true&levelindex=1&levelid=1765292926381#abreadcrumb
 
@@ -39,3 +42,52 @@ def load_population_data(path: str) -> pd.DataFrame:
     df["AGS"] = df["MU_ID"].str.ljust(8, "0")
 
     return df
+
+
+def transform_population_data(
+    in_path: str = DEFAULT_RAW_DATA_PATH, out_path: str = DEFAULT_TFORM_DATA_PATH
+) -> pd.DataFrame:
+    """Transform raw population data into a pivoted format with age groups as columns.
+
+    Args:
+        in_path (str): Path to the input raw CSV file.
+        out_path (str): Path to save the transformed CSV file.
+
+    Returns:
+        pd.DataFrame: Transformed DataFrame with age groups as columns.
+    """
+    raw_df = load_raw_population_data(in_path)
+
+    # Pivot the data to have age groups as columns
+    tform_df = raw_df.pivot_table(
+        index=["AGS"],
+        columns="age_group",
+        values="people_count",
+        aggfunc="sum",
+    ).reset_index()
+
+    # rename german age group columns to english
+    age_group_rename_map = {
+        "unter 3 Jahre": "age_under_3",
+        "3 bis unter 6 Jahre": "age_3_to_5",
+        "6 bis unter 10 Jahre": "age_6_to_9",
+        "10 bis unter 15 Jahre": "age_10_to_14",
+        "15 bis unter 18 Jahre": "age_15_to_17",
+        "18 bis unter 20 Jahre": "age_18_to_19",
+        "20 bis unter 25 Jahre": "age_20_to_24",
+        "25 bis unter 30 Jahre": "age_25_to_29",
+        "30 bis unter 35 Jahre": "age_30_to_34",
+        "35 bis unter 40 Jahre": "age_35_to_39",
+        "40 bis unter 45 Jahre": "age_40_to_44",
+        "45 bis unter 50 Jahre": "age_45_to_49",
+        "50 bis unter 55 Jahre": "age_50_to_54",
+        "55 bis unter 60 Jahre": "age_55_to_59",
+        "60 bis unter 65 Jahre": "age_60_to_64",
+        "65 bis unter 75 Jahre": "age_65_to_74",
+        "75 Jahre und mehr": "age_75_and_over",
+        "Insgesamt": "total_population",
+    }
+    tform_df.rename(columns=age_group_rename_map, inplace=True)
+
+    tform_df.to_csv(out_path, index=False)
+    return tform_df
