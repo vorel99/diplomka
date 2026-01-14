@@ -3,7 +3,8 @@ import pandas as pd
 
 def load_migration_data(path: str) -> pd.DataFrame:
     """Load migration data from a CSV file.
-    Data were obtained from https://www.regionalstatistik.de/genesis//online?operation=table&code=12711-91-01-5&bypass=true&levelindex=0&levelid=1768376496916#abreadcrumb
+    Data were obtained from the GENESIS-Online regional statistics database of the German Federal Statistical Office.
+    https://www.regionalstatistik.de/genesis//online?operation=table&code=12711-91-01-5&bypass=true&levelindex=0&levelid=1768376496916#abreadcrumb
 
     Args:
         path (str): Path to the CSV file.
@@ -17,6 +18,7 @@ def load_migration_data(path: str) -> pd.DataFrame:
         encoding="latin1",
         skiprows=4,
         skipfooter=4,
+        engine="python",
         na_values=["-", "."],
     )
     df.rename(
