@@ -34,10 +34,16 @@ async def lookup_area(
     Returns:
         AGS code and area metadata or error message
     """
-    settings = app_request.app.state.settings
+    state = app_request.app.state
+    settings = state.settings
 
     try:
-        retriever = MapyComStructAddressRetriever(api_key=settings.mapy_com_api_key, geojson_path=settings.geojson_path)
+        if not hasattr(state, "mapy_com_retriever"):
+            state.mapy_com_retriever = MapyComStructAddressRetriever(
+                api_key=settings.mapy_com_api_key,
+                geojson_path=settings.geojson_path,
+            )
+        retriever = state.mapy_com_retriever
 
         position = Position(latitude=latitude, longitude=longitude)
         ags = retriever.get_ags(position)
