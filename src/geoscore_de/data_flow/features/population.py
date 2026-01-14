@@ -48,6 +48,7 @@ def transform_population_data(
     in_path: str = DEFAULT_RAW_DATA_PATH, out_path: str = DEFAULT_TFORM_DATA_PATH
 ) -> pd.DataFrame:
     """Transform raw population data into a pivoted format with age groups as columns.
+    Rename age group columns from German to English and convert absolute counts to proportions of the total population.
 
     Args:
         in_path (str): Path to the input raw CSV file.
@@ -88,6 +89,13 @@ def transform_population_data(
         "Insgesamt": "total_population",
     }
     tform_df.rename(columns=age_group_rename_map, inplace=True)
+
+    # Change all columns from absolute counts to proportions of the total population
+    for col in tform_df.columns:
+        if col != "AGS" and col != "total_population":
+            tform_df[col] = tform_df[col] / tform_df["total_population"]
+
+    tform_df.drop(columns=["total_population"], inplace=True)
 
     tform_df.to_csv(out_path, index=False)
     return tform_df

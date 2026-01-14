@@ -14,7 +14,8 @@ configs/*.env
 !configs/example.env
 
 # data files
-data/raw/*
+data/**/*.csv
+data/**/*.pdf
 !data/raw/target/
-!data/raw/population.csv
+!data/raw/features/population.csv
 !data/raw/municipalities_2022.csv
