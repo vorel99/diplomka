@@ -2,7 +2,6 @@ import shutil
 from pathlib import Path
 
 import pandas as pd
-
 from geoscore_de.data_flow.election.utils import load_election_zip, move_extracted_file
 
 ZIP_URL = "https://www.bundeswahlleiterin.de/en/dam/jcr/c2cd99e6-064e-4ebc-b634-f86b5c0e14b3/btw21_wbz.zip"
