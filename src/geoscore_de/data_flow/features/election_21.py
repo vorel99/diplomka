@@ -59,7 +59,7 @@ class Election21Feature(BaseFeature):
             + df["Gemeinde"].astype(str).str.zfill(3)
         )
 
-        # drop none rows with missing AGS
+        # drop rows with missing AGS components
         df = df.dropna(subset=["Land", "Regierungsbezirk", "Kreis", "Gemeinde"])
 
         return df
