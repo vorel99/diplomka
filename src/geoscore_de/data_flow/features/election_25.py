@@ -55,7 +55,7 @@ class Election25Feature(BaseFeature):
         df = df.dropna(subset=["Land", "Regierungsbezirk", "Kreis", "Gemeinde"])
         return df
 
-    def transform(self, df) -> pd.DataFrame:
+    def transform(self, df: pd.DataFrame) -> pd.DataFrame:
         """Transform raw election 2025 data into aggregated, proportional metrics.
 
         This method:
