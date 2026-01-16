@@ -8,6 +8,9 @@ from geoscore_de.data_flow.features.utils import load_election_zip, move_extract
 
 ZIP_URL = "https://www.bundeswahlleiterin.de/en/dam/jcr/e79a7bd3-0607-4e87-9752-8e601e299e00/btw25_wbz.zip"
 
+DEFAULT_RAW_DATA_PATH = "data/raw/features/election_2025"
+DEFAULT_TFORM_DATA_PATH = "data/tform/features/election_25.csv"
+
 
 class Election25Feature(BaseFeature):
     """Feature class for election 2025 data."""
@@ -15,8 +18,8 @@ class Election25Feature(BaseFeature):
     def __init__(
         self,
         url: str = ZIP_URL,
-        raw_data_path: str = "data/raw/features/election_2025",
-        tform_data_path: str = "data/tform/features/election_25.csv",
+        raw_data_path: str = DEFAULT_RAW_DATA_PATH,
+        tform_data_path: str = DEFAULT_TFORM_DATA_PATH,
     ):
         self.url = url
         self.raw_data_path = raw_data_path
