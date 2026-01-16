@@ -56,8 +56,14 @@ class Election25Feature(BaseFeature):
         return df
 
     def transform(self, df) -> pd.DataFrame:
-        """No transformation implemented for election 25 data."""
+        """Transform raw election 2025 data into aggregated, proportional metrics.
 
+        This method:
+        - selects first- and second-vote columns, along with AGS, eligible voters, and total voters,
+        - renames key columns to normalized English identifiers,
+        - aggregates all vote counts by AGS via summation, and
+        - computes election participation and converts vote counts to proportions of total voters.
+        """
         # select only columns ending with "Erststimmen" or "Zweitstimmen" or AGS or Wahlberechtigte (A) or Wählende (B)
         df = df[
             [
