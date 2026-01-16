@@ -42,7 +42,15 @@ def load_raw_election_21_data(url: str = ZIP_URL, dest_path: str = DEFAULT_RAW_D
 
     # create AGS column by concatenating Land, Regierungsbezirk, Kreis, and Gemeinde columns
     # Convert to string first to handle potential numeric types
-    df["AGS"] = df["Land"] + df["Regierungsbezirk"] + df["Kreis"] + df["Gemeinde"].str.zfill(3)
+    df["AGS"] = (
+        df["Land"].astype(str)
+        + df["Regierungsbezirk"].astype(str)
+        + df["Kreis"].astype(str)
+        + df["Gemeinde"].astype(str).str.zfill(3)
+    )
+
+    # drop none rows with missing AGS
+    df = df.dropna(subset=["Land", "Regierungsbezirk", "Kreis", "Gemeinde"])
 
     return df
 
@@ -65,22 +73,39 @@ def transform_election_21_data(
     """
     df = load_raw_election_21_data(dest_path=in_path)
 
-    # TODO: rename columns
+    # select only columns started with "E_" or "Z_" or AGS or Wahlberechtigte (A) or Wählende (B)
+    df = df[
+        [
+            col
+            for col in df.columns
+            if col.startswith(("E_", "Z_")) or col in ("AGS", "Wahlberechtigte (A)", "Wählende (B)")
+        ]
+    ]
+
+    # rename columns
     df.rename(
         columns={
             "Wahlberechtigte (A)": "eligible_voters",
-            "Wähler (B)": "total_voters",
+            "Wählende (B)": "total_voters",
             # first votes
             "E_Ungültige": "E_invalid_votes",
+            "E_Gültige": "E_valid_votes",
             # second votes
             "Z_Ungültige": "Z_invalid_votes",
+            "Z_Gültige": "Z_valid_votes",
         },
         inplace=True,
     )
 
-    # TODO: group by municipality (AGS)
+    # group by municipality (AGS)
+    df = df.groupby("AGS").sum().reset_index()
 
-    # TODO: relative votes per party in each municipality
+    df["election_participation"] = df["total_voters"] / df["eligible_voters"].replace(0, pd.NA)
+
+    # # relative votes per party in each municipality
+    vote_columns = [col for col in df.columns if col.startswith(("E_", "Z_"))]
+    for col in vote_columns:
+        df[col] = df[col] / df["total_voters"].replace(0, pd.NA)
 
     # Save the transformed DataFrame to CSV
     df.to_csv(out_path, index=False)
