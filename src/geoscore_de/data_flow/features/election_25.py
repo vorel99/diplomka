@@ -57,4 +57,38 @@ class Election25Feature(BaseFeature):
 
     def transform(self, df) -> pd.DataFrame:
         """No transformation implemented for election 25 data."""
-        pass
+
+        # select only columns ending with "Erststimmen" or "Zweitstimmen" or AGS or Wahlberechtigte (A) or Wählende (B)
+        df = df[
+            [
+                col
+                for col in df.columns
+                if col.endswith(("Erststimmen", "Zweitstimmen"))
+                or col in ("AGS", "Wahlberechtigte (A)", "Wählende (B)")
+            ]
+        ]
+
+        # rename columns
+        df = df.rename(
+            columns={
+                "Wahlberechtigte (A)": "eligible_voters",
+                "Wählende (B)": "total_voters",
+                "Ungültige - Zweitstimmen": "invalid_votes_zweitstimmen",
+                "Gültige - Zweitstimmen": "valid_votes_zweitstimmen",
+                "Ungültige - Erststimmen": "invalid_votes_erststimmen",
+                "Gültige - Erststimmen": "valid_votes_erststimmen",
+            }
+        )
+
+        # group by AGS and sum all other columns
+        df = df.groupby("AGS").sum().reset_index()
+
+        # Change all columns from absolute counts to proportions of the total voters
+        df["eligible_voters"] = df["eligible_voters"].replace(0, pd.NA)
+        df["election_participation"] = df["total_voters"] / df["eligible_voters"]
+
+        for col in df.columns:
+            if col not in ["AGS", "eligible_voters", "total_voters", "election_participation"]:
+                df[col] = df[col] / df["total_voters"].replace(0, pd.NA)
+
+        return df
