@@ -26,7 +26,11 @@ class Election25Feature(BaseFeature):
         self.tform_data_path = tform_data_path
 
     def load(self) -> pd.DataFrame:
-        """Load and extract election 25 data from a ZIP file."""
+        """Load and extract election 25 data from a ZIP file.
+
+        Returns:
+            pd.DataFrame: DataFrame containing the election data.
+        """
         temp_dir = load_election_zip(self.url)
         try:
             # Ensure destination directory exists

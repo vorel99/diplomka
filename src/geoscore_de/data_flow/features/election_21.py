@@ -87,7 +87,7 @@ class Election21Feature(BaseFeature):
         ]
 
         # rename columns
-        df.rename(
+        df = df.rename(
             columns={
                 "Wahlberechtigte (A)": "eligible_voters",
                 "Wählende (B)": "total_voters",
@@ -98,7 +98,6 @@ class Election21Feature(BaseFeature):
                 "Z_Ungültige": "Z_invalid_votes",
                 "Z_Gültige": "Z_valid_votes",
             },
-            inplace=True,
         )
 
         # group by municipality (AGS)
