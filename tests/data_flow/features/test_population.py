@@ -3,10 +3,7 @@
 import pandas as pd
 import pytest
 
-from geoscore_de.data_flow.features.population import (
-    load_raw_population_data,
-    transform_population_data,
-)
+from geoscore_de.data_flow.features.population import PopulationFeature
 
 
 @pytest.fixture
@@ -43,7 +40,8 @@ def mock_raw_csv_file(tmp_path, mock_raw_csv_content):
 
 def test_load_raw_population_data(mock_raw_csv_file):
     """Test loading raw population data from CSV."""
-    df = load_raw_population_data(mock_raw_csv_file)
+    feature = PopulationFeature(raw_data_path=mock_raw_csv_file)
+    df = feature.load()
 
     # Check columns exist
     assert "AGS" in df.columns
@@ -60,7 +58,8 @@ def test_load_raw_population_data(mock_raw_csv_file):
 
 def test_load_raw_population_data_ags_padding(mock_raw_csv_file):
     """Test that AGS codes are properly padded to 8 characters."""
-    df = load_raw_population_data(mock_raw_csv_file)
+    feature = PopulationFeature(raw_data_path=mock_raw_csv_file)
+    df = feature.load()
 
     # Check AGS padding - should all be 8 characters
     ags_values = df["AGS"].unique()
@@ -78,7 +77,8 @@ def test_load_raw_population_data_ags_padding(mock_raw_csv_file):
 
 def test_load_raw_population_data_na_handling(mock_raw_csv_file):
     """Test that NA values are properly handled."""
-    df = load_raw_population_data(mock_raw_csv_file)
+    feature = PopulationFeature(raw_data_path=mock_raw_csv_file)
+    df = feature.load()
 
     # Check that rows with NA values exist
     na_rows = df[df["people_count"].isna()]
@@ -89,7 +89,8 @@ def test_transform_population_data_structure(tmp_path, mock_raw_csv_file):
     """Test the structure of transformed population data."""
     out_path = tmp_path / "output.csv"
 
-    df = transform_population_data(mock_raw_csv_file, str(out_path))
+    feature = PopulationFeature(raw_data_path=mock_raw_csv_file, tform_data_path=str(out_path))
+    df = feature.transform(feature.load())
 
     # Check that AGS column exists
     assert "AGS" in df.columns
@@ -111,7 +112,8 @@ def test_transform_population_data_proportions(tmp_path, mock_raw_csv_file):
     """Test that values are converted to proportions."""
     out_path = tmp_path / "output.csv"
 
-    df = transform_population_data(mock_raw_csv_file, str(out_path))
+    feature = PopulationFeature(raw_data_path=mock_raw_csv_file, tform_data_path=str(out_path))
+    df = feature.transform(feature.load())
 
     # Get a row with data (not NaN)
     valid_rows = df.dropna(subset=["age_under_3"])
@@ -144,7 +146,8 @@ def test_transform_population_data_division_by_zero(tmp_path):
     csv_file.write_text(test_csv)
     out_path = tmp_path / "test_output.csv"
 
-    df = transform_population_data(str(csv_file), str(out_path))
+    feature = PopulationFeature(raw_data_path=str(csv_file), tform_data_path=str(out_path))
+    df = feature.transform(feature.load())
 
     # Check that we don't have inf values
     for col in df.columns:
@@ -157,7 +160,8 @@ def test_transform_population_data_output_file(tmp_path, mock_raw_csv_file):
     """Test that output file is created."""
     out_path = tmp_path / "output.csv"
 
-    transform_population_data(mock_raw_csv_file, str(out_path))
+    feature = PopulationFeature(raw_data_path=mock_raw_csv_file, tform_data_path=str(out_path))
+    _ = feature.transform(feature.load())
 
     # Check file exists
     assert out_path.exists()
@@ -172,7 +176,8 @@ def test_transform_population_data_pivot(tmp_path, mock_raw_csv_file):
     """Test that data is properly pivoted."""
     out_path = tmp_path / "output.csv"
 
-    df = transform_population_data(mock_raw_csv_file, str(out_path))
+    feature = PopulationFeature(raw_data_path=mock_raw_csv_file, tform_data_path=str(out_path))
+    df = feature.transform(feature.load())
 
     # After pivoting, each AGS should appear only once
     assert df["AGS"].is_unique
@@ -204,7 +209,8 @@ def test_transform_population_data_nan_handling(tmp_path):
     csv_file.write_text(test_csv)
     out_path = tmp_path / "test_output.csv"
 
-    df = transform_population_data(str(csv_file), str(out_path))
+    feature = PopulationFeature(raw_data_path=str(csv_file), tform_data_path=str(out_path))
+    df = feature.transform(feature.load())
 
     # Check that we have both valid data and NaN values
     assert df["age_under_3"].notna().any(), "Should have some valid values"
@@ -215,7 +221,8 @@ def test_transform_population_data_all_columns_renamed(tmp_path, mock_raw_csv_fi
     """Test that all age group columns are renamed to English."""
     out_path = tmp_path / "output.csv"
 
-    df = transform_population_data(mock_raw_csv_file, str(out_path))
+    feature = PopulationFeature(raw_data_path=mock_raw_csv_file, tform_data_path=str(out_path))
+    df = feature.transform(feature.load())
 
     # Expected English column names
     expected_columns = [
@@ -246,7 +253,8 @@ def test_transform_population_data_all_columns_renamed(tmp_path, mock_raw_csv_fi
 
 def test_load_raw_population_data_column_types(mock_raw_csv_file):
     """Test that loaded data has correct column types."""
-    df = load_raw_population_data(mock_raw_csv_file)
+    feature = PopulationFeature(raw_data_path=mock_raw_csv_file)
+    df = feature.load()
 
     # Numeric columns should be float (allowing for NaN)
     assert df["people_count"].dtype in [float, "float64"]
