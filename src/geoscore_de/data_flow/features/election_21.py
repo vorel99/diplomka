@@ -13,6 +13,8 @@ DEFAULT_TFORM_DATA_PATH = "data/tform/features/federal_election_21.csv"
 
 
 class Election21Feature(BaseFeature):
+    """Feature class for election 2021 data."""
+
     def __init__(
         self,
         url: str = ZIP_URL,
