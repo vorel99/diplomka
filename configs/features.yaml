@@ -1,0 +1,52 @@
+# Feature Configuration
+# This file defines which features to include in the feature matrix and their parameters
+
+features:
+  # Population demographics feature
+  - name: population
+    class: PopulationFeature
+    module: geoscore_de.data_flow.features.population
+    enabled: true
+    params:
+      raw_data_path: data/raw/features/population.csv
+      tform_data_path: data/tform/features/population.csv
+
+  # Federal election 2021 results
+  - name: election_2021
+    class: Election21Feature
+    module: geoscore_de.data_flow.features.election_21
+    enabled: true
+    params:
+      url: https://www.bundeswahlleiterin.de/en/dam/jcr/c2cd99e6-064e-4ebc-b634-f86b5c0e14b3/btw21_wbz.zip
+      raw_data_path: data/raw/features/election_2021
+      tform_data_path: data/tform/features/federal_election_21.csv
+
+  # Federal election 2025 results
+  - name: election_2025
+    class: Election25Feature
+    module: geoscore_de.data_flow.features.election_25
+    enabled: true
+    params:
+      url: https://www.bundeswahlleiterin.de/en/dam/jcr/e79a7bd3-0607-4e87-9752-8e601e299e00/btw25_wbz.zip
+      raw_data_path: data/raw/features/election_2025
+      tform_data_path: data/tform/features/election_25.csv
+
+# Matrix building configuration
+matrix:
+  # Key column to join all features on (municipality code)
+  join_key: AGS
+  
+  # How to join features: 'inner', 'outer', 'left', 'right'
+  join_method: outer
+  
+  # Whether to save the feature matrix to a file
+  save_output: true
+  
+  # Path to save the final feature matrix
+  output_path: data/final/feature_matrix.csv
+  
+  # Handle missing values: 'drop', 'fill', or null for no action
+  missing_values: null
+  
+  # If missing_values is 'fill', specify the fill value (e.g., 0, 'mean', 'median')
+  fill_value: 0
