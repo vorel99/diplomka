@@ -128,6 +128,7 @@ class FeatureMatrixBuilder:
 
         Raises:
             ValueError: If no features are loaded or no data can be merged.
+            Exception: If any feature fails to load or process.
         """
         if not self.features:
             raise ValueError("No features loaded. Call load_features() first.")
@@ -160,8 +161,7 @@ class FeatureMatrixBuilder:
 
             except Exception as e:
                 logger.error(f"Failed to process feature {feature_name}: {e}")
-                # Continue with other features
-                continue
+                raise
 
         if not feature_dfs:
             raise ValueError("No feature data could be loaded")
