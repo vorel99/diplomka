@@ -16,6 +16,7 @@ dependencies = [
     "requests",
     "typer",
     "pydantic",
+    "pyyaml",
     # app
     "fastapi",
     "uvicorn[standard]",
