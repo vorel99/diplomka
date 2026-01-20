@@ -1,7 +1,5 @@
 """Tests for FeatureMatrixBuilder."""
 
-from pathlib import Path
-
 import pandas as pd
 import pytest
 import yaml
@@ -52,6 +50,7 @@ def temp_config_file(tmp_path):
         yaml.dump(config_data, f)
 
     yield temp_path
+
 
 @pytest.fixture
 def multi_feature_config(tmp_path):
@@ -274,7 +273,7 @@ class TestFeatureMatrixBuilder:
         # Replace feature with one that doesn't have AGS column
         builder.features["test_feature"] = MockFeature(pd.DataFrame({"other_col": [1, 2, 3]}))
 
-        with pytest.raises(ValueError, match="No feature data could be loaded"):
+        with pytest.raises(KeyError, match="Join key 'AGS' not found in test_feature dataframe"):
             builder.build_matrix()
 
     def test_build_matrix_with_missing_values_drop(self, tmp_path):
