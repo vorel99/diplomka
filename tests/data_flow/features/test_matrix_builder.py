@@ -53,10 +53,6 @@ def temp_config_file(tmp_path):
 
     yield temp_path
 
-    # Cleanup
-    Path(temp_path).unlink(missing_ok=True)
-
-
 @pytest.fixture
 def multi_feature_config(tmp_path):
     """Create a config with multiple features."""
