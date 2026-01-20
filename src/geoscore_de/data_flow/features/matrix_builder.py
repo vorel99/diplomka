@@ -150,8 +150,9 @@ class FeatureMatrixBuilder:
 
                 # Verify join key exists
                 if join_key not in df.columns:
-                    logger.error(f"Join key '{join_key}' not found in {feature_name} dataframe")
-                    continue
+                    msg = f"Join key '{join_key}' not found in {feature_name} dataframe"
+                    logger.error(msg)
+                    raise KeyError(msg)
 
                 # Add feature name prefix to columns (except join key)
                 df = df.rename(columns={col: f"{feature_name}_{col}" for col in df.columns if col != join_key})
