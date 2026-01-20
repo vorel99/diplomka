@@ -37,7 +37,7 @@ matrix:
   join_key: AGS
   
   # How to join features: 'inner', 'outer', 'left', 'right'
-  join_method: inner
+  join_method: outer
   
   # Whether to save the feature matrix to a file
   save_output: true
