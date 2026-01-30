@@ -16,6 +16,7 @@ configs/*.env
 # data files
 data/**/*.csv
 data/**/*.pdf
+!data/georef-germany-gemeinde.csv
 !data/raw/target/
 !data/raw/features/population.csv
 !data/raw/municipalities_2022.csv
