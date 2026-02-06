@@ -21,6 +21,9 @@ dependencies = [
     "fastapi",
     "uvicorn[standard]",
     "pydantic-settings",
+    # modelling
+    "scikit-learn",
+    "lightgbm",
 ]
 
 [dependency-groups]

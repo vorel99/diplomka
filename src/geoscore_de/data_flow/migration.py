@@ -16,20 +16,12 @@ def load_migration_data(path: str) -> pd.DataFrame:
         path,
         sep=";",
         encoding="latin1",
-        skiprows=4,
+        skiprows=5,
         skipfooter=4,
         engine="python",
         na_values=["-", "."],
-    )
-    df.rename(
-        columns={
-            "Unnamed: 0": "Year",
-            "Unnamed: 1": "MU_ID",
-            "Unnamed: 2": "Municipality",
-            "Zuzüge über die Gemeindegrenzen": "in_migration",
-            "Fortzüge über die Gemeindegrenzen": "out_migration",
-        },
-        inplace=True,
+        names=["Year", "MU_ID", "Municipality", "in_migration", "out_migration"],
+        header=None,
     )
 
     # drop first row which contains column descriptions

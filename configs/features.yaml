@@ -31,6 +31,14 @@ features:
       raw_data_path: data/raw/features/election_2025
       tform_data_path: data/tform/features/election_25.csv
 
+  - name: unemployment
+    class: UnemploymentFeature
+    module: geoscore_de.data_flow.features.unemployment
+    enabled: true
+    params:
+      raw_data_path: data/raw/features/unemployment.csv
+      tform_data_path: data/tform/features/unemployment.csv
+
 # Matrix building configuration
 matrix:
   # Key column to join all features on (municipality code)
