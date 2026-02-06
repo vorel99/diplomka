@@ -1,5 +1,4 @@
 import logging
-from pathlib import Path
 
 import pandas as pd
 
@@ -94,21 +93,5 @@ class PopulationFeature(BaseFeature):
             if col != "AGS" and col != "total_population":
                 tform_df[col] = tform_df[col] / total_pop
 
-        # Ensure output directory exists
-        output_path = Path(self.tform_data_path)
-        try:
-            output_path.parent.mkdir(parents=True, exist_ok=True)
-            logger.info(f"Saving transformed data to {self.tform_data_path}")
-            tform_df.to_csv(self.tform_data_path, index=False)
-            logger.info(f"Successfully saved {len(tform_df)} rows to {self.tform_data_path}")
-        except PermissionError as e:
-            logger.error(f"Permission denied when writing to {self.tform_data_path}: {e}")
-            raise
-        except OSError as e:
-            logger.error(f"OS error when writing to {self.tform_data_path}: {e}")
-            raise
-        except Exception as e:
-            logger.error(f"Unexpected error when writing to {self.tform_data_path}: {e}")
-            raise
-
+        tform_df.to_csv(self.tform_data_path, index=False)
         return tform_df
