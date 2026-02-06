@@ -1,6 +1,7 @@
 import pandas as pd
 
 from geoscore_de.data_flow.features.base import BaseFeature
+from geoscore_de.data_flow.municipality import DEFAULT_RAW_DATA_PATH as MUNICIPALITY_RAW_DATA_PATH
 from geoscore_de.data_flow.municipality import MunicipalityFeature
 
 DEFAULT_RAW_DATA_PATH = "data/raw/features/unemployment.csv"
@@ -10,16 +11,23 @@ DEFAULT_TFORM_DATA_PATH = "data/tform/features/unemployment.csv"
 class UnemploymentFeature(BaseFeature):
     """Load and transform unemployment data from GENESIS-Online."""
 
-    def __init__(self, raw_data_path: str = DEFAULT_RAW_DATA_PATH, tform_data_path: str = DEFAULT_TFORM_DATA_PATH):
+    def __init__(
+        self,
+        raw_data_path: str = DEFAULT_RAW_DATA_PATH,
+        tform_data_path: str = DEFAULT_TFORM_DATA_PATH,
+        municipality_data_path: str = MUNICIPALITY_RAW_DATA_PATH,
+    ):
         """Initialize the unemployment feature.
 
         Args:
             raw_data_path (str): Path to the CSV file containing raw unemployment data.
             tform_data_path (str): Path to the CSV file containing transformed unemployment data.
                 Data source: https://www.regionalstatistik.de/genesis//online?operation=table&code=13211-01-03-5&bypass=true&levelindex=1&levelid=1768376127943#abreadcrumb
+            municipality_data_path (str): Path to the CSV file containing municipality data for normalization.
         """
         self.raw_data_path = raw_data_path
         self.tform_data_path = tform_data_path
+        self.municipality_data_path = municipality_data_path
 
     def load(self) -> pd.DataFrame:
         """Load raw unemployment data from CSV."""
@@ -53,8 +61,8 @@ class UnemploymentFeature(BaseFeature):
         """Transform raw unemployment data and normalize by municipality population."""
 
         # Load municipality data to get population (Persons column) for normalization
-        municipality_feature = MunicipalityFeature("data/raw/municipalities_2022.csv")
-        municipality_df = municipality_feature.load_transform()[["AGS", "Persons"]]
+        municipality_feature = MunicipalityFeature(self.municipality_data_path)
+        municipality_df = municipality_feature.load()[["AGS", "Persons"]]
 
         # Convert Persons to numeric (it may be a string)
         municipality_df["Persons"] = pd.to_numeric(municipality_df["Persons"], errors="coerce")
@@ -67,6 +75,8 @@ class UnemploymentFeature(BaseFeature):
 
         # Drop temporary columns
         df = df.drop(columns=["MU_ID", "Municipality", "Persons"])
+
+        df.to_csv(self.tform_data_path, index=False)
 
         return df
 
@@ -81,4 +91,4 @@ def load_unemployment_data(path: str) -> pd.DataFrame:
         pd.DataFrame: DataFrame containing the loaded unemployment data.
     """
     feature = UnemploymentFeature(path)
-    return feature.load_transform()
+    return feature.load()

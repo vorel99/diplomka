@@ -24,7 +24,9 @@ class RowFilteringConfig(BaseModel):
 class ModelConfig(BaseModel):
     """Configuration for the model."""
 
-    model_type: str = Field(..., description="Type of model to use for training (e.g., 'lightgbm', 'random_forest').")
+    model_type: str = Field(
+        "lightgbm", description="Type of model to use for training (e.g., 'lightgbm', 'random_forest')."
+    )
     param_grid: dict = Field(
         default_factory=dict,
         description="Dictionary specifying the hyperparameters and their corresponding values for grid search.",

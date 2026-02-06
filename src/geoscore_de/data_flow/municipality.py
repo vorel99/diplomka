@@ -47,4 +47,4 @@ def load_municipality_data(path: str) -> pd.DataFrame:
             `MU_ID`, `Municipality`, `Persons`, `Area`, `Population Density` and `AGS`.
     """
     feature = MunicipalityFeature(path)
-    return feature.load_transform()
+    return feature.load()

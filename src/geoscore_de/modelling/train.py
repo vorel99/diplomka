@@ -18,8 +18,15 @@ class Trainer:
         return X
 
     def _prepare_data(self, data: pd.DataFrame):
-        """Prepare data for model training by applying row and feature filtering,
-        and splitting into train, validation, and test sets.
+        """Prepare data for model training by applying row and feature filtering
+        and splitting into train and test sets.
+
+        Args:
+            data (pd.DataFrame): The input DataFrame containing features and target variable.
+
+        Returns:
+            Tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]: Split data into
+            X_train_val, X_test, y_train_val, y_test.
         """
         # remove ID column if it exists
         if self.config.id_column in data.columns:
@@ -52,6 +59,14 @@ class Trainer:
         return test_score
 
     def train(self, data: pd.DataFrame):
+        """Train the model using the provided data and configuration.
+
+        Args:
+            data (pd.DataFrame): The input DataFrame containing features and target variable.
+
+        Returns:
+            GridSearchCV: The fitted GridSearchCV object containing the best model and results.
+        """
         X_train_val, X_test, y_train_val, y_test = self._prepare_data(data)
 
         # Train

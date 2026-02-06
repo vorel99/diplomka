@@ -47,7 +47,7 @@ class PopulationFeature(BaseFeature):
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
         """Transform raw population data into a pivoted format with age groups as columns.
         - rename age group columns from German to English
-        - convert absolute counts to proportions of the total population.
+        - convert absolute counts to proportions of the total population. (except for the total population column)
 
         Args:
             df (pd.DataFrame): Raw population DataFrame.
