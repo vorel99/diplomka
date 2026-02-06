@@ -94,8 +94,6 @@ class PopulationFeature(BaseFeature):
             if col != "AGS" and col != "total_population":
                 tform_df[col] = tform_df[col] / total_pop
 
-        tform_df.drop(columns=["total_population"], inplace=True)
-
         # Ensure output directory exists
         output_path = Path(self.tform_data_path)
         try:
