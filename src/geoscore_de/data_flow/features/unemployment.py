@@ -1,6 +1,7 @@
 import pandas as pd
 
 from geoscore_de.data_flow.features.base import BaseFeature
+from geoscore_de.data_flow.municipality import MunicipalityFeature
 
 DEFAULT_RAW_DATA_PATH = "data/raw/features/unemployment.csv"
 DEFAULT_TFORM_DATA_PATH = "data/tform/features/unemployment.csv"
@@ -49,10 +50,24 @@ class UnemploymentFeature(BaseFeature):
 
     # TODO: implement any transformations if needed (e.g., normalization by population)
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Transform raw unemployment data."""
+        """Transform raw unemployment data and normalize by municipality population."""
 
-        # drop MU_ID and Municipality columns
-        df = df.drop(columns=["MU_ID", "Municipality"])
+        # Load municipality data to get population (Persons column) for normalization
+        municipality_feature = MunicipalityFeature("data/raw/municipalities_2022.csv")
+        municipality_df = municipality_feature.load_transform()[["AGS", "Persons"]]
+
+        # Convert Persons to numeric (it may be a string)
+        municipality_df["Persons"] = pd.to_numeric(municipality_df["Persons"], errors="coerce")
+
+        # Merge with municipality data
+        df = df.merge(municipality_df, on="AGS", how="left")
+
+        # Normalize unemployment by population
+        df["unemployment_per_capita"] = (df["unemployment_total"] / df["Persons"]).round(6)
+
+        # Drop temporary columns
+        df = df.drop(columns=["MU_ID", "Municipality", "Persons"])
+
         return df
 
 
