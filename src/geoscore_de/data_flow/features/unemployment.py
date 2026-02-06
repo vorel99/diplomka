@@ -47,8 +47,12 @@ class UnemploymentFeature(BaseFeature):
 
         return df
 
+    # TODO: implement any transformations if needed (e.g., normalization by population)
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
         """Transform raw unemployment data."""
+
+        # drop MU_ID and Municipality columns
+        df = df.drop(columns=["MU_ID", "Municipality"])
         return df
 
 
