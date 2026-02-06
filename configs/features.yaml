@@ -1,6 +1,13 @@
 # Feature Configuration
 # This file defines which features to include in the feature matrix and their parameters
 
+# Municipalities reference data - used as the basis for joining all features
+municipalities:
+  class: MunicipalityFeature
+  module: geoscore_de.data_flow.municipality
+  params:
+    path: data/raw/municipalities_2022.csv
+
 features:
   # Population demographics feature
   - name: population

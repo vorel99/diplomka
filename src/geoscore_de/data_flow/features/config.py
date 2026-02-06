@@ -5,16 +5,25 @@ from typing import Any, Literal
 from pydantic import BaseModel, Field
 
 
-class FeatureConfig(BaseModel):
+class BaseComponentConfig(BaseModel):
+    """Base configuration for loadable components."""
+
+    class_name: str = Field(..., alias="class", description="Name of the component class")
+    module: str = Field(..., description="Module path where the component class is located")
+    params: dict[str, Any] = Field(default_factory=dict, description="Parameters to pass to the component class")
+
+    model_config = {"populate_by_name": True}
+
+
+class FeatureConfig(BaseComponentConfig):
     """Configuration for a single feature."""
 
     name: str = Field(..., description="Unique name for the feature")
-    class_name: str = Field(..., alias="class", description="Name of the feature class")
-    module: str = Field(..., description="Module path where the feature class is located")
     enabled: bool = Field(default=True, description="Whether this feature is enabled")
-    params: dict[str, Any] = Field(default_factory=dict, description="Parameters to pass to the feature class")
 
-    model_config = {"populate_by_name": True}
+
+class MunicipalitiesConfig(BaseComponentConfig):
+    """Configuration for municipalities reference data."""
 
 
 class MatrixConfig(BaseModel):
@@ -37,5 +46,6 @@ class MatrixConfig(BaseModel):
 class FeaturesYAMLConfig(BaseModel):
     """Root configuration model for features.yaml."""
 
+    municipalities: MunicipalitiesConfig = Field(..., description="Configuration for municipalities reference data")
     features: list[FeatureConfig] = Field(default_factory=list, description="List of feature configurations")
     matrix: MatrixConfig = Field(default_factory=MatrixConfig, description="Matrix building configuration")
