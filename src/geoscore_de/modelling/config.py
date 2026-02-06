@@ -21,6 +21,16 @@ class RowFilteringConfig(BaseModel):
     )
 
 
+class ModelConfig(BaseModel):
+    """Configuration for the model."""
+
+    model_type: str = Field(..., description="Type of model to use for training (e.g., 'lightgbm', 'random_forest').")
+    param_grid: dict = Field(
+        default_factory=dict,
+        description="Dictionary specifying the hyperparameters and their corresponding values for grid search.",
+    )
+
+
 class TrainingConfig(BaseModel):
     """Configuration for model training."""
 
@@ -34,7 +44,5 @@ class TrainingConfig(BaseModel):
     train_test_split_ratio: float = Field(
         default=0.8, description="Ratio for splitting the dataset into training and testing sets."
     )
-    train_valid_split_ratio: float = Field(
-        default=0.8, description="Ratio for splitting the training set into training and validation sets."
-    )
     random_state: int = Field(default=42, description="Random state for reproducibility of train-test split.")
+    model: ModelConfig = Field(default_factory=ModelConfig, description="Configuration for the model.")

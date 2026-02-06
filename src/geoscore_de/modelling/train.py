@@ -1,6 +1,6 @@
 import pandas as pd
 from lightgbm import LGBMRegressor
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import GridSearchCV, train_test_split
 
 from geoscore_de.modelling.config import TrainingConfig
 
@@ -32,13 +32,8 @@ class Trainer:
         X_train_val, X_test, y_train_val, y_test = train_test_split(
             X, y, test_size=1 - self.config.train_test_split_ratio, random_state=self.config.random_state
         )
-        X_train, X_valid, y_train, y_valid = train_test_split(
-            X_train_val,
-            y_train_val,
-            test_size=1 - self.config.train_valid_split_ratio,
-            random_state=self.config.random_state,
-        )
-        return X_train, X_valid, X_test, y_train, y_valid, y_test
+
+        return X_train_val, X_test, y_train_val, y_test
 
     # TODO: implement method to get model based on config
     def _get_model(self):
@@ -50,12 +45,13 @@ class Trainer:
         return test_score
 
     def train(self, data: pd.DataFrame):
-        X_train, X_valid, X_test, y_train, y_valid, y_test = self._prepare_data(data)
+        X_train_val, X_test, y_train_val, y_test = self._prepare_data(data)
 
         # Train
         model = self._get_model()
-        model.fit(X_train, y_train, eval_set=[(X_valid, y_valid)], early_stopping_rounds=10, verbose=True)
-
+        grid_search = GridSearchCV(model, self.config.model.param_grid, cv=5, scoring="r2")
+        grid_search.fit(X_train_val, y_train_val)
+        model = grid_search.best_estimator_
         # Evaluate on test set
         self._evaluate(model, X_test, y_test)
-        return model
+        return grid_search
