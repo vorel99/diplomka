@@ -15,13 +15,11 @@ class TestFeatureConfig:
             name="test_feature",
             class_name="TestFeature",
             module="test.module",
-            enabled=True,
             params={"param1": "value1"},
         )
         assert config.name == "test_feature"
         assert config.class_name == "TestFeature"
         assert config.module == "test.module"
-        assert config.enabled is True
         assert config.params == {"param1": "value1"}
 
     def test_feature_config_with_alias(self):
@@ -40,7 +38,6 @@ class TestFeatureConfig:
             class_name="TestFeature",
             module="test.module",
         )
-        assert config.enabled is True
         assert config.params == {}
 
     def test_feature_config_missing_required_field(self):
@@ -105,14 +102,12 @@ class TestFeaturesYAMLConfig:
                     "name": "feature1",
                     "class": "Feature1",
                     "module": "module1",
-                    "enabled": True,
                     "params": {"param1": "value1"},
                 },
                 {
                     "name": "feature2",
                     "class": "Feature2",
                     "module": "module2",
-                    "enabled": False,
                 },
             ],
             "matrix": {
@@ -125,7 +120,6 @@ class TestFeaturesYAMLConfig:
         config = FeaturesYAMLConfig(**config_dict)
         assert len(config.features) == 2
         assert config.features[0].name == "feature1"
-        assert config.features[1].enabled is False
         assert config.matrix.join_key == "ID"
 
     def test_empty_config(self):

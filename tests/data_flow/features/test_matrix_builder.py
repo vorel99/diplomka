@@ -38,7 +38,6 @@ def temp_config_file(tmp_path):
                 "name": "test_feature",
                 "class": "MockFeature",
                 "module": __name__,
-                "enabled": True,
                 "params": {},
             }
         ],
@@ -71,21 +70,18 @@ def multi_feature_config(tmp_path):
                 "name": "feature1",
                 "class": "MockFeature",
                 "module": __name__,
-                "enabled": True,
                 "params": {},
             },
             {
                 "name": "feature2",
                 "class": "MockFeature",
                 "module": __name__,
-                "enabled": True,
                 "params": {},
             },
             {
                 "name": "feature3",
                 "class": "MockFeature",
                 "module": __name__,
-                "enabled": False,
                 "params": {},
             },
         ],
@@ -150,16 +146,6 @@ class TestFeatureMatrixBuilder:
         assert "test_feature" in builder.features
         assert isinstance(builder.features["test_feature"], MockFeature)
 
-    def test_load_features_skips_disabled(self, multi_feature_config):
-        """Test that disabled features are not loaded."""
-        builder = FeatureMatrixBuilder(config_path=multi_feature_config)
-        builder.load_features()
-
-        assert len(builder.features) == 2
-        assert "feature1" in builder.features
-        assert "feature2" in builder.features
-        assert "feature3" not in builder.features
-
     def test_load_features_handles_import_error(self, tmp_path):
         """Test that import errors are handled gracefully."""
         config_data = {
@@ -169,7 +155,6 @@ class TestFeatureMatrixBuilder:
                     "name": "bad_feature",
                     "class": "NonExistentClass",
                     "module": "nonexistent.module",
-                    "enabled": True,
                 }
             ],
             "matrix": {"join_key": "AGS"},
