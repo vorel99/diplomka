@@ -34,13 +34,14 @@ class ModelConfig(BaseModel):
 class TrainingConfig(BaseModel):
     """Configuration for model training."""
 
+    id_column: str = Field("AGS", description="Name of the column containing unique identifiers for each row.")
+    target_variable: str = Field(..., description="The target variable for model training.")
     feature_filtering: FeatureFilteringConfig = Field(
         default_factory=FeatureFilteringConfig, description="Configuration for feature filtering."
     )
     row_filtering: RowFilteringConfig = Field(
         default_factory=RowFilteringConfig, description="Configuration for row filtering."
     )
-    target_variable: str = Field(..., description="The target variable for model training.")
     train_test_split_ratio: float = Field(
         default=0.8, description="Ratio for splitting the dataset into training and testing sets."
     )

@@ -21,8 +21,15 @@ class Trainer:
         """Prepare data for model training by applying row and feature filtering,
         and splitting into train, validation, and test sets.
         """
+        # remove ID column if it exists
+        if self.config.id_column in data.columns:
+            data = data.drop(columns=[self.config.id_column])
+
         # filter rows
         data = self._filter_rows(data)
+
+        # drop rows with missing target variable
+        data = data.dropna(subset=[self.config.target_variable])
 
         # filter features
         X = self._filter_features(data.drop(columns=[self.config.target_variable]))
@@ -37,7 +44,7 @@ class Trainer:
 
     # TODO: implement method to get model based on config
     def _get_model(self):
-        return LGBMRegressor()
+        return LGBMRegressor(random_state=self.config.random_state)
 
     def _evaluate(self, model, X_test, y_test):
         test_score = model.score(X_test, y_test)
