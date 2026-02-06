@@ -21,7 +21,7 @@ class RowFilteringConfig(BaseModel):
     )
 
 
-class ModelTrainingConfig(BaseModel):
+class TrainingConfig(BaseModel):
     """Configuration for model training."""
 
     feature_filtering: FeatureFilteringConfig = Field(
@@ -31,3 +31,10 @@ class ModelTrainingConfig(BaseModel):
         default_factory=RowFilteringConfig, description="Configuration for row filtering."
     )
     target_variable: str = Field(..., description="The target variable for model training.")
+    train_test_split_ratio: float = Field(
+        default=0.8, description="Ratio for splitting the dataset into training and testing sets."
+    )
+    train_valid_split_ratio: float = Field(
+        default=0.8, description="Ratio for splitting the training set into training and validation sets."
+    )
+    random_state: int = Field(default=42, description="Random state for reproducibility of train-test split.")
