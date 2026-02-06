@@ -30,9 +30,6 @@ class MatrixConfig(BaseModel):
     """Configuration for feature matrix building."""
 
     join_key: str = Field(default="AGS", description="Column name to join features on")
-    join_method: Literal["inner", "outer", "left", "right"] = Field(
-        default="inner", description="How to join feature dataframes"
-    )
     save_output: bool = Field(default=True, description="Whether to save the feature matrix to a file")
     output_path: str = Field(
         default="data/final/feature_matrix.csv", description="Path to save the final feature matrix"

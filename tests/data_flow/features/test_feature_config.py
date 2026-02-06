@@ -56,14 +56,12 @@ class TestMatrixConfig:
         """Test creating a valid matrix config."""
         config = MatrixConfig(
             join_key="ID",
-            join_method="outer",
             save_output=False,
             output_path="custom/path.csv",
             missing_values="fill",
             fill_value=999,
         )
         assert config.join_key == "ID"
-        assert config.join_method == "outer"
         assert config.save_output is False
         assert config.output_path == "custom/path.csv"
         assert config.missing_values == "fill"
@@ -73,16 +71,10 @@ class TestMatrixConfig:
         """Test default values for matrix config."""
         config = MatrixConfig()
         assert config.join_key == "AGS"
-        assert config.join_method == "inner"
         assert config.save_output is True
         assert config.output_path == "data/final/feature_matrix.csv"
         assert config.missing_values is None
         assert config.fill_value == 0
-
-    def test_invalid_join_method(self):
-        """Test that invalid join method raises validation error."""
-        with pytest.raises(ValidationError):
-            MatrixConfig(join_method="invalid")
 
     def test_invalid_missing_values_strategy(self):
         """Test that invalid missing values strategy raises validation error."""
@@ -130,12 +122,13 @@ class TestFeaturesYAMLConfig:
     def test_config_with_invalid_feature(self):
         """Test that invalid feature raises validation error."""
         config_dict = {
+            "municipalities": {"class": "MockFeature", "module": __name__},
             "features": [
                 {
                     "name": "feature1",
                     # Missing required 'class' and 'module'
                 }
-            ]
+            ],
         }
         with pytest.raises(ValidationError):
             FeaturesYAMLConfig(**config_dict)
@@ -143,9 +136,10 @@ class TestFeaturesYAMLConfig:
     def test_config_with_invalid_matrix(self):
         """Test that invalid matrix config raises validation error."""
         config_dict = {
+            "municipalities": {"class": "MockFeature", "module": __name__},
             "matrix": {
-                "join_method": "invalid_method",  # Invalid choice
-            }
+                "missing_values": "invalid_value",  # Invalid choice
+            },
         }
         with pytest.raises(ValidationError):
             FeaturesYAMLConfig(**config_dict)

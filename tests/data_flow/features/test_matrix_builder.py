@@ -193,6 +193,7 @@ class TestFeatureMatrixBuilder:
         builder.load_features()
 
         # Create different data for each feature
+        builder.municipalities = MockFeature(pd.DataFrame({"AGS": [1, 2], "muni_val": [100, 200]}))
         builder.features["feature1"] = MockFeature(pd.DataFrame({"AGS": [1, 2], "val1": [10, 20]}))
         builder.features["feature2"] = MockFeature(pd.DataFrame({"AGS": [1, 2], "val2": [100, 200]}))
 
@@ -202,59 +203,6 @@ class TestFeatureMatrixBuilder:
         assert "feature1_val1" in matrix.columns
         assert "feature2_val2" in matrix.columns
         assert len(matrix) == 2
-
-    def test_build_matrix_with_inner_join(self, tmp_path):
-        """Test building matrix with inner join (default)."""
-        config_data = {
-            "municipalities": {"class": "MockFeature", "module": __name__},
-            "features": [
-                {"name": "f1", "class": "MockFeature", "module": __name__},
-                {"name": "f2", "class": "MockFeature", "module": __name__},
-            ],
-            "matrix": {"join_key": "AGS", "join_method": "inner", "save_output": False},
-        }
-
-        config_file = tmp_path / "inner_join.yaml"
-        config_file.write_text(yaml.dump(config_data))
-
-        builder = FeatureMatrixBuilder(config_path=str(config_file))
-        builder.load_features()
-
-        # Set different data with partial overlap
-        builder.features["f1"] = MockFeature(pd.DataFrame({"AGS": [1, 2, 3], "val1": [10, 20, 30]}))
-        builder.features["f2"] = MockFeature(pd.DataFrame({"AGS": [2, 3, 4], "val2": [200, 300, 400]}))
-
-        matrix = builder.build_matrix()
-
-        # Inner join should only include AGS 2 and 3
-        assert len(matrix) == 2
-        assert set(matrix["AGS"]) == {2, 3}
-
-    def test_build_matrix_with_outer_join(self, tmp_path):
-        """Test building matrix with outer join."""
-        config_data = {
-            "municipalities": {"class": "MockFeature", "module": __name__},
-            "features": [
-                {"name": "f1", "class": "MockFeature", "module": __name__},
-                {"name": "f2", "class": "MockFeature", "module": __name__},
-            ],
-            "matrix": {"join_key": "AGS", "join_method": "outer", "save_output": False},
-        }
-
-        config_file = tmp_path / "outer_join.yaml"
-        config_file.write_text(yaml.dump(config_data))
-
-        builder = FeatureMatrixBuilder(config_path=str(config_file))
-        builder.load_features()
-
-        builder.features["f1"] = MockFeature(pd.DataFrame({"AGS": [1, 2], "val1": [10, 20]}))
-        builder.features["f2"] = MockFeature(pd.DataFrame({"AGS": [2, 3], "val2": [200, 300]}))
-
-        matrix = builder.build_matrix()
-
-        # Outer join should include all AGS values
-        assert len(matrix) == 3
-        assert set(matrix["AGS"]) == {1, 2, 3}
 
     def test_build_matrix_no_features_loaded(self, temp_config_file):
         """Test building matrix without loading features raises error."""
