@@ -2,23 +2,28 @@ import pandas as pd
 
 from geoscore_de.data_flow.features.base import BaseFeature
 
+DEFAULT_RAW_DATA_PATH = "data/raw/features/unemployment.csv"
+DEFAULT_TFORM_DATA_PATH = "data/tform/features/unemployment.csv"
+
 
 class UnemploymentFeature(BaseFeature):
     """Load and transform unemployment data from GENESIS-Online."""
 
-    def __init__(self, path: str):
+    def __init__(self, raw_data_path: str = DEFAULT_RAW_DATA_PATH, tform_data_path: str = DEFAULT_TFORM_DATA_PATH):
         """Initialize the unemployment feature.
 
         Args:
-            path (str): Path to the CSV file containing unemployment data.
+            raw_data_path (str): Path to the CSV file containing raw unemployment data.
+            tform_data_path (str): Path to the CSV file containing transformed unemployment data.
                 Data source: https://www.regionalstatistik.de/genesis//online?operation=table&code=13211-01-03-5&bypass=true&levelindex=1&levelid=1768376127943#abreadcrumb
         """
-        self.path = path
+        self.raw_data_path = raw_data_path
+        self.tform_data_path = tform_data_path
 
     def load(self) -> pd.DataFrame:
         """Load raw unemployment data from CSV."""
         df = pd.read_csv(
-            self.path,
+            self.raw_data_path,
             sep=";",
             encoding="latin1",
             skiprows=7,
