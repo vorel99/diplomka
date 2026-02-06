@@ -23,7 +23,11 @@ class FeatureConfig(BaseComponentConfig):
 
 
 class MunicipalitiesConfig(BaseComponentConfig):
-    """Configuration for municipalities reference data."""
+    """Configuration for municipalities reference data.
+    This is a special case because the municipalities data is required for building the feature matrix,
+    so it has its own configuration section separate from the other features.
+    This data will be loaded first and used as the base dataframe to which other features will be joined.
+    """
 
 
 class MatrixConfig(BaseModel):

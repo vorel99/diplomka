@@ -28,6 +28,11 @@ class MockFeature(BaseFeature):
 def temp_config_file(tmp_path):
     """Create a temporary config file for testing."""
     config_data = {
+        "municipalities": {
+            "class": "MockFeature",
+            "module": __name__,
+            "params": {},
+        },
         "features": [
             {
                 "name": "test_feature",
@@ -56,6 +61,11 @@ def temp_config_file(tmp_path):
 def multi_feature_config(tmp_path):
     """Create a config with multiple features."""
     config_data = {
+        "municipalities": {
+            "class": "MockFeature",
+            "module": __name__,
+            "params": {},
+        },
         "features": [
             {
                 "name": "feature1",
@@ -153,6 +163,7 @@ class TestFeatureMatrixBuilder:
     def test_load_features_handles_import_error(self, tmp_path):
         """Test that import errors are handled gracefully."""
         config_data = {
+            "municipalities": {"class": "MockFeature", "module": __name__},
             "features": [
                 {
                     "name": "bad_feature",
@@ -210,6 +221,7 @@ class TestFeatureMatrixBuilder:
     def test_build_matrix_with_inner_join(self, tmp_path):
         """Test building matrix with inner join (default)."""
         config_data = {
+            "municipalities": {"class": "MockFeature", "module": __name__},
             "features": [
                 {"name": "f1", "class": "MockFeature", "module": __name__},
                 {"name": "f2", "class": "MockFeature", "module": __name__},
@@ -236,6 +248,7 @@ class TestFeatureMatrixBuilder:
     def test_build_matrix_with_outer_join(self, tmp_path):
         """Test building matrix with outer join."""
         config_data = {
+            "municipalities": {"class": "MockFeature", "module": __name__},
             "features": [
                 {"name": "f1", "class": "MockFeature", "module": __name__},
                 {"name": "f2", "class": "MockFeature", "module": __name__},
@@ -279,6 +292,7 @@ class TestFeatureMatrixBuilder:
     def test_build_matrix_with_missing_values_drop(self, tmp_path):
         """Test handling missing values with drop strategy."""
         config_data = {
+            "municipalities": {"class": "MockFeature", "module": __name__},
             "features": [{"name": "f1", "class": "MockFeature", "module": __name__}],
             "matrix": {"join_key": "AGS", "missing_values": "drop", "save_output": False},
         }
@@ -302,6 +316,7 @@ class TestFeatureMatrixBuilder:
     def test_build_matrix_with_missing_values_fill(self, tmp_path):
         """Test handling missing values with fill strategy."""
         config_data = {
+            "municipalities": {"class": "MockFeature", "module": __name__},
             "features": [{"name": "f1", "class": "MockFeature", "module": __name__}],
             "matrix": {"join_key": "AGS", "missing_values": "fill", "fill_value": -999, "save_output": False},
         }
@@ -326,6 +341,7 @@ class TestFeatureMatrixBuilder:
         output_path = tmp_path / "output" / "matrix.csv"
 
         config_data = {
+            "municipalities": {"class": "MockFeature", "module": __name__},
             "features": [{"name": "f1", "class": "MockFeature", "module": __name__}],
             "matrix": {"join_key": "AGS", "save_output": True, "output_path": str(output_path)},
         }

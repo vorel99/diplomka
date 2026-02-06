@@ -99,6 +99,7 @@ class TestFeaturesYAMLConfig:
     def test_valid_full_config(self):
         """Test creating a complete valid config."""
         config_dict = {
+            "municipalities": {"class": "MockFeature", "module": __name__},
             "features": [
                 {
                     "name": "feature1",
@@ -128,10 +129,9 @@ class TestFeaturesYAMLConfig:
         assert config.matrix.join_key == "ID"
 
     def test_empty_config(self):
-        """Test creating config with no features."""
-        config = FeaturesYAMLConfig()
-        assert config.features == []
-        assert config.matrix.join_key == "AGS"  # Should use defaults
+        """Test creating config with default values."""
+        with pytest.raises(ValidationError):
+            FeaturesYAMLConfig()
 
     def test_config_with_invalid_feature(self):
         """Test that invalid feature raises validation error."""
