@@ -6,15 +6,14 @@ from geoscore_de.data_flow.feature_engineering.base import BaseFeatureEngineerin
 
 class HomogeneityFeatureEngineering(BaseFeatureEngineering):
     """Feature engineering transformation to calculate the homogeneity of a feature.
-    This is a simple example of a feature engineering transformation that calculates
-    the homogeneity of a feature by comparing it to the mean value of that feature
-    across all municipalities. The output is a new column that represents how similar
-    each municipality's value is to the average, which can be useful for identifying
-    outliers or patterns in the data.
+    This transformation calculates the weighted coefficient of variation (CV) for specified input columns,
+    grouped by AGS. The CV is a measure of relative variability and can be used
+    to assess the homogeneity of a feature across municipalities within a district.
+    The resulting CV values are merged back into the main feature dataframe as new columns specified in output_column.
     """
 
-    def __init__(self, input_columns: list[str], output_columns: list[str], weight_column: str):
-        super().__init__(input_columns, output_columns)
+    def __init__(self, input_columns: list[str], output_column: str, weight_column: str):
+        super().__init__(input_columns, output_column)
         self.weight_column = weight_column
 
     @classmethod
@@ -62,11 +61,9 @@ class HomogeneityFeatureEngineering(BaseFeatureEngineering):
 
             # For each output column, calculate the mean CV across input columns
             if cvs:
-                for output_col in self.output_columns:
-                    metrics[output_col] = np.mean(cvs)
+                metrics[self.output_column] = np.mean(cvs)
             else:
-                for output_col in self.output_columns:
-                    metrics[output_col] = np.nan
+                metrics[self.output_column] = np.nan
 
             results.append(metrics)
 

@@ -28,7 +28,13 @@ class FeatureEngineeringConfig(ComponentConfig):
     input_columns: list[str] = Field(
         default_factory=list, description="List of input column names to use for transformation"
     )
-    output_columns: list[str] = Field(default_factory=list, description="Names of the output columns")
+    output_column: str = Field(
+        ...,
+        description=(
+            "Name of the output column produced by this transformation"
+            "(or prefix for multiple output columns if transformation produces more than one feature)"
+        ),
+    )
 
 
 class FeatureConfig(ComponentConfig):

@@ -12,14 +12,9 @@ logger = logging.getLogger(__name__)
 class BaseFeatureEngineering(metaclass=ABCMeta):
     """Abstract base class for feature engineering."""
 
-    def __init__(self, input_columns: list[str], output_columns: list[str]):
+    def __init__(self, input_columns: list[str], output_column: str):
         self.input_columns = input_columns
-        self.output_columns = output_columns
-
-    @property
-    def output_columns(self) -> list[str]:
-        """Get the names of the output columns produced by this transformation."""
-        return self.output_columns
+        self.output_column = output_column
 
     def validate(self, df: pd.DataFrame) -> bool:
         """Validate the input dataframe before applying transformations.
