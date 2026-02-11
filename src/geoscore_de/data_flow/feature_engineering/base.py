@@ -15,9 +15,9 @@ class BaseFeatureEngineering(metaclass=ABCMeta):
         self.config = config
 
     @property
-    def output_column(self) -> str:
-        """Get the name of the output column produced by this transformation."""
-        return self.config.output_column
+    def output_columns(self) -> list[str]:
+        """Get the names of the output columns produced by this transformation."""
+        return self.config.output_columns
 
     def validate(self, df: pd.DataFrame) -> bool:
         """Validate the input dataframe before applying transformations.
