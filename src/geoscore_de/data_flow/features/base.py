@@ -38,6 +38,7 @@ class BaseFeature(metaclass=ABCMeta):
 
         if self.before_transforms:
             for transform in self.before_transforms:
+                logger.info(f"Applying before_transform: {transform}")
                 transform_class = get_feature_engineering_class(transform)
                 transform_instance = transform_class(
                     input_columns=transform.input_columns, output_columns=transform.output_columns, **transform.params
