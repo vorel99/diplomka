@@ -5,21 +5,10 @@ from typing import Any, Literal
 from pydantic import BaseModel, Field
 
 
-class FeatureEngineeringConfig(BaseModel):
-    """Configuration for feature engineering transformations.
-    Takes multiple columns as input and produces one column as output (e.g. municipality homogeneity).
+class ComponentConfig(BaseModel):
+    """Configuration for a dynamically loaded component (e.g., feature or transformation).
+    This model captures the necessary information to dynamically import and instantiate a class based on configuration.
     """
-
-    name: str = Field(..., description="Unique name for the transformation")
-    class_name: str = Field(..., alias="class", description="Name of the transformation class")
-    module: str = Field(..., description="Module path where the transformation class is located")
-    input_columns: list[str] = Field([], description="List of input column names to use for transformation")
-    output_column: str = Field(..., description="Name of the output column")
-    params: dict[str, Any] = Field(default_factory=dict, description="Additional parameters for the transformation")
-
-
-class FeatureConfig(BaseModel):
-    """Configuration for a single feature."""
 
     name: str = Field(..., description="Unique name for the feature")
     class_name: str = Field(..., alias="class", description="Name of the feature class")
@@ -29,7 +18,18 @@ class FeatureConfig(BaseModel):
     model_config = {"populate_by_name": True}
 
 
-class MunicipalitiesConfig(FeatureConfig):
+class FeatureEngineeringConfig(ComponentConfig):
+    """Configuration for feature engineering transformations.
+    Takes multiple columns as input and produces one or more columns as output.
+    """
+
+    input_columns: list[str] = Field(
+        default_factory=list, description="List of input column names to use for transformation"
+    )
+    output_columns: list[str] = Field(default_factory=list, description="Names of the output columns")
+
+
+class MunicipalitiesConfig(ComponentConfig):
     """Configuration for municipalities reference data.
     This is a special case because the municipalities data is required for building the feature matrix,
     so it has its own configuration section separate from the other features.
@@ -57,7 +57,7 @@ class FeaturesYAMLConfig(BaseModel):
     """Root configuration model for features.yaml."""
 
     municipalities: MunicipalitiesConfig = Field(..., description="Configuration for municipalities reference data")
-    features: list[FeatureConfig] = Field(default_factory=list, description="List of feature configurations")
+    features: list[ComponentConfig] = Field(default_factory=list, description="List of feature configurations")
     before_transforms: list[FeatureEngineeringConfig] = Field(
         default_factory=list, description="Transformations on raw data before transformation"
     )

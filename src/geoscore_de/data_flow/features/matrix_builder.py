@@ -9,7 +9,7 @@ import yaml
 from pydantic import ValidationError
 
 from geoscore_de.data_flow.features.base import BaseFeature
-from geoscore_de.data_flow.features.config import FeatureConfig, FeaturesYAMLConfig
+from geoscore_de.data_flow.features.config import ComponentConfig, FeaturesYAMLConfig
 
 logger = logging.getLogger(__name__)
 
@@ -64,7 +64,7 @@ class FeatureMatrixBuilder:
             logger.error(f"Configuration validation error: {e}")
             raise
 
-    def _instantiate_feature(self, feature_config: FeatureConfig) -> BaseFeature:
+    def _instantiate_feature(self, feature_config: ComponentConfig) -> BaseFeature:
         """Dynamically instantiate a feature class from configuration.
 
         Args:

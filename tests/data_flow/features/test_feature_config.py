@@ -3,7 +3,7 @@
 import pytest
 from pydantic import ValidationError
 
-from geoscore_de.data_flow.features.config import FeatureConfig, FeaturesYAMLConfig, MatrixConfig
+from geoscore_de.data_flow.features.config import ComponentConfig, FeaturesYAMLConfig, MatrixConfig
 
 
 class TestFeatureConfig:
@@ -11,7 +11,7 @@ class TestFeatureConfig:
 
     def test_valid_feature_config(self):
         """Test creating a valid feature config."""
-        config = FeatureConfig(
+        config = ComponentConfig(
             name="test_feature",
             class_name="TestFeature",
             module="test.module",
@@ -24,7 +24,7 @@ class TestFeatureConfig:
 
     def test_feature_config_with_alias(self):
         """Test that 'class' alias works for class_name."""
-        config = FeatureConfig(
+        config = ComponentConfig(
             name="test_feature",
             **{"class": "TestFeature"},  # Using the alias
             module="test.module",
@@ -33,7 +33,7 @@ class TestFeatureConfig:
 
     def test_feature_config_defaults(self):
         """Test default values for optional fields."""
-        config = FeatureConfig(
+        config = ComponentConfig(
             name="test_feature",
             class_name="TestFeature",
             module="test.module",
@@ -43,7 +43,7 @@ class TestFeatureConfig:
     def test_feature_config_missing_required_field(self):
         """Test that missing required fields raise validation error."""
         with pytest.raises(ValidationError):
-            FeatureConfig(
+            ComponentConfig(
                 name="test_feature",
                 # Missing class_name and module
             )
