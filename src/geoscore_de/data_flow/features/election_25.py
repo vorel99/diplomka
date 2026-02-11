@@ -34,7 +34,6 @@ class Election25Feature(BaseFeature):
         - adds an AGS column by concatenating the Land, Regierungsbezirk, Kreis, and Gemeinde columns
         - renames key columns to normalized English identifiers
 
-
         Returns:
             pd.DataFrame: DataFrame containing the election data.
         """

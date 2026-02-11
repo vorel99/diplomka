@@ -7,12 +7,19 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 from geoscore_de.data_flow.feature_engineering.config import (
+    BASE_MODULE,
     ComponentConfig,
     FeatureEngineeringConfig,
 )
 
 
 class FeatureConfig(ComponentConfig):
+    module: str = Field(
+        default=f"{BASE_MODULE}.features",
+        description=(
+            "Module path where the feature class is located. Defaults to the features submodule of the base module."
+        ),
+    )
     before_transforms: list[FeatureEngineeringConfig] = Field(
         default_factory=list, description="Transformations on raw data before this feature's transformation"
     )

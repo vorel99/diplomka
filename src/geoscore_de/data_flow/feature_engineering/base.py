@@ -45,6 +45,10 @@ class BaseFeatureEngineering(metaclass=ABCMeta):
             )
             return False
 
+        if "AGS" not in df.columns:
+            logger.error(f"Missing required 'AGS' column for transformation '{self.__class__.__name__}'")
+            return False
+
         if not self._validate(df):
             return False
 
