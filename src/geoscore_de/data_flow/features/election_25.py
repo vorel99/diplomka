@@ -66,10 +66,10 @@ class Election25Feature(BaseFeature):
             columns={
                 "Wahlberechtigte (A)": "eligible_voters",
                 "Wählende (B)": "total_voters",
-                "Ungültige - Zweitstimmen": "invalid_votes_zweitstimmen",
-                "Gültige - Zweitstimmen": "valid_votes_zweitstimmen",
                 "Ungültige - Erststimmen": "invalid_votes_erststimmen",
                 "Gültige - Erststimmen": "valid_votes_erststimmen",
+                "Ungültige - Zweitstimmen": "invalid_votes_zweitstimmen",
+                "Gültige - Zweitstimmen": "valid_votes_zweitstimmen",
             }
         )
 
@@ -91,7 +91,17 @@ class Election25Feature(BaseFeature):
             [
                 col
                 for col in df.columns
-                if col.endswith(("Erststimmen", "Zweitstimmen")) or col in ("AGS", "eligible_voters", "total_voters")
+                if col.endswith(("Erststimmen", "Zweitstimmen"))
+                or col
+                in (
+                    "AGS",
+                    "eligible_voters",
+                    "total_voters",
+                    "invalid_votes_erststimmen",
+                    "valid_votes_erststimmen",
+                    "invalid_votes_zweitstimmen",
+                    "valid_votes_zweitstimmen",
+                )
             ]
         ]
 
