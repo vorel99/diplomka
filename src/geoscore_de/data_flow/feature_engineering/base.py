@@ -3,21 +3,20 @@ from abc import ABCMeta, abstractmethod
 
 import pandas as pd
 
-from geoscore_de.data_flow.features.config import FeatureEngineeringConfig
-
 logger = logging.getLogger(__name__)
 
 
 class BaseFeatureEngineering(metaclass=ABCMeta):
     """Abstract base class for feature engineering."""
 
-    def __init__(self, config: FeatureEngineeringConfig):
-        self.config = config
+    def __init__(self, input_columns: list[str], output_columns: list[str]):
+        self.input_columns = input_columns
+        self.output_columns = output_columns
 
     @property
     def output_columns(self) -> list[str]:
         """Get the names of the output columns produced by this transformation."""
-        return self.config.output_columns
+        return self.output_columns
 
     def validate(self, df: pd.DataFrame) -> bool:
         """Validate the input dataframe before applying transformations.
@@ -29,9 +28,11 @@ class BaseFeatureEngineering(metaclass=ABCMeta):
         Returns:
             True if validation passes, False otherwise.
         """
-        missing_columns = [col for col in self.config.input_columns if col not in df.columns]
+        missing_columns = [col for col in self.input_columns if col not in df.columns]
         if missing_columns:
-            logger.error(f"Missing required input columns for transformation '{self.config.name}': {missing_columns}")
+            logger.error(
+                f"Missing required input columns for transformation '{self.__class__.__name__}': {missing_columns}"
+            )
             return False
         return True
 
@@ -47,7 +48,7 @@ class BaseFeatureEngineering(metaclass=ABCMeta):
         Raises:
             ValueError: If the input dataframe fails validation checks.
         """
-        logger.info(f"Applying transformation '{self.config.name}'")
+        logger.info(f"Applying transformation '{self.__class__.__name__}'")
         if not self.validate(df):
             raise ValueError("Input dataframe failed validation checks.")
 
