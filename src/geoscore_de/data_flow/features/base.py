@@ -11,14 +11,14 @@ logger = logging.getLogger(__name__)
 
 
 class BaseFeature(metaclass=ABCMeta):
-    """Abstract base class for data flow features."""
+    """Abstract base class for data flow features.
+
+    Args:
+        before_transforms: List of feature engineering transformations to apply to the raw data.
+    """
 
     def __init__(self, before_transforms: list[FeatureEngineeringConfig] | None = None):
-        """Initialize the feature with optional parameters.
-
-        Args:
-            before_transforms: List of feature engineering transformations to apply to the raw data.
-        """
+        """Initialize the feature with optional parameters."""
         self.before_transforms = before_transforms or []
 
     @abstractmethod

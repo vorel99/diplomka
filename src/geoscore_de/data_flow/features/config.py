@@ -13,7 +13,7 @@ class ComponentConfig(BaseModel):
     """
 
     name: str = Field(..., description="Unique name for the feature")
-    class_name: str = Field(..., alias="class", description="Name of the feature class")
+    class_name: str = Field(..., validation_alias="class", description="Name of the feature class")
     module: str = Field(..., description="Module path where the feature class is located")
     params: dict[str, Any] = Field(default_factory=dict, description="Parameters to pass to the feature class")
 
