@@ -16,6 +16,18 @@ class BaseFeatureEngineering(metaclass=ABCMeta):
         self.input_columns = input_columns
         self.output_column = output_column
 
+    @abstractmethod
+    def _validate(self, df: pd.DataFrame) -> bool:
+        """Custom validation logic for the feature engineering transformation.
+
+        Args:
+            df: Input dataframe to validate.
+
+        Returns:
+            True if validation passes, False otherwise.
+        """
+        return True
+
     def validate(self, df: pd.DataFrame) -> bool:
         """Validate the input dataframe before applying transformations.
         Check that required input columns are present.
@@ -32,6 +44,10 @@ class BaseFeatureEngineering(metaclass=ABCMeta):
                 f"Missing required input columns for transformation '{self.__class__.__name__}': {missing_columns}"
             )
             return False
+
+        if not self._validate(df):
+            return False
+
         return True
 
     def apply(self, df: pd.DataFrame) -> pd.DataFrame:

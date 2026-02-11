@@ -1,7 +1,11 @@
+import logging
+
 import numpy as np
 import pandas as pd
 
 from geoscore_de.data_flow.feature_engineering.base import BaseFeatureEngineering
+
+logger = logging.getLogger(__name__)
 
 
 class HomogeneityFeatureEngineering(BaseFeatureEngineering):
@@ -15,6 +19,13 @@ class HomogeneityFeatureEngineering(BaseFeatureEngineering):
     def __init__(self, input_columns: list[str], output_column: str, weight_column: str):
         super().__init__(input_columns, output_column)
         self.weight_column = weight_column
+
+    def _validate(self, df: pd.DataFrame) -> bool:
+        """Validate that the required weight column is present in the dataframe."""
+        if self.weight_column not in df.columns:
+            logger.error(f"Missing required weight column for homogeneity transformation: '{self.weight_column}'")
+            return False
+        return True
 
     @classmethod
     def _weighted_cv(cls, values, weights):
