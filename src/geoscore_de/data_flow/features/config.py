@@ -1,12 +1,16 @@
 """Pydantic models for feature configuration."""
 
+from __future__ import annotations
+
 from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
 
-class FeatureConfig(BaseModel):
-    """Configuration for a single feature."""
+class ComponentConfig(BaseModel):
+    """Configuration for a dynamically loaded component (e.g., feature or transformation).
+    This model captures the necessary information to dynamically import and instantiate a class based on configuration.
+    """
 
     name: str = Field(..., description="Unique name for the feature")
     class_name: str = Field(..., alias="class", description="Name of the feature class")
@@ -16,7 +20,24 @@ class FeatureConfig(BaseModel):
     model_config = {"populate_by_name": True}
 
 
-class MunicipalitiesConfig(FeatureConfig):
+class FeatureEngineeringConfig(ComponentConfig):
+    """Configuration for feature engineering transformations.
+    Takes multiple columns as input and produces one or more columns as output.
+    """
+
+    input_columns: list[str] = Field(
+        default_factory=list, description="List of input column names to use for transformation"
+    )
+    output_columns: list[str] = Field(default_factory=list, description="Names of the output columns")
+
+
+class FeatureConfig(ComponentConfig):
+    before_transforms: list[FeatureEngineeringConfig] = Field(
+        default_factory=list, description="Transformations on raw data before this feature's transformation"
+    )
+
+
+class MunicipalitiesConfig(ComponentConfig):
     """Configuration for municipalities reference data.
     This is a special case because the municipalities data is required for building the feature matrix,
     so it has its own configuration section separate from the other features.
@@ -45,4 +66,10 @@ class FeaturesYAMLConfig(BaseModel):
 
     municipalities: MunicipalitiesConfig = Field(..., description="Configuration for municipalities reference data")
     features: list[FeatureConfig] = Field(default_factory=list, description="List of feature configurations")
+    after_transforms: list[FeatureEngineeringConfig] = Field(
+        default_factory=list, description="Transformations on transformed features (delta features)"
+    )
+    standalone_transforms: list[FeatureEngineeringConfig] = Field(
+        default_factory=list, description="Standalone feature engineering transformations"
+    )
     matrix: MatrixConfig = Field(default_factory=MatrixConfig, description="Matrix building configuration")
