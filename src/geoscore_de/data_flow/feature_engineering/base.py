@@ -66,7 +66,7 @@ class BaseFeatureEngineering(metaclass=ABCMeta):
         if not self.validate(df):
             raise ValueError("Input dataframe failed validation checks.")
 
-        return self._apply(df)
+        return self._apply(df.copy())
 
     @abstractmethod
     def _apply(self, df: pd.DataFrame) -> pd.DataFrame:

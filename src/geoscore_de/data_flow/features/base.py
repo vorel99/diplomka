@@ -14,7 +14,8 @@ class BaseFeature(metaclass=ABCMeta):
     """Abstract base class for data flow features.
 
     Args:
-        before_transforms: List of feature engineering transformations to apply to the raw data.
+        before_transforms (list[FeatureEngineeringConfig] | None):
+            List of feature engineering transformations to apply to the raw data.
     """
 
     def __init__(self, before_transforms: list[FeatureEngineeringConfig] | None = None):
