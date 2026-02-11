@@ -15,13 +15,11 @@ class TestFeatureConfig:
             name="test_feature",
             class_name="TestFeature",
             module="test.module",
-            enabled=True,
             params={"param1": "value1"},
         )
         assert config.name == "test_feature"
         assert config.class_name == "TestFeature"
         assert config.module == "test.module"
-        assert config.enabled is True
         assert config.params == {"param1": "value1"}
 
     def test_feature_config_with_alias(self):
@@ -40,7 +38,6 @@ class TestFeatureConfig:
             class_name="TestFeature",
             module="test.module",
         )
-        assert config.enabled is True
         assert config.params == {}
 
     def test_feature_config_missing_required_field(self):
@@ -59,14 +56,12 @@ class TestMatrixConfig:
         """Test creating a valid matrix config."""
         config = MatrixConfig(
             join_key="ID",
-            join_method="outer",
             save_output=False,
             output_path="custom/path.csv",
             missing_values="fill",
             fill_value=999,
         )
         assert config.join_key == "ID"
-        assert config.join_method == "outer"
         assert config.save_output is False
         assert config.output_path == "custom/path.csv"
         assert config.missing_values == "fill"
@@ -76,16 +71,10 @@ class TestMatrixConfig:
         """Test default values for matrix config."""
         config = MatrixConfig()
         assert config.join_key == "AGS"
-        assert config.join_method == "inner"
         assert config.save_output is True
         assert config.output_path == "data/final/feature_matrix.csv"
         assert config.missing_values is None
         assert config.fill_value == 0
-
-    def test_invalid_join_method(self):
-        """Test that invalid join method raises validation error."""
-        with pytest.raises(ValidationError):
-            MatrixConfig(join_method="invalid")
 
     def test_invalid_missing_values_strategy(self):
         """Test that invalid missing values strategy raises validation error."""
@@ -99,19 +88,18 @@ class TestFeaturesYAMLConfig:
     def test_valid_full_config(self):
         """Test creating a complete valid config."""
         config_dict = {
+            "municipalities": {"class": "MockFeature", "module": __name__},
             "features": [
                 {
                     "name": "feature1",
                     "class": "Feature1",
                     "module": "module1",
-                    "enabled": True,
                     "params": {"param1": "value1"},
                 },
                 {
                     "name": "feature2",
                     "class": "Feature2",
                     "module": "module2",
-                    "enabled": False,
                 },
             ],
             "matrix": {
@@ -124,24 +112,23 @@ class TestFeaturesYAMLConfig:
         config = FeaturesYAMLConfig(**config_dict)
         assert len(config.features) == 2
         assert config.features[0].name == "feature1"
-        assert config.features[1].enabled is False
         assert config.matrix.join_key == "ID"
 
     def test_empty_config(self):
-        """Test creating config with no features."""
-        config = FeaturesYAMLConfig()
-        assert config.features == []
-        assert config.matrix.join_key == "AGS"  # Should use defaults
+        """Test creating config with default values."""
+        with pytest.raises(ValidationError):
+            FeaturesYAMLConfig()
 
     def test_config_with_invalid_feature(self):
         """Test that invalid feature raises validation error."""
         config_dict = {
+            "municipalities": {"class": "MockFeature", "module": __name__},
             "features": [
                 {
                     "name": "feature1",
                     # Missing required 'class' and 'module'
                 }
-            ]
+            ],
         }
         with pytest.raises(ValidationError):
             FeaturesYAMLConfig(**config_dict)
@@ -149,9 +136,10 @@ class TestFeaturesYAMLConfig:
     def test_config_with_invalid_matrix(self):
         """Test that invalid matrix config raises validation error."""
         config_dict = {
+            "municipalities": {"class": "MockFeature", "module": __name__},
             "matrix": {
-                "join_method": "invalid_method",  # Invalid choice
-            }
+                "missing_values": "invalid_value",  # Invalid choice
+            },
         }
         with pytest.raises(ValidationError):
             FeaturesYAMLConfig(**config_dict)

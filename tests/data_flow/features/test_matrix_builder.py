@@ -28,12 +28,16 @@ class MockFeature(BaseFeature):
 def temp_config_file(tmp_path):
     """Create a temporary config file for testing."""
     config_data = {
+        "municipalities": {
+            "class": "MockFeature",
+            "module": __name__,
+            "params": {},
+        },
         "features": [
             {
                 "name": "test_feature",
                 "class": "MockFeature",
                 "module": __name__,
-                "enabled": True,
                 "params": {},
             }
         ],
@@ -56,26 +60,28 @@ def temp_config_file(tmp_path):
 def multi_feature_config(tmp_path):
     """Create a config with multiple features."""
     config_data = {
+        "municipalities": {
+            "class": "MockFeature",
+            "module": __name__,
+            "params": {},
+        },
         "features": [
             {
                 "name": "feature1",
                 "class": "MockFeature",
                 "module": __name__,
-                "enabled": True,
                 "params": {},
             },
             {
                 "name": "feature2",
                 "class": "MockFeature",
                 "module": __name__,
-                "enabled": True,
                 "params": {},
             },
             {
                 "name": "feature3",
                 "class": "MockFeature",
                 "module": __name__,
-                "enabled": False,
                 "params": {},
             },
         ],
@@ -99,7 +105,8 @@ class TestFeatureMatrixBuilder:
         builder = FeatureMatrixBuilder(config_path=temp_config_file)
         assert builder.config_path == temp_config_file
         assert len(builder.config.features) == 1
-        assert builder.features == {}
+        assert "test_feature" in builder.features
+        assert isinstance(builder.features["test_feature"], MockFeature)
 
     def test_init_with_missing_config(self):
         """Test initialization with missing config file raises error."""
@@ -131,34 +138,15 @@ class TestFeatureMatrixBuilder:
         with pytest.raises(ValidationError):
             FeatureMatrixBuilder(config_path=str(config_file))
 
-    def test_load_features(self, temp_config_file):
-        """Test loading features from config."""
-        builder = FeatureMatrixBuilder(config_path=temp_config_file)
-        builder.load_features()
-
-        assert len(builder.features) == 1
-        assert "test_feature" in builder.features
-        assert isinstance(builder.features["test_feature"], MockFeature)
-
-    def test_load_features_skips_disabled(self, multi_feature_config):
-        """Test that disabled features are not loaded."""
-        builder = FeatureMatrixBuilder(config_path=multi_feature_config)
-        builder.load_features()
-
-        assert len(builder.features) == 2
-        assert "feature1" in builder.features
-        assert "feature2" in builder.features
-        assert "feature3" not in builder.features
-
-    def test_load_features_handles_import_error(self, tmp_path):
+    def test_feature_nonexisting_module(self, tmp_path):
         """Test that import errors are handled gracefully."""
         config_data = {
+            "municipalities": {"class": "MockFeature", "module": __name__},
             "features": [
                 {
                     "name": "bad_feature",
                     "class": "NonExistentClass",
                     "module": "nonexistent.module",
-                    "enabled": True,
                 }
             ],
             "matrix": {"join_key": "AGS"},
@@ -168,7 +156,6 @@ class TestFeatureMatrixBuilder:
         config_file.write_text(yaml.dump(config_data))
 
         builder = FeatureMatrixBuilder(config_path=str(config_file))
-        builder.load_features()
         # Should not raise, but features dict should be empty
         assert len(builder.features) == 0
 
@@ -183,7 +170,6 @@ class TestFeatureMatrixBuilder:
     def test_build_matrix_single_feature(self, temp_config_file):
         """Test building matrix with a single feature."""
         builder = FeatureMatrixBuilder(config_path=temp_config_file)
-        builder.load_features()
         matrix = builder.build_matrix()
 
         assert isinstance(matrix, pd.DataFrame)
@@ -194,9 +180,9 @@ class TestFeatureMatrixBuilder:
     def test_build_matrix_multiple_features(self, multi_feature_config):
         """Test building matrix with multiple features."""
         builder = FeatureMatrixBuilder(config_path=multi_feature_config)
-        builder.load_features()
 
         # Create different data for each feature
+        builder.municipalities = MockFeature(pd.DataFrame({"AGS": [1, 2], "muni_val": [100, 200]}))
         builder.features["feature1"] = MockFeature(pd.DataFrame({"AGS": [1, 2], "val1": [10, 20]}))
         builder.features["feature2"] = MockFeature(pd.DataFrame({"AGS": [1, 2], "val2": [100, 200]}))
 
@@ -207,68 +193,9 @@ class TestFeatureMatrixBuilder:
         assert "feature2_val2" in matrix.columns
         assert len(matrix) == 2
 
-    def test_build_matrix_with_inner_join(self, tmp_path):
-        """Test building matrix with inner join (default)."""
-        config_data = {
-            "features": [
-                {"name": "f1", "class": "MockFeature", "module": __name__},
-                {"name": "f2", "class": "MockFeature", "module": __name__},
-            ],
-            "matrix": {"join_key": "AGS", "join_method": "inner", "save_output": False},
-        }
-
-        config_file = tmp_path / "inner_join.yaml"
-        config_file.write_text(yaml.dump(config_data))
-
-        builder = FeatureMatrixBuilder(config_path=str(config_file))
-        builder.load_features()
-
-        # Set different data with partial overlap
-        builder.features["f1"] = MockFeature(pd.DataFrame({"AGS": [1, 2, 3], "val1": [10, 20, 30]}))
-        builder.features["f2"] = MockFeature(pd.DataFrame({"AGS": [2, 3, 4], "val2": [200, 300, 400]}))
-
-        matrix = builder.build_matrix()
-
-        # Inner join should only include AGS 2 and 3
-        assert len(matrix) == 2
-        assert set(matrix["AGS"]) == {2, 3}
-
-    def test_build_matrix_with_outer_join(self, tmp_path):
-        """Test building matrix with outer join."""
-        config_data = {
-            "features": [
-                {"name": "f1", "class": "MockFeature", "module": __name__},
-                {"name": "f2", "class": "MockFeature", "module": __name__},
-            ],
-            "matrix": {"join_key": "AGS", "join_method": "outer", "save_output": False},
-        }
-
-        config_file = tmp_path / "outer_join.yaml"
-        config_file.write_text(yaml.dump(config_data))
-
-        builder = FeatureMatrixBuilder(config_path=str(config_file))
-        builder.load_features()
-
-        builder.features["f1"] = MockFeature(pd.DataFrame({"AGS": [1, 2], "val1": [10, 20]}))
-        builder.features["f2"] = MockFeature(pd.DataFrame({"AGS": [2, 3], "val2": [200, 300]}))
-
-        matrix = builder.build_matrix()
-
-        # Outer join should include all AGS values
-        assert len(matrix) == 3
-        assert set(matrix["AGS"]) == {1, 2, 3}
-
-    def test_build_matrix_no_features_loaded(self, temp_config_file):
-        """Test building matrix without loading features raises error."""
-        builder = FeatureMatrixBuilder(config_path=temp_config_file)
-
-        with pytest.raises(ValueError, match="No features loaded"):
-            builder.build_matrix()
-
     def test_build_matrix_missing_join_key(self, temp_config_file):
         """Test handling of missing join key in feature data."""
         builder = FeatureMatrixBuilder(config_path=temp_config_file)
-        builder.load_features()
 
         # Replace feature with one that doesn't have AGS column
         builder.features["test_feature"] = MockFeature(pd.DataFrame({"other_col": [1, 2, 3]}))
@@ -279,6 +206,7 @@ class TestFeatureMatrixBuilder:
     def test_build_matrix_with_missing_values_drop(self, tmp_path):
         """Test handling missing values with drop strategy."""
         config_data = {
+            "municipalities": {"class": "MockFeature", "module": __name__},
             "features": [{"name": "f1", "class": "MockFeature", "module": __name__}],
             "matrix": {"join_key": "AGS", "missing_values": "drop", "save_output": False},
         }
@@ -287,7 +215,6 @@ class TestFeatureMatrixBuilder:
         config_file.write_text(yaml.dump(config_data))
 
         builder = FeatureMatrixBuilder(config_path=str(config_file))
-        builder.load_features()
 
         # Create data with missing values
         df = pd.DataFrame({"AGS": [1, 2, 3], "val": [10, None, 30]})
@@ -302,6 +229,7 @@ class TestFeatureMatrixBuilder:
     def test_build_matrix_with_missing_values_fill(self, tmp_path):
         """Test handling missing values with fill strategy."""
         config_data = {
+            "municipalities": {"class": "MockFeature", "module": __name__},
             "features": [{"name": "f1", "class": "MockFeature", "module": __name__}],
             "matrix": {"join_key": "AGS", "missing_values": "fill", "fill_value": -999, "save_output": False},
         }
@@ -310,7 +238,6 @@ class TestFeatureMatrixBuilder:
         config_file.write_text(yaml.dump(config_data))
 
         builder = FeatureMatrixBuilder(config_path=str(config_file))
-        builder.load_features()
 
         df = pd.DataFrame({"AGS": [1, 2, 3], "val": [10, None, 30]})
         builder.features["f1"] = MockFeature(df)
@@ -326,6 +253,7 @@ class TestFeatureMatrixBuilder:
         output_path = tmp_path / "output" / "matrix.csv"
 
         config_data = {
+            "municipalities": {"class": "MockFeature", "module": __name__},
             "features": [{"name": "f1", "class": "MockFeature", "module": __name__}],
             "matrix": {"join_key": "AGS", "save_output": True, "output_path": str(output_path)},
         }
@@ -334,7 +262,6 @@ class TestFeatureMatrixBuilder:
         config_file.write_text(yaml.dump(config_data))
 
         builder = FeatureMatrixBuilder(config_path=str(config_file))
-        builder.load_features()
         builder.build_matrix()
 
         assert output_path.exists()
@@ -344,7 +271,6 @@ class TestFeatureMatrixBuilder:
     def test_get_feature_names(self, temp_config_file):
         """Test getting feature names."""
         builder = FeatureMatrixBuilder(config_path=temp_config_file)
-        builder.load_features()
 
         names = builder.get_feature_names()
         assert names == ["test_feature"]
@@ -352,7 +278,6 @@ class TestFeatureMatrixBuilder:
     def test_get_feature(self, temp_config_file):
         """Test getting a specific feature."""
         builder = FeatureMatrixBuilder(config_path=temp_config_file)
-        builder.load_features()
 
         feature = builder.get_feature("test_feature")
         assert feature is not None
@@ -364,7 +289,6 @@ class TestFeatureMatrixBuilder:
     def test_column_prefixing(self, multi_feature_config):
         """Test that feature names are prefixed to columns."""
         builder = FeatureMatrixBuilder(config_path=multi_feature_config)
-        builder.load_features()
 
         builder.features["feature1"] = MockFeature(pd.DataFrame({"AGS": [1, 2], "col1": [10, 20]}))
         builder.features["feature2"] = MockFeature(pd.DataFrame({"AGS": [1, 2], "col2": [100, 200]}))

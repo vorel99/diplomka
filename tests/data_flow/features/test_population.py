@@ -100,8 +100,8 @@ def test_transform_population_data_structure(tmp_path, mock_raw_csv_file):
     assert "age_3_to_5" in df.columns
     assert "age_6_to_9" in df.columns
 
-    # Check that total_population column is removed
-    assert "total_population" not in df.columns
+    # Check that total_population column is present
+    assert "total_population" in df.columns
 
     # Check that German columns are gone
     assert "unter 3 Jahre" not in df.columns
@@ -123,7 +123,7 @@ def test_transform_population_data_proportions(tmp_path, mock_raw_csv_file):
 
         # Check that values are proportions (between 0 and 1)
         for col in df.columns:
-            if col != "AGS" and not pd.isna(row[col]):
+            if col != "AGS" and col != "total_population" and not pd.isna(row[col]):
                 assert 0 <= row[col] <= 1, f"Column {col} value {row[col]} is not a proportion"
 
 
@@ -243,6 +243,7 @@ def test_transform_population_data_all_columns_renamed(tmp_path, mock_raw_csv_fi
         "age_60_to_64",
         "age_65_to_74",
         "age_75_and_over",
+        "total_population",
     ]
 
     # Check that expected columns exist (if they're in the data)
