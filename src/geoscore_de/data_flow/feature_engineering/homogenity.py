@@ -44,10 +44,13 @@ class HomogeneityFeatureEngineering(BaseFeatureEngineering):
         results = []
 
         for ags, group in df.groupby("AGS"):
+            metrics = {"AGS": ags}
+
             if len(group) < 2:  # Need at least 2 districts to measure variance
+                metrics[self.output_column] = np.nan
+                results.append(metrics)
                 continue
 
-            metrics = {"AGS": ags}
             weights = group[self.weight_column].values
 
             # Calculate CV for each input column
@@ -59,12 +62,16 @@ class HomogeneityFeatureEngineering(BaseFeatureEngineering):
                     if not np.isnan(cv):
                         cvs.append(cv)
 
-            # For each output column, calculate the mean CV across input columns
+            # Calculate the mean CV across input columns
             if cvs:
                 metrics[self.output_column] = np.mean(cvs)
             else:
                 metrics[self.output_column] = np.nan
 
             results.append(metrics)
+
+        # Handle case where no groups exist at all
+        if not results:
+            return pd.DataFrame(columns=["AGS", self.output_column])
 
         return pd.DataFrame(results)
