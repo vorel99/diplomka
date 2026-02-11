@@ -20,7 +20,9 @@ class Election21Feature(BaseFeature):
         url: str = ZIP_URL,
         raw_data_path: str = DEFAULT_RAW_DATA_PATH,
         tform_data_path: str = DEFAULT_TFORM_DATA_PATH,
+        **kwargs,
     ):
+        super().__init__(**kwargs)
         self.url = url
         self.raw_data_path = raw_data_path
         self.tform_data_path = tform_data_path

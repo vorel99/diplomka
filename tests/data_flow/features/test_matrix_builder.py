@@ -13,6 +13,7 @@ class MockFeature(BaseFeature):
     """Mock feature class for testing."""
 
     def __init__(self, data: pd.DataFrame | None = None):
+        super().__init__()
         self.data = data if data is not None else pd.DataFrame({"AGS": [1, 2, 3], "value": [10, 20, 30]})
 
     def load(self) -> pd.DataFrame:

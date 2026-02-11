@@ -1,7 +1,10 @@
+import importlib
 import logging
 from abc import ABCMeta, abstractmethod
 
 import pandas as pd
+
+from geoscore_de.data_flow.features.config import FeatureEngineeringConfig
 
 logger = logging.getLogger(__name__)
 
@@ -64,3 +67,27 @@ class BaseFeatureEngineering(metaclass=ABCMeta):
         Returns:
             DataFrame containing one or more engineered feature columns.
         """
+
+
+def get_feature_engineering_class(config: FeatureEngineeringConfig) -> type[BaseFeatureEngineering]:
+    """Dynamically import and return a feature class based on the provided configuration.
+
+    Args:
+        config: FeatureEngineeringConfig containing the module and class name to import.
+
+    Returns:
+        The imported feature class.
+    """
+    module_name = config.module
+    class_name = config.class_name
+
+    try:
+        module = importlib.import_module(module_name)
+        feature_class = getattr(module, class_name)
+        return feature_class
+    except ImportError as e:
+        logger.error(f"Error importing module '{module_name}': {e}")
+        raise
+    except AttributeError as e:
+        logger.error(f"Module '{module_name}' does not have a class '{class_name}': {e}")
+        raise

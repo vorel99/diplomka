@@ -1,10 +1,24 @@
+import logging
 from abc import ABCMeta, abstractmethod
 
 import pandas as pd
 
+from geoscore_de.data_flow.feature_engineering.base import get_feature_engineering_class
+from geoscore_de.data_flow.features.config import FeatureEngineeringConfig
+
+logger = logging.getLogger(__name__)
+
 
 class BaseFeature(metaclass=ABCMeta):
     """Abstract base class for data flow features."""
+
+    def __init__(self, before_transforms: list[FeatureEngineeringConfig] | None = None):
+        """Initialize the feature with optional parameters.
+
+        Args:
+            before_transforms: List of feature engineering transformations to apply to the raw data.
+        """
+        self.before_transforms = before_transforms or []
 
     @abstractmethod
     def load(self) -> pd.DataFrame:
@@ -19,5 +33,22 @@ class BaseFeature(metaclass=ABCMeta):
     def load_transform(self) -> pd.DataFrame:
         """Load and transform data in one step."""
         raw_data = self.load()
+        engineered_features = []
+
+        if self.before_transforms:
+            for transform in self.before_transforms:
+                transform_class = get_feature_engineering_class(transform)
+                transform_instance = transform_class(
+                    input_columns=transform.input_columns, output_columns=transform.output_columns, **transform.params
+                )
+                result = transform_instance.apply(raw_data)
+                engineered_features.append(result)
+
         transformed_data = self.transform(raw_data)
+
+        # Join all engineered features to transformed_data on AGS
+        if engineered_features:
+            for feature_df in engineered_features:
+                transformed_data = transformed_data.merge(feature_df, on="AGS", how="left")
+
         return transformed_data

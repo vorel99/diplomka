@@ -16,6 +16,7 @@ class UnemploymentFeature(BaseFeature):
         raw_data_path: str = DEFAULT_RAW_DATA_PATH,
         tform_data_path: str = DEFAULT_TFORM_DATA_PATH,
         municipality_data_path: str = MUNICIPALITY_RAW_DATA_PATH,
+        **kwargs,
     ):
         """Initialize the unemployment feature.
 
@@ -25,6 +26,7 @@ class UnemploymentFeature(BaseFeature):
                 Data source: https://www.regionalstatistik.de/genesis//online?operation=table&code=13211-01-03-5&bypass=true&levelindex=1&levelid=1768376127943#abreadcrumb
             municipality_data_path (str): Path to the CSV file containing municipality data for normalization.
         """
+        super().__init__(**kwargs)
         self.raw_data_path = raw_data_path
         self.tform_data_path = tform_data_path
         self.municipality_data_path = municipality_data_path

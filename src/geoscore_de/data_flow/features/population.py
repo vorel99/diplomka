@@ -13,7 +13,10 @@ DEFAULT_TFORM_DATA_PATH = "data/tform/features/population.csv"
 class PopulationFeature(BaseFeature):
     """Feature class for population data."""
 
-    def __init__(self, raw_data_path: str = DEFAULT_RAW_DATA_PATH, tform_data_path: str = DEFAULT_TFORM_DATA_PATH):
+    def __init__(
+        self, raw_data_path: str = DEFAULT_RAW_DATA_PATH, tform_data_path: str = DEFAULT_TFORM_DATA_PATH, **kwargs
+    ):
+        super().__init__(**kwargs)
         self.raw_data_path = raw_data_path
         self.tform_data_path = tform_data_path
 
