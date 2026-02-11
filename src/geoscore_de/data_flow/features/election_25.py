@@ -60,6 +60,19 @@ class Election25Feature(BaseFeature):
             + df["Kreis"].astype(str)
             + df["Gemeinde"].astype(str).str.zfill(3)
         )
+
+        # rename columns
+        df = df.rename(
+            columns={
+                "Wahlberechtigte (A)": "eligible_voters",
+                "Wählende (B)": "total_voters",
+                "Ungültige - Zweitstimmen": "invalid_votes_zweitstimmen",
+                "Gültige - Zweitstimmen": "valid_votes_zweitstimmen",
+                "Ungültige - Erststimmen": "invalid_votes_erststimmen",
+                "Gültige - Erststimmen": "valid_votes_erststimmen",
+            }
+        )
+
         # drop rows with missing AGS
         df = df.dropna(subset=["Land", "Regierungsbezirk", "Kreis", "Gemeinde"])
         return df
@@ -78,22 +91,9 @@ class Election25Feature(BaseFeature):
             [
                 col
                 for col in df.columns
-                if col.endswith(("Erststimmen", "Zweitstimmen"))
-                or col in ("AGS", "Wahlberechtigte (A)", "Wählende (B)")
+                if col.endswith(("Erststimmen", "Zweitstimmen")) or col in ("AGS", "eligible_voters", "total_voters")
             ]
         ]
-
-        # rename columns
-        df = df.rename(
-            columns={
-                "Wahlberechtigte (A)": "eligible_voters",
-                "Wählende (B)": "total_voters",
-                "Ungültige - Zweitstimmen": "invalid_votes_zweitstimmen",
-                "Gültige - Zweitstimmen": "valid_votes_zweitstimmen",
-                "Ungültige - Erststimmen": "invalid_votes_erststimmen",
-                "Gültige - Erststimmen": "valid_votes_erststimmen",
-            }
-        )
 
         # group by AGS and sum all other columns
         df = df.groupby("AGS").sum().reset_index()
