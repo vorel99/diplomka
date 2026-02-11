@@ -1,5 +1,7 @@
 """Pydantic models for feature configuration."""
 
+from __future__ import annotations
+
 from typing import Any, Literal
 
 from pydantic import BaseModel, Field
@@ -27,6 +29,12 @@ class FeatureEngineeringConfig(ComponentConfig):
         default_factory=list, description="List of input column names to use for transformation"
     )
     output_columns: list[str] = Field(default_factory=list, description="Names of the output columns")
+
+
+class FeatureConfig(ComponentConfig):
+    before_transforms: list[FeatureEngineeringConfig] = Field(
+        default_factory=list, description="Transformations on raw data before this feature's transformation"
+    )
 
 
 class MunicipalitiesConfig(ComponentConfig):
@@ -57,10 +65,7 @@ class FeaturesYAMLConfig(BaseModel):
     """Root configuration model for features.yaml."""
 
     municipalities: MunicipalitiesConfig = Field(..., description="Configuration for municipalities reference data")
-    features: list[ComponentConfig] = Field(default_factory=list, description="List of feature configurations")
-    before_transforms: list[FeatureEngineeringConfig] = Field(
-        default_factory=list, description="Transformations on raw data before transformation"
-    )
+    features: list[FeatureConfig] = Field(default_factory=list, description="List of feature configurations")
     after_transforms: list[FeatureEngineeringConfig] = Field(
         default_factory=list, description="Transformations on transformed features (delta features)"
     )
