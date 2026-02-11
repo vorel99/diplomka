@@ -61,6 +61,20 @@ class Election21Feature(BaseFeature):
             + df["Gemeinde"].astype(str).str.zfill(3)
         )
 
+        # rename columns
+        df = df.rename(
+            columns={
+                "Wahlberechtigte (A)": "eligible_voters",
+                "Wählende (B)": "total_voters",
+                # first votes
+                "E_Ungültige": "E_invalid_votes",
+                "E_Gültige": "E_valid_votes",
+                # second votes
+                "Z_Ungültige": "Z_invalid_votes",
+                "Z_Gültige": "Z_valid_votes",
+            },
+        )
+
         # drop rows with missing AGS components
         df = df.dropna(subset=["Land", "Regierungsbezirk", "Kreis", "Gemeinde"])
 
@@ -79,28 +93,14 @@ class Election21Feature(BaseFeature):
             pd.DataFrame: Transformed DataFrame with relevant election data.
         """
 
-        # select only columns started with "E_" or "Z_" or AGS or Wahlberechtigte (A) or Wählende (B)
+        # select only columns started with "E_" or "Z_" or AGS or eligible_voters or total_voters
         df = df[
             [
                 col
                 for col in df.columns
-                if col.startswith(("E_", "Z_")) or col in ("AGS", "Wahlberechtigte (A)", "Wählende (B)")
+                if col.startswith(("E_", "Z_")) or col in ("AGS", "eligible_voters", "total_voters")
             ]
         ]
-
-        # rename columns
-        df = df.rename(
-            columns={
-                "Wahlberechtigte (A)": "eligible_voters",
-                "Wählende (B)": "total_voters",
-                # first votes
-                "E_Ungültige": "E_invalid_votes",
-                "E_Gültige": "E_valid_votes",
-                # second votes
-                "Z_Ungültige": "Z_invalid_votes",
-                "Z_Gültige": "Z_valid_votes",
-            },
-        )
 
         # group by municipality (AGS)
         df = df.groupby("AGS").sum().reset_index()
