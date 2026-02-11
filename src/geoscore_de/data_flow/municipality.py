@@ -8,12 +8,13 @@ DEFAULT_RAW_DATA_PATH = "data/raw/municipalities_2022.csv"
 class MunicipalityFeature(BaseFeature):
     """Load and transform municipality data."""
 
-    def __init__(self, raw_data_path: str = DEFAULT_RAW_DATA_PATH):
+    def __init__(self, raw_data_path: str = DEFAULT_RAW_DATA_PATH, **kwargs):
         """Initialize the municipality feature.
 
         Args:
             raw_data_path (str): Path to the CSV file containing municipality data.
         """
+        super().__init__(**kwargs)
         self.raw_data_path = raw_data_path
 
     def load(self) -> pd.DataFrame:
