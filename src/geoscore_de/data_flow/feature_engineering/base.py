@@ -4,7 +4,7 @@ from abc import ABCMeta, abstractmethod
 
 import pandas as pd
 
-from geoscore_de.data_flow.features.config import FeatureEngineeringConfig
+from geoscore_de.data_flow.feature_engineering.config import FeatureEngineeringConfig
 
 logger = logging.getLogger(__name__)
 
