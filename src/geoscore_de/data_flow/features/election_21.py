@@ -30,6 +30,10 @@ class Election21Feature(BaseFeature):
     def load(self) -> pd.DataFrame:
         """Load and extract election 21 data from a ZIP file.
 
+        This method:
+        - adds an AGS column by concatenating the Land, Regierungsbezirk, Kreis, and Gemeinde columns
+        - renames key columns to normalized English identifiers
+
         Returns:
             pd.DataFrame: DataFrame containing the election data.
         """

@@ -30,6 +30,11 @@ class Election25Feature(BaseFeature):
     def load(self) -> pd.DataFrame:
         """Load and extract election 25 data from a ZIP file.
 
+        This method:
+        - adds an AGS column by concatenating the Land, Regierungsbezirk, Kreis, and Gemeinde columns
+        - renames key columns to normalized English identifiers
+
+
         Returns:
             pd.DataFrame: DataFrame containing the election data.
         """
@@ -82,7 +87,6 @@ class Election25Feature(BaseFeature):
 
         This method:
         - selects first- and second-vote columns, along with AGS, eligible voters, and total voters,
-        - renames key columns to normalized English identifiers,
         - aggregates all vote counts by AGS via summation, and
         - computes election participation and converts vote counts to proportions of total voters.
         """
