@@ -26,3 +26,9 @@ class MockFeature(BaseFeature):
 def mock_feature_class():
     """Provide MockFeature class for tests."""
     return MockFeature
+
+
+@pytest.fixture
+def mock_feature_module():
+    """Provide the module path where MockFeature lives."""
+    return __name__

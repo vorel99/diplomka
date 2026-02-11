@@ -1,7 +1,5 @@
 """Tests for FeatureMatrixBuilder."""
 
-import sys
-
 import pandas as pd
 import pytest
 import yaml
@@ -11,19 +9,19 @@ from geoscore_de.data_flow.features.matrix_builder import FeatureMatrixBuilder
 
 
 @pytest.fixture
-def temp_config_file(tmp_path):
+def temp_config_file(tmp_path, mock_feature_module):
     """Create a temporary config file for testing."""
     config_data = {
         "municipalities": {
             "class": "MockFeature",
-            "module": __name__,
+            "module": mock_feature_module,
             "params": {},
         },
         "features": [
             {
                 "name": "test_feature",
                 "class": "MockFeature",
-                "module": __name__,
+                "module": mock_feature_module,
                 "params": {},
             }
         ],
@@ -43,31 +41,31 @@ def temp_config_file(tmp_path):
 
 
 @pytest.fixture
-def multi_feature_config(tmp_path):
+def multi_feature_config(tmp_path, mock_feature_module):
     """Create a config with multiple features."""
     config_data = {
         "municipalities": {
             "class": "MockFeature",
-            "module": __name__,
+            "module": mock_feature_module,
             "params": {},
         },
         "features": [
             {
                 "name": "feature1",
                 "class": "MockFeature",
-                "module": __name__,
+                "module": mock_feature_module,
                 "params": {},
             },
             {
                 "name": "feature2",
                 "class": "MockFeature",
-                "module": __name__,
+                "module": mock_feature_module,
                 "params": {},
             },
             {
                 "name": "feature3",
                 "class": "MockFeature",
-                "module": __name__,
+                "module": mock_feature_module,
                 "params": {},
             },
         ],
@@ -89,7 +87,6 @@ class TestFeatureMatrixBuilder:
     @pytest.fixture(autouse=True)
     def setup_mock(self, mock_feature_class):
         """Inject MockFeature into module namespace for all tests."""
-        sys.modules[__name__].MockFeature = mock_feature_class
         self.MockFeature = mock_feature_class
 
     def test_init_with_valid_config(self, temp_config_file):
@@ -130,10 +127,10 @@ class TestFeatureMatrixBuilder:
         with pytest.raises(ValidationError):
             FeatureMatrixBuilder(config_path=str(config_file))
 
-    def test_feature_nonexisting_module(self, tmp_path):
+    def test_feature_nonexisting_module(self, tmp_path, mock_feature_module):
         """Test that import errors are handled gracefully."""
         config_data = {
-            "municipalities": {"class": "MockFeature", "module": __name__},
+            "municipalities": {"class": "MockFeature", "module": mock_feature_module},
             "features": [
                 {
                     "name": "bad_feature",
@@ -195,11 +192,11 @@ class TestFeatureMatrixBuilder:
         with pytest.raises(KeyError, match="Join key 'AGS' not found in test_feature dataframe"):
             builder.build_matrix()
 
-    def test_build_matrix_with_missing_values_drop(self, tmp_path):
+    def test_build_matrix_with_missing_values_drop(self, tmp_path, mock_feature_module):
         """Test handling missing values with drop strategy."""
         config_data = {
-            "municipalities": {"class": "MockFeature", "module": __name__},
-            "features": [{"name": "f1", "class": "MockFeature", "module": __name__}],
+            "municipalities": {"class": "MockFeature", "module": mock_feature_module},
+            "features": [{"name": "f1", "class": "MockFeature", "module": mock_feature_module}],
             "matrix": {"join_key": "AGS", "missing_values": "drop", "save_output": False},
         }
 
@@ -218,11 +215,11 @@ class TestFeatureMatrixBuilder:
         assert len(matrix) == 2
         assert matrix["f1_val"].notna().all()
 
-    def test_build_matrix_with_missing_values_fill(self, tmp_path):
+    def test_build_matrix_with_missing_values_fill(self, tmp_path, mock_feature_module):
         """Test handling missing values with fill strategy."""
         config_data = {
-            "municipalities": {"class": "MockFeature", "module": __name__},
-            "features": [{"name": "f1", "class": "MockFeature", "module": __name__}],
+            "municipalities": {"class": "MockFeature", "module": mock_feature_module},
+            "features": [{"name": "f1", "class": "MockFeature", "module": mock_feature_module}],
             "matrix": {"join_key": "AGS", "missing_values": "fill", "fill_value": -999, "save_output": False},
         }
 
@@ -240,13 +237,13 @@ class TestFeatureMatrixBuilder:
         assert len(matrix) == 3
         assert matrix.loc[matrix["AGS"] == 2, "f1_val"].values[0] == -999
 
-    def test_build_matrix_saves_output(self, tmp_path):
+    def test_build_matrix_saves_output(self, tmp_path, mock_feature_module):
         """Test that matrix is saved when save_output is True."""
         output_path = tmp_path / "output" / "matrix.csv"
 
         config_data = {
-            "municipalities": {"class": "MockFeature", "module": __name__},
-            "features": [{"name": "f1", "class": "MockFeature", "module": __name__}],
+            "municipalities": {"class": "MockFeature", "module": mock_feature_module},
+            "features": [{"name": "f1", "class": "MockFeature", "module": mock_feature_module}],
             "matrix": {"join_key": "AGS", "save_output": True, "output_path": str(output_path)},
         }
 

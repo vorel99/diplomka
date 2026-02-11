@@ -1,10 +1,11 @@
+import importlib
 import logging
 from abc import ABCMeta, abstractmethod
 
 import pandas as pd
 
 from geoscore_de.data_flow.feature_engineering.base import get_feature_engineering_class
-from geoscore_de.data_flow.features.config import FeatureEngineeringConfig
+from geoscore_de.data_flow.features.config import FeatureConfig, FeatureEngineeringConfig
 
 logger = logging.getLogger(__name__)
 
@@ -52,3 +53,40 @@ class BaseFeature(metaclass=ABCMeta):
                 transformed_data = transformed_data.merge(feature_df, on="AGS", how="left")
 
         return transformed_data
+
+
+def get_feature_class(config: FeatureConfig) -> type[BaseFeature]:
+    """Dynamically instantiate a feature class from configuration.
+
+    Args:
+        config: FeatureConfig object containing feature configuration.
+
+    Returns:
+        Instantiated feature object.
+
+    Raises:
+        ImportError: If the module cannot be imported.
+        AttributeError: If the class doesn't exist in the module.
+    """
+    module_name = config.module
+    class_name = config.class_name
+    params = config.params
+
+    try:
+        # Import the module
+        module = importlib.import_module(module_name)
+        # Get the class from the module
+        feature_class = getattr(module, class_name)
+        # Instantiate the class with parameters
+        feature_instance = feature_class(**params)
+        logger.info(f"Instantiated {class_name} for feature '{config.name}'")
+        return feature_instance
+    except ImportError as e:
+        logger.error(f"Failed to import module {module_name}: {e}")
+        raise
+    except AttributeError as e:
+        logger.error(f"Class {class_name} not found in module {module_name}: {e}")
+        raise
+    except Exception as e:
+        logger.error(f"Failed to instantiate {class_name}: {e}")
+        raise
