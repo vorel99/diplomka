@@ -7,7 +7,7 @@ import pandas as pd
 import yaml
 from pydantic import ValidationError
 
-from geoscore_de.data_flow.features.base import BaseFeature, get_feature_class
+from geoscore_de.data_flow.features.base import BaseFeature, instantiate_feature
 from geoscore_de.data_flow.features.config import FeaturesYAMLConfig
 
 logger = logging.getLogger(__name__)
@@ -66,7 +66,7 @@ class FeatureMatrixBuilder:
     def load_features(self) -> None:
         """Load all features from the configuration."""
         # load municipalities feature first
-        self.municipalities = get_feature_class(self.config.municipalities)
+        self.municipalities = instantiate_feature(self.config.municipalities)
 
         if not self.config.features:
             logger.warning("No features found in configuration")
@@ -74,7 +74,7 @@ class FeatureMatrixBuilder:
 
         for feature_config in self.config.features:
             try:
-                feature_instance = get_feature_class(feature_config)
+                feature_instance = instantiate_feature(feature_config)
                 self.features[feature_config.name] = feature_instance
             except Exception as e:
                 logger.error(f"Failed to load feature {feature_config.name}: {e}")

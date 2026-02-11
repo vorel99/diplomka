@@ -56,14 +56,14 @@ class BaseFeature(metaclass=ABCMeta):
         return transformed_data
 
 
-def get_feature_class(config: FeatureConfig) -> type[BaseFeature]:
+def instantiate_feature(config: FeatureConfig) -> BaseFeature:
     """Dynamically instantiate a feature class from configuration.
 
     Args:
         config: FeatureConfig object containing feature configuration.
 
     Returns:
-        Instantiated feature object.
+        An instance of the specified feature class.
 
     Raises:
         ImportError: If the module cannot be imported.
