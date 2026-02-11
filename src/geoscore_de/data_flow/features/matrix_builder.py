@@ -31,6 +31,7 @@ class FeatureMatrixBuilder:
         self.config = self._load_config()
         self.features: dict[str, BaseFeature] = {}
         self.municipalities: BaseFeature | None = None
+        self.load_features()
 
     def _load_config(self) -> FeaturesYAMLConfig:
         """Load and validate the YAML configuration file.
@@ -101,11 +102,12 @@ class FeatureMatrixBuilder:
 
     def load_features(self) -> None:
         """Load all features from the configuration."""
+        # load municipalities feature first
+        self.municipalities = self._instantiate_feature(self.config.municipalities)
+
         if not self.config.features:
             logger.warning("No features found in configuration")
             return
-        # load municipalities feature
-        self.municipalities = self._instantiate_feature(self.config.municipalities)
 
         for feature_config in self.config.features:
             try:
