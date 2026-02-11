@@ -5,6 +5,19 @@ from typing import Any, Literal
 from pydantic import BaseModel, Field
 
 
+class FeatureEngineeringConfig(BaseModel):
+    """Configuration for feature engineering transformations.
+    Takes multiple columns as input and produces one column as output (e.g. municipality homogeneity).
+    """
+
+    name: str = Field(..., description="Unique name for the transformation")
+    class_name: str = Field(..., alias="class", description="Name of the transformation class")
+    module: str = Field(..., description="Module path where the transformation class is located")
+    input_columns: list[str] = Field([], description="List of input column names to use for transformation")
+    output_column: str = Field(..., description="Name of the output column")
+    params: dict[str, Any] = Field(default_factory=dict, description="Additional parameters for the transformation")
+
+
 class FeatureConfig(BaseModel):
     """Configuration for a single feature."""
 
@@ -45,4 +58,13 @@ class FeaturesYAMLConfig(BaseModel):
 
     municipalities: MunicipalitiesConfig = Field(..., description="Configuration for municipalities reference data")
     features: list[FeatureConfig] = Field(default_factory=list, description="List of feature configurations")
+    before_transforms: list[FeatureEngineeringConfig] = Field(
+        default_factory=list, description="Transformations on raw data before transformation"
+    )
+    after_transforms: list[FeatureEngineeringConfig] = Field(
+        default_factory=list, description="Transformations on transformed features (delta features)"
+    )
+    standalone_transforms: list[FeatureEngineeringConfig] = Field(
+        default_factory=list, description="Standalone feature engineering transformations"
+    )
     matrix: MatrixConfig = Field(default_factory=MatrixConfig, description="Matrix building configuration")
