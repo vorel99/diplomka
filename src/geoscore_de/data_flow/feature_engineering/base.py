@@ -32,9 +32,7 @@ class BaseFeatureEngineering(metaclass=ABCMeta):
         missing_columns = [col for col in self.config.input_columns if col not in df.columns]
         if missing_columns:
             logger.error(f"Missing required input columns for transformation '{self.config.name}': {missing_columns}")
-            raise ValueError(
-                f"Missing required input columns for transformation '{self.config.name}': {missing_columns}"
-            )
+            return False
         return True
 
     def apply(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -45,10 +43,12 @@ class BaseFeatureEngineering(metaclass=ABCMeta):
 
         Returns:
             DataFrame containing one or more engineered feature columns.
+
+        Raises:
+            ValueError: If the input dataframe fails validation checks.
         """
         logger.info(f"Applying transformation '{self.config.name}'")
         if not self.validate(df):
-            logger.error("Input dataframe failed validation checks.")
             raise ValueError("Input dataframe failed validation checks.")
 
         return self._apply(df)
