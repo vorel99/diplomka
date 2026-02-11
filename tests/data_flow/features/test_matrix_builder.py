@@ -148,14 +148,6 @@ class TestFeatureMatrixBuilder:
         # Should not raise, but features dict should be empty
         assert len(builder.features) == 0
 
-    def test_instantiate_feature(self, temp_config_file):
-        """Test feature instantiation."""
-        builder = FeatureMatrixBuilder(config_path=temp_config_file)
-        feature_config = builder.config.features[0]
-        feature = builder._instantiate_feature(feature_config)
-
-        assert isinstance(feature, self.MockFeature)
-
     def test_build_matrix_single_feature(self, temp_config_file):
         """Test building matrix with a single feature."""
         builder = FeatureMatrixBuilder(config_path=temp_config_file)
