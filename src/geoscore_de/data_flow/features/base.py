@@ -78,7 +78,7 @@ def get_feature_class(config: FeatureConfig) -> type[BaseFeature]:
         # Get the class from the module
         feature_class = getattr(module, class_name)
         # Instantiate the class with parameters
-        feature_instance = feature_class(**params)
+        feature_instance = feature_class(**params, before_transforms=config.before_transforms)
         logger.info(f"Instantiated {class_name} for feature '{config.name}'")
         return feature_instance
     except ImportError as e:

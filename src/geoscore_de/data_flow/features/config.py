@@ -37,7 +37,7 @@ class FeatureConfig(ComponentConfig):
     )
 
 
-class MunicipalitiesConfig(ComponentConfig):
+class MunicipalitiesConfig(FeatureConfig):
     """Configuration for municipalities reference data.
     This is a special case because the municipalities data is required for building the feature matrix,
     so it has its own configuration section separate from the other features.
