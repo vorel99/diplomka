@@ -1,6 +1,6 @@
 import numpy as np
 
-from geoscore_de.data_flow.feature_engineering.homogenity import HomogeneityFeatureEngineering
+from geoscore_de.data_flow.feature_engineering.homogeneity import HomogeneityFeatureEngineering
 
 
 def test_weighted_cv():
