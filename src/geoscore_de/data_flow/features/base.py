@@ -4,7 +4,7 @@ from abc import ABCMeta, abstractmethod
 
 import pandas as pd
 
-from geoscore_de.data_flow.feature_engineering.base import get_feature_engineering_class
+from geoscore_de.data_flow.feature_engineering.base import BaseFeatureEngineering, get_feature_engineering_class
 from geoscore_de.data_flow.features.config import FeatureConfig, FeatureEngineeringConfig
 
 logger = logging.getLogger(__name__)
@@ -18,9 +18,21 @@ class BaseFeature(metaclass=ABCMeta):
             List of feature engineering transformations to apply to the raw data.
     """
 
+    before_transforms: list[BaseFeatureEngineering]
+
     def __init__(self, before_transforms: list[FeatureEngineeringConfig] | None = None):
         """Initialize the feature with optional parameters."""
-        self.before_transforms = before_transforms or []
+        self.before_transforms = []
+        if before_transforms:
+            for transform_config in before_transforms:
+                logger.info(f"Instantiating before_transform: '{transform_config.name}'")
+                transform_class = get_feature_engineering_class(transform_config)
+                transform_instance = transform_class(
+                    input_columns=transform_config.input_columns,
+                    output_column=transform_config.output_column,
+                    **transform_config.params,
+                )
+                self.before_transforms.append(transform_instance)
 
     @abstractmethod
     def load(self) -> pd.DataFrame:
@@ -38,12 +50,8 @@ class BaseFeature(metaclass=ABCMeta):
         engineered_features = []
 
         if self.before_transforms:
-            for transform in self.before_transforms:
-                logger.info(f"Applying before_transform: '{transform.name}'")
-                transform_class = get_feature_engineering_class(transform)
-                transform_instance = transform_class(
-                    input_columns=transform.input_columns, output_column=transform.output_column, **transform.params
-                )
+            logger.info("Applying before_transforms")
+            for transform_instance in self.before_transforms:
                 result = transform_instance.apply(raw_data)
                 engineered_features.append(result)
 

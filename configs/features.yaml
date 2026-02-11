@@ -27,7 +27,6 @@ features:
     before_transforms:
       - name: election_2021_homogeneity
         class: HomogeneityFeatureEngineering
-        module: geoscore_de.data_flow.feature_engineering.homogeneity
         input_columns: ["E_CDU", "E_SPD", "E_AfD", "E_FDP", "E_DIE LINKE", "E_GRÜNE", "E_CSU"]
         output_column: homogeneity
         params:
@@ -43,7 +42,6 @@ features:
     before_transforms:
       - name: election_2025_homogeneity
         class: HomogeneityFeatureEngineering
-        module: geoscore_de.data_flow.feature_engineering.homogeneity
         input_columns: [
           "SPD - Erststimmen","CDU - Erststimmen","GRÜNE - Erststimmen","FDP - Erststimmen","AfD - Erststimmen","CSU - Erststimmen","Die Linke - Erststimmen"
         ]
