@@ -42,6 +42,16 @@ features:
       url: https://www.bundeswahlleiterin.de/en/dam/jcr/e79a7bd3-0607-4e87-9752-8e601e299e00/btw25_wbz.zip
       raw_data_path: data/raw/features/election_2025
       tform_data_path: data/tform/features/election_25.csv
+    before_transforms:
+      - name: election_2025_homogeneity
+        class: HomogeneityFeatureEngineering
+        module: geoscore_de.data_flow.feature_engineering.homogenity
+        input_columns: [
+          "SPD - Erststimmen","CDU - Erststimmen","GRÜNE - Erststimmen","FDP - Erststimmen","AfD - Erststimmen","CSU - Erststimmen","Die Linke - Erststimmen"
+        ]
+        output_column: homogeneity
+        params:
+          weight_column: eligible_voters
 
   - name: unemployment
     class: UnemploymentFeature
