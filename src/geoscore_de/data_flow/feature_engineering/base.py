@@ -1,9 +1,10 @@
+import importlib
 import logging
 from abc import ABCMeta, abstractmethod
 
 import pandas as pd
 
-from geoscore_de.data_flow.features.config import FeatureEngineeringConfig
+from geoscore_de.data_flow.feature_engineering.config import FeatureEngineeringConfig
 
 logger = logging.getLogger(__name__)
 
@@ -11,13 +12,21 @@ logger = logging.getLogger(__name__)
 class BaseFeatureEngineering(metaclass=ABCMeta):
     """Abstract base class for feature engineering."""
 
-    def __init__(self, config: FeatureEngineeringConfig):
-        self.config = config
+    def __init__(self, input_columns: list[str], output_column: str):
+        self.input_columns = input_columns
+        self.output_column = output_column
 
-    @property
-    def output_columns(self) -> list[str]:
-        """Get the names of the output columns produced by this transformation."""
-        return self.config.output_columns
+    @abstractmethod
+    def _validate(self, df: pd.DataFrame) -> bool:
+        """Custom validation logic for the feature engineering transformation.
+
+        Args:
+            df: Input dataframe to validate.
+
+        Returns:
+            True if validation passes, False otherwise.
+        """
+        return True
 
     def validate(self, df: pd.DataFrame) -> bool:
         """Validate the input dataframe before applying transformations.
@@ -29,10 +38,20 @@ class BaseFeatureEngineering(metaclass=ABCMeta):
         Returns:
             True if validation passes, False otherwise.
         """
-        missing_columns = [col for col in self.config.input_columns if col not in df.columns]
+        missing_columns = [col for col in self.input_columns if col not in df.columns]
         if missing_columns:
-            logger.error(f"Missing required input columns for transformation '{self.config.name}': {missing_columns}")
+            logger.error(
+                f"Missing required input columns for transformation '{self.__class__.__name__}': {missing_columns}"
+            )
             return False
+
+        if "AGS" not in df.columns:
+            logger.error(f"Missing required 'AGS' column for transformation '{self.__class__.__name__}'")
+            return False
+
+        if not self._validate(df):
+            return False
+
         return True
 
     def apply(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -47,11 +66,11 @@ class BaseFeatureEngineering(metaclass=ABCMeta):
         Raises:
             ValueError: If the input dataframe fails validation checks.
         """
-        logger.info(f"Applying transformation '{self.config.name}'")
+        logger.info(f"Applying transformation '{self.__class__.__name__}'")
         if not self.validate(df):
             raise ValueError("Input dataframe failed validation checks.")
 
-        return self._apply(df)
+        return self._apply(df.copy())
 
     @abstractmethod
     def _apply(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -63,3 +82,30 @@ class BaseFeatureEngineering(metaclass=ABCMeta):
         Returns:
             DataFrame containing one or more engineered feature columns.
         """
+
+
+def instantiate_feature_engineering_class(config: FeatureEngineeringConfig) -> BaseFeatureEngineering:
+    """Dynamically import and return a feature class instance based on the provided configuration.
+
+    Args:
+        config: FeatureEngineeringConfig containing the module and class name to import.
+
+    Returns:
+        An instance of the imported feature class.
+    """
+    module_name = config.module
+    class_name = config.class_name
+
+    try:
+        module = importlib.import_module(module_name)
+        feature_class = getattr(module, class_name)
+        feature_instance = feature_class(
+            input_columns=config.input_columns, output_column=config.output_column, **config.params
+        )
+        return feature_instance
+    except ImportError as e:
+        logger.error(f"Error importing module '{module_name}': {e}")
+        raise
+    except AttributeError as e:
+        logger.error(f"Module '{module_name}' does not have a class '{class_name}': {e}")
+        raise

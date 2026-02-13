@@ -2,42 +2,30 @@
 
 from __future__ import annotations
 
-from typing import Any, Literal
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
-
-class ComponentConfig(BaseModel):
-    """Configuration for a dynamically loaded component (e.g., feature or transformation).
-    This model captures the necessary information to dynamically import and instantiate a class based on configuration.
-    """
-
-    name: str = Field(..., description="Unique name for the feature")
-    class_name: str = Field(..., alias="class", description="Name of the feature class")
-    module: str = Field(..., description="Module path where the feature class is located")
-    params: dict[str, Any] = Field(default_factory=dict, description="Parameters to pass to the feature class")
-
-    model_config = {"populate_by_name": True}
-
-
-class FeatureEngineeringConfig(ComponentConfig):
-    """Configuration for feature engineering transformations.
-    Takes multiple columns as input and produces one or more columns as output.
-    """
-
-    input_columns: list[str] = Field(
-        default_factory=list, description="List of input column names to use for transformation"
-    )
-    output_columns: list[str] = Field(default_factory=list, description="Names of the output columns")
+from geoscore_de.data_flow.feature_engineering.config import (
+    BASE_MODULE,
+    ComponentConfig,
+    FeatureEngineeringConfig,
+)
 
 
 class FeatureConfig(ComponentConfig):
+    module: str = Field(
+        default=f"{BASE_MODULE}.features",
+        description=(
+            "Module path where the feature class is located. Defaults to the features submodule of the base module."
+        ),
+    )
     before_transforms: list[FeatureEngineeringConfig] = Field(
         default_factory=list, description="Transformations on raw data before this feature's transformation"
     )
 
 
-class MunicipalitiesConfig(ComponentConfig):
+class MunicipalitiesConfig(FeatureConfig):
     """Configuration for municipalities reference data.
     This is a special case because the municipalities data is required for building the feature matrix,
     so it has its own configuration section separate from the other features.

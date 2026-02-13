@@ -20,24 +20,37 @@ features:
   # Federal election 2021 results
   - name: election_2021
     class: Election21Feature
-    module: geoscore_de.data_flow.features.election_21
     params:
       url: https://www.bundeswahlleiterin.de/en/dam/jcr/c2cd99e6-064e-4ebc-b634-f86b5c0e14b3/btw21_wbz.zip
       raw_data_path: data/raw/features/election_2021
       tform_data_path: data/tform/features/federal_election_21.csv
+    before_transforms:
+      - name: election_2021_homogeneity
+        class: HomogeneityFeatureEngineering
+        input_columns: ["E_CDU", "E_SPD", "E_AfD", "E_FDP", "E_DIE LINKE", "E_GRÜNE", "E_CSU"]
+        output_column: homogeneity
+        params:
+          weight_column: eligible_voters
 
   # Federal election 2025 results
   - name: election_2025
     class: Election25Feature
-    module: geoscore_de.data_flow.features.election_25
     params:
       url: https://www.bundeswahlleiterin.de/en/dam/jcr/e79a7bd3-0607-4e87-9752-8e601e299e00/btw25_wbz.zip
       raw_data_path: data/raw/features/election_2025
       tform_data_path: data/tform/features/election_25.csv
+    before_transforms:
+      - name: election_2025_homogeneity
+        class: HomogeneityFeatureEngineering
+        input_columns: [
+          "SPD - Erststimmen","CDU - Erststimmen","GRÜNE - Erststimmen","FDP - Erststimmen","AfD - Erststimmen","CSU - Erststimmen","Die Linke - Erststimmen"
+        ]
+        output_column: homogeneity
+        params:
+          weight_column: eligible_voters
 
   - name: unemployment
     class: UnemploymentFeature
-    module: geoscore_de.data_flow.features.unemployment
     params:
       raw_data_path: data/raw/features/unemployment.csv
       tform_data_path: data/tform/features/unemployment.csv

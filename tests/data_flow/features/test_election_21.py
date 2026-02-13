@@ -36,8 +36,8 @@ def test_load_election_21_data(mock_raw_election_csv_file):
 
     # Check required columns exist
     assert "AGS" in df.columns
-    assert "Wahlberechtigte (A)" in df.columns
-    assert "Wählende (B)" in df.columns
+    assert "eligible_voters" in df.columns
+    assert "total_voters" in df.columns
     assert "E_CDU" in df.columns
     assert "Z_CDU" in df.columns
 

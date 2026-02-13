@@ -1,6 +1,5 @@
 """Feature Matrix Builder for combining multiple feature datasets."""
 
-import importlib
 import logging
 from pathlib import Path
 
@@ -8,8 +7,8 @@ import pandas as pd
 import yaml
 from pydantic import ValidationError
 
-from geoscore_de.data_flow.features.base import BaseFeature
-from geoscore_de.data_flow.features.config import ComponentConfig, FeaturesYAMLConfig
+from geoscore_de.data_flow.features.base import BaseFeature, instantiate_feature
+from geoscore_de.data_flow.features.config import FeaturesYAMLConfig
 
 logger = logging.getLogger(__name__)
 
@@ -64,46 +63,10 @@ class FeatureMatrixBuilder:
             logger.error(f"Configuration validation error: {e}")
             raise
 
-    def _instantiate_feature(self, feature_config: ComponentConfig) -> BaseFeature:
-        """Dynamically instantiate a feature class from configuration.
-
-        Args:
-            feature_config: FeatureConfig object containing feature configuration.
-
-        Returns:
-            Instantiated feature object.
-
-        Raises:
-            ImportError: If the module cannot be imported.
-            AttributeError: If the class doesn't exist in the module.
-        """
-        module_name = feature_config.module
-        class_name = feature_config.class_name
-        params = feature_config.params
-
-        try:
-            # Import the module
-            module = importlib.import_module(module_name)
-            # Get the class from the module
-            feature_class = getattr(module, class_name)
-            # Instantiate the class with parameters
-            feature_instance = feature_class(**params)
-            logger.info(f"Instantiated {class_name} for feature '{feature_config.name}'")
-            return feature_instance
-        except ImportError as e:
-            logger.error(f"Failed to import module {module_name}: {e}")
-            raise
-        except AttributeError as e:
-            logger.error(f"Class {class_name} not found in module {module_name}: {e}")
-            raise
-        except Exception as e:
-            logger.error(f"Failed to instantiate {class_name}: {e}")
-            raise
-
     def load_features(self) -> None:
         """Load all features from the configuration."""
         # load municipalities feature first
-        self.municipalities = self._instantiate_feature(self.config.municipalities)
+        self.municipalities = instantiate_feature(self.config.municipalities)
 
         if not self.config.features:
             logger.warning("No features found in configuration")
@@ -111,7 +74,7 @@ class FeatureMatrixBuilder:
 
         for feature_config in self.config.features:
             try:
-                feature_instance = self._instantiate_feature(feature_config)
+                feature_instance = instantiate_feature(feature_config)
                 self.features[feature_config.name] = feature_instance
             except Exception as e:
                 logger.error(f"Failed to load feature {feature_config.name}: {e}")

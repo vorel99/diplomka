@@ -20,13 +20,19 @@ class Election25Feature(BaseFeature):
         url: str = ZIP_URL,
         raw_data_path: str = DEFAULT_RAW_DATA_PATH,
         tform_data_path: str = DEFAULT_TFORM_DATA_PATH,
+        **kwargs,
     ):
+        super().__init__(**kwargs)
         self.url = url
         self.raw_data_path = raw_data_path
         self.tform_data_path = tform_data_path
 
     def load(self) -> pd.DataFrame:
         """Load and extract election 25 data from a ZIP file.
+
+        This method:
+        - adds an AGS column by concatenating the Land, Regierungsbezirk, Kreis, and Gemeinde columns
+        - renames key columns to normalized English identifiers
 
         Returns:
             pd.DataFrame: DataFrame containing the election data.
@@ -58,6 +64,19 @@ class Election25Feature(BaseFeature):
             + df["Kreis"].astype(str)
             + df["Gemeinde"].astype(str).str.zfill(3)
         )
+
+        # rename columns
+        df = df.rename(
+            columns={
+                "Wahlberechtigte (A)": "eligible_voters",
+                "Wählende (B)": "total_voters",
+                "Ungültige - Erststimmen": "invalid_votes_erststimmen",
+                "Gültige - Erststimmen": "valid_votes_erststimmen",
+                "Ungültige - Zweitstimmen": "invalid_votes_zweitstimmen",
+                "Gültige - Zweitstimmen": "valid_votes_zweitstimmen",
+            }
+        )
+
         # drop rows with missing AGS
         df = df.dropna(subset=["Land", "Regierungsbezirk", "Kreis", "Gemeinde"])
         return df
@@ -67,7 +86,6 @@ class Election25Feature(BaseFeature):
 
         This method:
         - selects first- and second-vote columns, along with AGS, eligible voters, and total voters,
-        - renames key columns to normalized English identifiers,
         - aggregates all vote counts by AGS via summation, and
         - computes election participation and converts vote counts to proportions of total voters.
         """
@@ -77,21 +95,18 @@ class Election25Feature(BaseFeature):
                 col
                 for col in df.columns
                 if col.endswith(("Erststimmen", "Zweitstimmen"))
-                or col in ("AGS", "Wahlberechtigte (A)", "Wählende (B)")
+                or col
+                in (
+                    "AGS",
+                    "eligible_voters",
+                    "total_voters",
+                    "invalid_votes_erststimmen",
+                    "valid_votes_erststimmen",
+                    "invalid_votes_zweitstimmen",
+                    "valid_votes_zweitstimmen",
+                )
             ]
         ]
-
-        # rename columns
-        df = df.rename(
-            columns={
-                "Wahlberechtigte (A)": "eligible_voters",
-                "Wählende (B)": "total_voters",
-                "Ungültige - Zweitstimmen": "invalid_votes_zweitstimmen",
-                "Gültige - Zweitstimmen": "valid_votes_zweitstimmen",
-                "Ungültige - Erststimmen": "invalid_votes_erststimmen",
-                "Gültige - Erststimmen": "valid_votes_erststimmen",
-            }
-        )
 
         # group by AGS and sum all other columns
         df = df.groupby("AGS").sum().reset_index()
