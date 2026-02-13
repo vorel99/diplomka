@@ -1,8 +1,8 @@
 import pandas as pd
 
 from geoscore_de.data_flow.features.base import BaseFeature
-from geoscore_de.data_flow.municipality import DEFAULT_RAW_DATA_PATH as MUNICIPALITY_RAW_DATA_PATH
-from geoscore_de.data_flow.municipality import MunicipalityFeature
+from geoscore_de.data_flow.features.municipality import DEFAULT_RAW_DATA_PATH as MUNICIPALITY_RAW_DATA_PATH
+from geoscore_de.data_flow.features.municipality import MunicipalityFeature
 
 DEFAULT_RAW_DATA_PATH = "data/raw/features/unemployment.csv"
 DEFAULT_TFORM_DATA_PATH = "data/tform/features/unemployment.csv"
