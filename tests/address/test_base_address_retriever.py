@@ -66,8 +66,6 @@ def test_get_area_metadata_outside_germany(retriever):
 
 def test_get_area_metadata_contains_destatis(retriever):
     """Test that area metadata contains destatis information."""
-    import json
-
     latitude = 54.0888
     longitude = 12.1359
 
@@ -76,7 +74,7 @@ def test_get_area_metadata_contains_destatis(retriever):
     assert result is not None
     assert "destatis" in result
 
-    destatis_data = json.loads(result["destatis"])
+    destatis_data = result["destatis"]
     assert "population" in destatis_data
     assert "area" in destatis_data
 
