@@ -6,7 +6,7 @@ repos:
         files: \.ipynb$
         stages: [pre-commit]
         language: system
-        entry: jupyter nbconvert --ClearOutputPreprocessor.enabled=True --inplace
+        entry: nbstripout
 
       - id: ruff-lint
         name: ruff-lint
