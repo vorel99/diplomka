@@ -4,7 +4,7 @@ from abc import ABCMeta, abstractmethod
 
 import pandas as pd
 
-from geoscore_de.data_flow.feature_engineering.base import BaseFeatureEngineering, get_feature_engineering_class
+from geoscore_de.data_flow.feature_engineering.base import BaseFeatureEngineering, instantiate_feature_engineering_class
 from geoscore_de.data_flow.features.config import FeatureConfig, FeatureEngineeringConfig
 
 logger = logging.getLogger(__name__)
@@ -26,12 +26,7 @@ class BaseFeature(metaclass=ABCMeta):
         if before_transforms:
             for transform_config in before_transforms:
                 logger.info(f"Instantiating before_transform: '{transform_config.name}'")
-                transform_class = get_feature_engineering_class(transform_config)
-                transform_instance = transform_class(
-                    input_columns=transform_config.input_columns,
-                    output_column=transform_config.output_column,
-                    **transform_config.params,
-                )
+                transform_instance = instantiate_feature_engineering_class(transform_config)
                 self.before_transforms.append(transform_instance)
 
     @abstractmethod

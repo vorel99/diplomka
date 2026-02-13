@@ -84,14 +84,14 @@ class BaseFeatureEngineering(metaclass=ABCMeta):
         """
 
 
-def get_feature_engineering_class(config: FeatureEngineeringConfig) -> type[BaseFeatureEngineering]:
-    """Dynamically import and return a feature class based on the provided configuration.
+def instantiate_feature_engineering_class(config: FeatureEngineeringConfig) -> BaseFeatureEngineering:
+    """Dynamically import and return a feature class instance based on the provided configuration.
 
     Args:
         config: FeatureEngineeringConfig containing the module and class name to import.
 
     Returns:
-        The imported feature class.
+        An instance of the imported feature class.
     """
     module_name = config.module
     class_name = config.class_name
@@ -99,7 +99,10 @@ def get_feature_engineering_class(config: FeatureEngineeringConfig) -> type[Base
     try:
         module = importlib.import_module(module_name)
         feature_class = getattr(module, class_name)
-        return feature_class
+        feature_instance = feature_class(
+            input_columns=config.input_columns, output_column=config.output_column, **config.params
+        )
+        return feature_instance
     except ImportError as e:
         logger.error(f"Error importing module '{module_name}': {e}")
         raise
