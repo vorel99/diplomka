@@ -8,6 +8,16 @@ DEFAULT_TFORM_DATA_PATH = "data/tform/features/road_accidents.csv"
 
 
 class RoadAccidentsFeature(BaseFeature):
+    """Initialize the road accidents feature.
+    Data source: https://www.regionalstatistik.de/genesis//online?operation=table&code=46241-01-04-5
+
+
+    Args:
+        raw_data_path (str): Path to the CSV file containing raw road accident data.
+        tform_data_path (str): Path to the CSV file containing transformed road accident data.
+        municipality_data_path (str): Path to the CSV file containing municipality data for normalization.
+    """
+
     def __init__(
         self,
         raw_data_path: str = DEFAULT_RAW_DATA_PATH,
@@ -15,14 +25,6 @@ class RoadAccidentsFeature(BaseFeature):
         municipality_data_path: str = MUNICIPALITY_RAW_DATA_PATH,
         **kwargs,
     ):
-        """Initialize the road accidents feature.
-
-        Args:
-            raw_data_path (str): Path to the CSV file containing raw road accident data.
-            tform_data_path (str): Path to the CSV file containing transformed road accident data.
-                Data source: https://www.regionalstatistik.de/genesis//online?operation=table&code=46241-01-04-5
-            municipality_data_path (str): Path to the CSV file containing municipality data for normalization.
-        """
         super().__init__(**kwargs)
         self.raw_data_path = raw_data_path
         self.tform_data_path = tform_data_path
@@ -37,7 +39,6 @@ class RoadAccidentsFeature(BaseFeature):
 
     def load(self) -> pd.DataFrame:
         """Load road accident data from a CSV file.
-        Data were obtained from https://www.destatis.de/DE/Themen/Gesellschaft-Umwelt/Verkehrsunfaelle/Tabellen/unfaelle-gesamt.html
 
         Returns:
             pd.DataFrame: DataFrame containing the loaded road accident data.
