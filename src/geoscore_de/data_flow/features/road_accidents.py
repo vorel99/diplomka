@@ -2,6 +2,7 @@ import pandas as pd
 
 from geoscore_de.data_flow.features.base import BaseFeature
 from geoscore_de.data_flow.features.municipality import DEFAULT_RAW_DATA_PATH as MUNICIPALITY_RAW_DATA_PATH
+from geoscore_de.data_flow.features.municipality import MunicipalityFeature
 
 DEFAULT_RAW_DATA_PATH = "data/raw/features/46241-01-04-5-road-accidents.csv"
 DEFAULT_TFORM_DATA_PATH = "data/tform/features/road_accidents.csv"
@@ -77,13 +78,14 @@ class RoadAccidentsFeature(BaseFeature):
             pd.DataFrame: Transformed DataFrame with columns `AGS`, `accident_count`, `fatalities`,
             and `injury_accidents` normalized by population.
         """
-        muni_df = pd.read_csv(self.municipality_data_path, sep=";", encoding="latin1")
+        municipality_feature = MunicipalityFeature(self.municipality_data_path)
+        municipality_df = municipality_feature.load()[["AGS", "Persons"]]
 
         # merge muni_df with filtered_df to get Persons column
-        merged_df = df.merge(muni_df[["AGS", "Persons"]], on="AGS", how="left")
+        merged_df = df.merge(municipality_df[["AGS", "Persons"]], on="AGS", how="left")
 
         # weight all accident columns by Persons (per capita)
         for col in self.accident_columns:
             merged_df[col] = merged_df[col] / merged_df["Persons"]
 
-        return merged_df
+        return merged_df[["AGS"] + self.accident_columns]

@@ -41,6 +41,7 @@ class UnemploymentFeature(BaseFeature):
             skipfooter=4,
             engine="python",
             na_values=["-", "."],
+            dtype={"MU_ID": str},
         )
         df.rename(
             columns={"Unnamed: 0": "MU_ID", "Unnamed: 1": "Municipality", "Unnamed: 2": "unemployment_total"},
@@ -50,7 +51,6 @@ class UnemploymentFeature(BaseFeature):
         # drop first row which contains column descriptions
         df = df.iloc[1:].reset_index(drop=True)
 
-        df["MU_ID"] = df["MU_ID"].astype(str)
         df["unemployment_total"] = pd.to_numeric(df["unemployment_total"])
 
         # fill MU_ID on the right with zeros to a total length of 8 characters

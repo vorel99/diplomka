@@ -27,10 +27,8 @@ class MunicipalityFeature(BaseFeature):
             engine="python",
             header=None,
             names=["MU_ID", "Municipality", "Persons", "Area", "Population Density"],
+            dtype={"MU_ID": str},
         )
-
-        # Convert MU_ID to string for processing
-        df["MU_ID"] = df["MU_ID"].astype(str)
 
         # Create AGS column by removing the Verbandsgemeinde (collective municipality) level from MU_ID
         df["AGS"] = df["MU_ID"].str.slice(0, 5) + df["MU_ID"].str.slice(9, 12)
