@@ -67,6 +67,7 @@ class RoadAccidentsFeature(BaseFeature):
 
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
         """Transform raw road accident data by normalizing with municipality population.
+        Replaces raw accident counts with per capita values to account for population differences.
 
         Args:
             df (pd.DataFrame): Raw road accident DataFrame.
@@ -82,6 +83,6 @@ class RoadAccidentsFeature(BaseFeature):
 
         # weight all accident columns by Persons (per capita)
         for col in self.accident_columns:
-            merged_df[f"{col}_per_capita"] = merged_df[col] / merged_df["Persons"]
+            merged_df[col] = merged_df[col] / merged_df["Persons"]
 
         return merged_df

@@ -48,6 +48,15 @@ features:
         params:
           weight_column: eligible_voters
 
+  # Road accidents feature
+  - name: road_accidents
+    class: RoadAccidentsFeature
+    params:
+      raw_data_path: data/raw/features/46241-01-04-5-road-accidents.csv
+      tform_data_path: data/tform/features/road_accidents.csv
+      municipality_data_path: data/raw/municipalities_2022.csv
+
+  # Unemployment feature
   - name: unemployment
     class: UnemploymentFeature
     params:
