@@ -38,6 +38,7 @@ class PopulationFeature(BaseFeature):
             engine="python",
             na_values=["-", "."],
             names=["date", "MU_ID", "Municipality", "age_group", "people_count", "male_count", "female_count"],
+            dtype={"MU_ID": str},
             header=None,
         )
 

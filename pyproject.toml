@@ -34,6 +34,7 @@ dev = [
 ]
 analysis = [
     "ipykernel",
+    "plotnine",
 ]
 precommit = [
     "pre-commit",
