@@ -105,29 +105,36 @@ class TestModelLogging:
     """Test model logging with type detection."""
 
     @patch("geoscore_de.mlflow_wrapper.mlflow.active_run", return_value=MagicMock())
-    @patch("mlflow.lightgbm.log_model")
-    def test_log_lightgbm_model(self, mock_log_model: MagicMock, mock_active_run):
+    def test_log_lightgbm_model(self, mock_active_run):
         """Test auto-detection of LightGBM model."""
         from lightgbm import LGBMRegressor
 
         model = LGBMRegressor()
-        model.fit([[1], [2]], [1, 2])  # Fit to set __module__
 
-        mlflow_wrapper.log_model(model, "model")
+        # Mock the entire lightgbm submodule to prevent real MLflow calls
+        with patch("mlflow.lightgbm") as mock_lightgbm:
+            mock_log_model = MagicMock()
+            mock_lightgbm.log_model = mock_log_model
 
-        mock_log_model.assert_called_once_with(model, "model")
+            mlflow_wrapper.log_model(model, "model")
+
+            mock_log_model.assert_called_once_with(model, "model")
 
     @patch("geoscore_de.mlflow_wrapper.mlflow.active_run", return_value=MagicMock())
-    @patch("mlflow.sklearn.log_model")
-    def test_log_sklearn_model(self, mock_log_model: MagicMock, mock_active):
+    def test_log_sklearn_model(self, mock_active):
         """Test auto-detection of sklearn model."""
         from sklearn.linear_model import LinearRegression
 
         model = LinearRegression()
 
-        mlflow_wrapper.log_model(model, "model")
+        # Mock the entire sklearn submodule to prevent real MLflow calls
+        with patch("mlflow.sklearn") as mock_sklearn:
+            mock_log_model = MagicMock()
+            mock_sklearn.log_model = mock_log_model
 
-        mock_log_model.assert_called_once_with(model, "model")
+            mlflow_wrapper.log_model(model, "model")
+
+            mock_log_model.assert_called_once_with(model, "model")
 
     @patch("geoscore_de.mlflow_wrapper.mlflow.active_run", return_value=MagicMock())
     def test_log_model_none_raises_error(self, mock_active):
