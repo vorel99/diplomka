@@ -283,3 +283,9 @@ class TestFeatureMatrixBuilder:
         assert "AGS" in matrix.columns
         assert "feature1_AGS" not in matrix.columns
         assert "feature2_AGS" not in matrix.columns
+
+
+def test_default_config():
+    """Test that default config is set correctly."""
+    builder = FeatureMatrixBuilder()
+    assert builder.municipalities is not None

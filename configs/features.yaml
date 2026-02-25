@@ -4,7 +4,7 @@
 # Municipalities reference data - used as the basis for joining all features
 municipalities:
   class: MunicipalityFeature
-  module: geoscore_de.data_flow.municipality
+  module: geoscore_de.data_flow.features.municipality
   params:
     raw_data_path: data/raw/municipalities_2022.csv
 
@@ -12,10 +12,17 @@ features:
   # Population demographics feature
   - name: population
     class: PopulationFeature
-    module: geoscore_de.data_flow.features.population
     params:
       raw_data_path: data/raw/features/population.csv
       tform_data_path: data/tform/features/population.csv
+
+  # Births feature
+  - name: births
+    class: BirthFeature
+    params:
+      raw_data_path: data/raw/features/12612-91-01-5-births.csv
+      tform_data_path: data/tform/features/births.csv
+      municipality_data_path: data/raw/municipalities_2022.csv
 
   # Federal election 2021 results
   - name: election_2021
@@ -49,6 +56,15 @@ features:
         params:
           weight_column: eligible_voters
 
+  # Road accidents feature
+  - name: road_accidents
+    class: RoadAccidentsFeature
+    params:
+      raw_data_path: data/raw/features/46241-01-04-5-road-accidents.csv
+      tform_data_path: data/tform/features/road_accidents.csv
+      municipality_data_path: data/raw/municipalities_2022.csv
+
+  # Unemployment feature
   - name: unemployment
     class: UnemploymentFeature
     params:
