@@ -31,7 +31,15 @@ class Trainer:
         return data
 
     # TODO: add support for regex in feature filtering
-    def _filter_features(self, X):
+    def _filter_features(self, X: pd.DataFrame) -> pd.DataFrame:
+        """Filter features based on use_features and omit_features lists in config.
+        Features in use_features are selected first, then features in omit_features are dropped from the result.
+
+        Args:
+            X (pd.DataFrame): Input features DataFrame before filtering.
+        Returns:
+            pd.DataFrame: Filtered features DataFrame.
+        """
         feature_filter = self.config.feature_filtering
         if feature_filter.use_features:
             missing_features = set(feature_filter.use_features) - set(X.columns)
