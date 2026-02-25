@@ -15,7 +15,7 @@ from sklearn.metrics import (
 )
 from sklearn.model_selection import GridSearchCV, train_test_split
 
-from geoscore_de import mlflow
+from geoscore_de import mlflow_wrapper
 from geoscore_de.modelling.config import TrainingConfig
 
 
@@ -133,7 +133,7 @@ class Trainer:
 
             # Log to MLflow if path provided
             if save_path:
-                mlflow.log_artifact(save_path)
+                mlflow_wrapper.log_artifact(save_path)
 
                 # clean up plot file if it was saved locally
                 Path(save_path).unlink(missing_ok=True)
@@ -164,15 +164,15 @@ class Trainer:
         for param_name, param_value in grid_search.best_params_.items():
             print(f"  {param_name}: {param_value}")
             # Log to MLflow with 'param_' prefix
-            mlflow.log_param(f"best_{param_name}", param_value)
+            mlflow_wrapper.log_param(f"best_{param_name}", param_value)
 
         # Log best CV score
-        mlflow.log_metric("cv_best_score", grid_search.best_score_)
+        mlflow_wrapper.log_metric("cv_best_score", grid_search.best_score_)
 
         # 2. Create DataFrame from cv_results and log as artifact
         cv_results_path = "grid_search_cv_results.csv"
         cv_results_df = pd.DataFrame(grid_search.cv_results_)
-        mlflow.log_data(cv_results_df, artifact_file=cv_results_path, index=False)
+        mlflow_wrapper.log_data(cv_results_df, artifact_file=cv_results_path, index=False)
         print(f"\nGrid search results saved to: {cv_results_path}")
 
         # 3. Create visualization if matplotlib available
@@ -183,13 +183,13 @@ class Trainer:
 
         # 4. Log total number of models trained
         n_models = len(cv_results_df)
-        mlflow.log_metric("n_models_trained", n_models)
+        mlflow_wrapper.log_metric("n_models_trained", n_models)
         print(f"\nTotal models evaluated: {n_models}")
 
         # 5. Log parameter grid info
         param_grid = grid_search.param_grid if hasattr(grid_search, "param_grid") else {}
         n_params = len(param_grid)
-        mlflow.log_metric("n_hyperparameters_tuned", n_params)
+        mlflow_wrapper.log_metric("n_hyperparameters_tuned", n_params)
 
         print("=" * 60 + "\n")
 
@@ -253,7 +253,7 @@ class Trainer:
             plt.savefig(plot_path, dpi=300, bbox_inches="tight")
             plt.close()
 
-            mlflow.log_artifact(plot_path)
+            mlflow_wrapper.log_artifact(plot_path)
             Path(plot_path).unlink(missing_ok=True)
 
             print(f"Parameter importance plot saved to: {plot_path}")
@@ -310,7 +310,7 @@ class Trainer:
         # Log to MLflow
         for metric_name, metric_value in metrics.items():
             if metric_value is not None:
-                mlflow.log_metric(metric_name, metric_value)
+                mlflow_wrapper.log_metric(metric_name, metric_value)
 
         # Print summary
         print("\n" + "=" * 60)
@@ -344,13 +344,13 @@ class Trainer:
         """
         # Log training configuration to MLflow for reproducibility
         config_dict = self.config.model_dump()
-        mlflow.log_dict(config_dict, "config.json")
+        mlflow_wrapper.log_dict(config_dict, "config.json")
 
         X_train_val, X_test, y_train_val, y_test = self._prepare_data(data)
 
         # Save first 100 rows for reference
         sample = X_train_val.head(100)
-        mlflow.log_data(sample, "train_sample.csv", index=False)
+        mlflow_wrapper.log_data(sample, "train_sample.csv", index=False)
 
         # Train with GridSearchCV
         model = self._get_model()
@@ -367,6 +367,6 @@ class Trainer:
         self._evaluate(model, X_test, y_test)
 
         # Log the best model to MLflow
-        mlflow.log_model(grid_search.best_estimator_, "best_model")
+        mlflow_wrapper.log_model(grid_search.best_estimator_, "best_model")
 
         return grid_search
