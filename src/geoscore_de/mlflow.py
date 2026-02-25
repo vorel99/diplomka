@@ -154,10 +154,18 @@ def log_pickle(obj: Any, artifact_file: str):
         mlflow.log_artifact(local_path=str(local_path), artifact_path=dirname)
 
 
-# Model logging functions
 @require_active_run
-def log_catboost_model(model, artifact_path: str = "model", **kwargs):
-    """Log a CatBoost model."""
-    import mlflow.catboost
+def log_model(model, artifact_path: str = "model", **kwargs):
+    """Log a model with auto-detection of type."""
+    model_type = type(model).__module__
 
-    return mlflow.catboost.log_model(model, artifact_path, **kwargs)
+    if "lightgbm" in model_type:
+        import mlflow.lightgbm
+
+        return mlflow.lightgbm.log_model(model, artifact_path, **kwargs)
+    elif "catboost" in model_type:
+        import mlflow.catboost
+
+        return mlflow.catboost.log_model(model, artifact_path, **kwargs)
+    else:
+        return mlflow.sklearn.log_model(model, artifact_path, **kwargs)

@@ -19,23 +19,7 @@ from geoscore_de.modelling.config import TrainingConfig
 
 
 class Trainer:
-    """Model trainer with comprehensive evaluation and hyperparameter logging.
-
-    Grid Search Logging Best Practices (implemented):
-    ------------------------------------------------
-    1. **Best Parameters**: Logged individually to MLflow for easy comparison
-    2. **CV Results Table**: Full cv_results_ saved as CSV artifact
-    3. **CV Statistics**: Mean, std, min, max of all CV scores logged
-    4. **Visualizations**: Parameter importance plots showing impact on score
-    5. **Model Metadata**: Number of models trained, parameters tuned tracked
-    6. **Reproducibility**: All parameters saved for experiment reproduction
-
-    This enables:
-    - Comparing hyperparameter sensitivity across experiments
-    - Identifying stable vs volatile parameters
-    - Debugging poor model performance
-    - Understanding parameter interactions
-    """
+    """Model trainer with comprehensive evaluation and hyperparameter logging."""
 
     def __init__(self, config: TrainingConfig):
         self.config = config
@@ -163,8 +147,8 @@ class Trainer:
     def _log_grid_search_results(self, grid_search: GridSearchCV):
         """Log comprehensive grid search results to MLflow.
 
-        Best practices for logging hyperparameter tuning:
-        1. Log best parameters individually for easy comparison
+        Logging includes:
+        1. Best parameters individually for easy comparison
         2. Save full cv_results as CSV artifact for detailed analysis
         3. Create visualization of parameter importance
         4. Log CV score statistics (mean, std)
@@ -361,6 +345,10 @@ class Trainer:
         Returns:
             GridSearchCV: The fitted GridSearchCV object containing the best model and results.
         """
+        # Log training configuration to MLflow for reproducibility
+        config_dict = self.config.model_dump()
+        mlflow.log_dict(config_dict, "config.json")
+
         X_train_val, X_test, y_train_val, y_test = self._prepare_data(data)
 
         # Train with GridSearchCV
@@ -376,5 +364,8 @@ class Trainer:
 
         # Evaluate on test set
         self._evaluate(model, X_test, y_test)
+
+        # Log the best model using MLflow's autologging
+        mlflow.log_model(grid_search.best_estimator_, "best_model")
 
         return grid_search
