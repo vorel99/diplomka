@@ -1,3 +1,4 @@
+import warnings
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -33,8 +34,16 @@ class Trainer:
     def _filter_features(self, X):
         feature_filter = self.config.feature_filtering
         if feature_filter.use_features:
-            X = X[feature_filter.use_features]
+            missing_features = set(feature_filter.use_features) - set(X.columns)
+            if missing_features:
+                warnings.warn(f"Missing features in use_features: {missing_features}")
+            available_features = [f for f in feature_filter.use_features if f in X.columns]
+            X = X[available_features]
+
         if feature_filter.omit_features:
+            missing_features = set(feature_filter.omit_features) - set(X.columns)
+            if missing_features:
+                warnings.warn(f"Missing features in omit_features: {missing_features}")
             X = X.drop(columns=feature_filter.omit_features, errors="ignore")
         return X
 
@@ -201,8 +210,6 @@ class Trainer:
             best_params (dict): Best parameters found
         """
         try:
-            import matplotlib.pyplot as plt
-
             # Extract parameter columns
             param_cols = [col for col in cv_results_df.columns if col.startswith("param_") and col != "params"]
 
@@ -256,8 +263,6 @@ class Trainer:
 
             print(f"Parameter importance plot saved to: {plot_path}")
 
-        except ImportError:
-            print("Warning: matplotlib not available, skipping grid search plots")
         except Exception as e:
             print(f"Warning: Could not create grid search visualization: {e}")
 
@@ -286,7 +291,7 @@ class Trainer:
         try:
             # MAPE can fail if y_test contains zeros
             mape = mean_absolute_percentage_error(y_test, y_pred)
-        except Exception:
+        except (ZeroDivisionError, ValueError):
             mape = None
 
         med_ae = median_absolute_error(y_test, y_pred)
