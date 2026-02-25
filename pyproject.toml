@@ -17,6 +17,7 @@ dependencies = [
     "typer",
     "pydantic",
     "pyyaml",
+    "mlflow",
     # app
     "fastapi",
     "uvicorn[standard]",
