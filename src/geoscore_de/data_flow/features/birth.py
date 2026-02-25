@@ -9,7 +9,7 @@ DEFAULT_TFORM_DATA_PATH = "data/tform/features/births.csv"
 
 
 class BirthFeature(BaseFeature):
-    """Initialize the birth feature.
+    """Feature class for birth statistics data.
     Data source: https://www.regionalstatistik.de/genesis//online?operation=table&code=12612-91-01-5
 
     Args:
@@ -71,7 +71,9 @@ class BirthFeature(BaseFeature):
         # merge muni_df with filtered_df to get Persons column
         merged_df = df.merge(municipality_df[["AGS", "Persons"]], on="AGS", how="left")
 
-        # weight all accident columns by Persons (per capita)
+        # normalize births by Persons to obtain births per capita
         merged_df["births"] = merged_df["births"] / merged_df["Persons"]
 
-        return merged_df[["AGS", "births"]]
+        result_df = merged_df[["AGS", "births"]]
+        result_df.to_csv(self.tform_data_path, index=False)
+        return result_df
