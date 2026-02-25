@@ -7,6 +7,7 @@ import pandas as pd
 import yaml
 from pydantic import ValidationError
 
+from geoscore_de import mlflow_wrapper
 from geoscore_de.data_flow.features.base import BaseFeature, instantiate_feature
 from geoscore_de.data_flow.features.config import FeaturesYAMLConfig
 
@@ -155,6 +156,8 @@ class FeatureMatrixBuilder:
             output_path.parent.mkdir(parents=True, exist_ok=True)
             result_df.to_csv(output_path, index=False)
             logger.info(f"Saved feature matrix to {output_path}")
+
+        mlflow_wrapper.log_data(result_df, artifact_file="data/feature_matrix.csv", index=False)
 
         return result_df
 

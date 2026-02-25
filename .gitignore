@@ -13,6 +13,9 @@ venv/
 configs/*.env
 !configs/example.env
 
+mlflow.db
+mlruns/
+
 # data files
 data/**/*.csv
 data/**/*.pdf
