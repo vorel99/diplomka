@@ -351,6 +351,10 @@ class Trainer:
 
         X_train_val, X_test, y_train_val, y_test = self._prepare_data(data)
 
+        # Save first 100 rows for reference
+        sample = X_train_val.head(100)
+        mlflow.log_data(sample, "train_sample.csv")
+
         # Train with GridSearchCV
         model = self._get_model()
         grid_search = GridSearchCV(model, self.config.model.param_grid, cv=5, scoring="r2")
