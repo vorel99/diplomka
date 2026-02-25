@@ -187,7 +187,7 @@ class Trainer:
         print(f"\nTotal models evaluated: {n_models}")
 
         # 5. Log parameter grid info
-        param_grid = grid_search.param_grid if hasattr(grid_search, "param_grid") else {}
+        param_grid = grid_search.param_grid
         n_params = len(param_grid)
         mlflow_wrapper.log_metric("n_hyperparameters_tuned", n_params)
 
@@ -210,8 +210,6 @@ class Trainer:
                 return
 
             n_params = len(param_cols)
-            if n_params == 0:
-                return
 
             # Create subplot for each parameter
             fig, axes = plt.subplots(1, min(n_params, 3), figsize=(6 * min(n_params, 3), 5))

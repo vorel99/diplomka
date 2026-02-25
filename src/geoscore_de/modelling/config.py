@@ -2,7 +2,10 @@ from pydantic import BaseModel, Field
 
 
 class FeatureFilteringConfig(BaseModel):
-    """Configuration for feature filtering."""
+    """Configuration for feature filtering.
+    If both omit_features and use_features are provided, first use_features will be applied to select a
+    subset of features, and then omit_features will be applied to exclude specific features from that subset.
+    """
 
     omit_features: list[str] = Field(
         default_factory=list, description="List of features to omit from the dataset during model training."
