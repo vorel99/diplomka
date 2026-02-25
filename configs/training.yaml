@@ -1,4 +1,15 @@
-target_variable: unemployment_unemployment_total
+target_variable: unemployment_unemployment_per_capita
+
+feature_filtering:
+  omit_features: [
+    "unemployment_unemployment_total",
+    "unemployment_ausländisch",
+    "unemployment_schwerbehindert",
+    "unemployment_15 bis unter 20 Jahre",
+    "unemployment_15 bis unter 25 Jahre",
+    "unemployment_55 bis unter 65 Jahre",
+    "unemployment_langzeitarbeitslos"
+  ]
 
 train_test_split_ratio: 0.8
 

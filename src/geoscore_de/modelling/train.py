@@ -273,6 +273,8 @@ class Trainer:
             plt.close()
 
             mlflow.log_artifact(plot_path)
+            Path(plot_path).unlink(missing_ok=True)
+
             print(f"Parameter importance plot saved to: {plot_path}")
 
         except ImportError:
