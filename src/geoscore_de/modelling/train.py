@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import matplotlib.pyplot as plt
 import pandas as pd
 from lightgbm import LGBMRegressor
 from sklearn.metrics import (
@@ -28,7 +29,7 @@ class Trainer:
     def _filter_rows(self, data: pd.DataFrame) -> pd.DataFrame:
         return data
 
-    # TODO: implement method to filter features based on config
+    # TODO: add support for regex in feature filtering
     def _filter_features(self, X):
         feature_filter = self.config.feature_filtering
         if feature_filter.use_features:
@@ -98,8 +99,6 @@ class Trainer:
             save_path (str | None): Optional path to save the plot
         """
         try:
-            import matplotlib.pyplot as plt
-
             fig, axes = plt.subplots(1, 2, figsize=(14, 5))
 
             # Plot 1: Predicted vs Actual
@@ -139,8 +138,6 @@ class Trainer:
                 # clean up plot file if it was saved locally
                 Path(save_path).unlink(missing_ok=True)
 
-        except ImportError:
-            print("Warning: matplotlib not available, skipping diagnostic plots")
         except Exception as e:
             print(f"Warning: Could not create diagnostic plots: {e}")
 
@@ -353,7 +350,7 @@ class Trainer:
 
         # Save first 100 rows for reference
         sample = X_train_val.head(100)
-        mlflow.log_data(sample, "train_sample.csv")
+        mlflow.log_data(sample, "train_sample.csv", index=False)
 
         # Train with GridSearchCV
         model = self._get_model()
@@ -369,7 +366,7 @@ class Trainer:
         # Evaluate on test set
         self._evaluate(model, X_test, y_test)
 
-        # Log the best model using MLflow's autologging
+        # Log the best model to MLflow
         mlflow.log_model(grid_search.best_estimator_, "best_model")
 
         return grid_search

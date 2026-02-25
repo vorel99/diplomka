@@ -156,8 +156,22 @@ def log_pickle(obj: Any, artifact_file: str):
 
 @require_active_run
 def log_model(model, artifact_path: str = "model", **kwargs):
-    """Log a model with auto-detection of type."""
-    model_type = type(model).__module__
+    """Log a model with auto-detection of type.
+
+    Args:
+        model: The model instance to log.
+        artifact_path: The run-relative artifact path to log the model under.
+        **kwargs: Additional keyword arguments to pass to the underlying log_model function.
+    """
+    if model is None:
+        raise ValueError("log_model() was called with model=None; a valid model instance is required.")
+    model_type = getattr(type(model), "__module__", None)
+    if not isinstance(model_type, str) or not model_type:
+        raise TypeError(
+            "log_model() could not determine the model type because "
+            "type(model).__module__ is missing or invalid. "
+            "Ensure that a valid model instance is passed."
+        )
 
     if "lightgbm" in model_type:
         import mlflow.lightgbm
@@ -168,4 +182,6 @@ def log_model(model, artifact_path: str = "model", **kwargs):
 
         return mlflow.catboost.log_model(model, artifact_path, **kwargs)
     else:
+        import mlflow.sklearn
+
         return mlflow.sklearn.log_model(model, artifact_path, **kwargs)
