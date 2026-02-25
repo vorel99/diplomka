@@ -71,13 +71,23 @@ class TestFeatureFiltering:
         assert list(result.columns) == ["feature_a", "feature_c"]
         pd.testing.assert_frame_equal(result, sample_data[["feature_a", "feature_c"]])
 
+    def test_use_nonexistent_feature(self, sample_data, base_config):
+        """Test that using non-existent feature raises warning."""
+        base_config.feature_filtering.use_features = ["feature_a", "nonexistent_feature"]
+        trainer = Trainer(base_config)
+
+        with pytest.warns(UserWarning, match="Missing features in use_features"):
+            result = trainer._filter_features(sample_data.copy())
+
+        assert list(result.columns) == ["feature_a"]
+
     def test_omit_nonexistent_feature(self, sample_data, base_config):
-        """Test that omitting non-existent feature doesn't raise error."""
+        """Test that omitting non-existent feature raises warning."""
         base_config.feature_filtering.omit_features = ["nonexistent_feature", "feature_b"]
         trainer = Trainer(base_config)
 
-        # Should not raise error due to errors="ignore"
-        result = trainer._filter_features(sample_data.copy())
+        with pytest.warns(UserWarning, match="Missing features in omit_features"):
+            result = trainer._filter_features(sample_data.copy())
 
         # Only feature_b should be removed
         assert list(result.columns) == ["feature_a", "feature_c", "feature_d"]
