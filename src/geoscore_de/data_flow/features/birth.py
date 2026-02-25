@@ -8,7 +8,7 @@ DEFAULT_RAW_DATA_PATH = "data/raw/features/12612-91-01-5-births.csv"
 DEFAULT_TFORM_DATA_PATH = "data/tform/features/births.csv"
 
 
-class BirthsFeature(BaseFeature):
+class BirthFeature(BaseFeature):
     """Initialize the birth feature.
     Data source: https://www.regionalstatistik.de/genesis//online?operation=table&code=12612-91-01-5
 
@@ -46,7 +46,7 @@ class BirthsFeature(BaseFeature):
             skipfooter=4,
             engine="python",
             na_values=["-", "."],
-            names=["MU_ID", "MU_name", "births"],
+            names=["date", "MU_ID", "MU_name", "births"],
             dtype={"MU_ID": str},
             header=None,
         )

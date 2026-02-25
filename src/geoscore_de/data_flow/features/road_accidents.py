@@ -9,7 +9,7 @@ DEFAULT_TFORM_DATA_PATH = "data/tform/features/road_accidents.csv"
 
 
 class RoadAccidentsFeature(BaseFeature):
-    """Initialize the road accidents feature.
+    """Feature class for road accidents statistics.
     Data source: https://www.regionalstatistik.de/genesis//online?operation=table&code=46241-01-04-5
 
 
@@ -60,6 +60,7 @@ class RoadAccidentsFeature(BaseFeature):
             na_values=["-", "."],
             names=["MU_ID", "MU_name"] + self.accident_columns,
             header=None,
+            dtype={"MU_ID": str},
         )
 
         # add AGS column by right-padding MU_ID with zeros to 8 characters (adds trailing zeros if necessary)
@@ -75,17 +76,19 @@ class RoadAccidentsFeature(BaseFeature):
             df (pd.DataFrame): Raw road accident DataFrame.
 
         Returns:
-            pd.DataFrame: Transformed DataFrame with columns `AGS`, `accident_count`, `fatalities`,
-            and `injury_accidents` normalized by population.
+            pd.DataFrame: Transformed DataFrame with columns `AGS`, `accident_count`, `injury_accidents`,
+            `property_damage_accidents`, `fatalities` and `injured` normalized by population.
         """
         municipality_feature = MunicipalityFeature(self.municipality_data_path)
         municipality_df = municipality_feature.load()[["AGS", "Persons"]]
 
         # merge muni_df with filtered_df to get Persons column
-        merged_df = df.merge(municipality_df[["AGS", "Persons"]], on="AGS", how="left")
+        merged_df: pd.DataFrame = df.merge(municipality_df[["AGS", "Persons"]], on="AGS", how="left")
 
         # weight all accident columns by Persons (per capita)
         for col in self.accident_columns:
             merged_df[col] = merged_df[col] / merged_df["Persons"]
 
-        return merged_df[["AGS"] + self.accident_columns]
+        merged_df = merged_df[["AGS"] + self.accident_columns]
+        merged_df.to_csv(self.tform_data_path, index=False)
+        return merged_df

@@ -18,7 +18,7 @@ features:
 
   # Births feature
   - name: births
-    class: BirthsFeature
+    class: BirthFeature
     params:
       raw_data_path: data/raw/features/12612-91-01-5-births.csv
       tform_data_path: data/tform/features/births.csv

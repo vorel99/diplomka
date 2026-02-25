@@ -1,6 +1,6 @@
 import pytest
 
-from geoscore_de.data_flow.features import BirthsFeature
+from geoscore_de.data_flow.features import BirthFeature
 
 
 @pytest.fixture
@@ -30,11 +30,12 @@ def test_load_births_data(mock_raw_csv_content, tmp_path):
     temp_csv_path = tmp_path / "births.csv"
     temp_csv_path.write_text(mock_raw_csv_content)
 
-    # Load the data using the BirthsFeature class
-    feature = BirthsFeature(raw_data_path=str(temp_csv_path))
+    # Load the data using the BirthFeature class
+    feature = BirthFeature(raw_data_path=str(temp_csv_path))
     df = feature.load()
 
     # Check columns exist
+    assert "date" in df.columns
     assert "AGS" in df.columns
     assert "births" in df.columns
 
