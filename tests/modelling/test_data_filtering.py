@@ -67,7 +67,7 @@ class TestFeatureFiltering:
     def test_use_nonexistent_feature(self, sample_data: pd.DataFrame, base_config: TrainingConfig):
         """Test that using non-existent feature raises warning."""
         base_config.feature_filtering.use_features = ["census_a", "nonexistent_feature"]
-        with pytest.warns(UserWarning, match="No columns matched in use_features"):
+        with pytest.warns(UserWarning, match="No columns matched for use_features patterns"):
             result = filter_features(sample_data.copy(), base_config)
 
         assert list(result.columns) == ["census_a"]
@@ -75,7 +75,7 @@ class TestFeatureFiltering:
     def test_omit_nonexistent_feature(self, sample_data: pd.DataFrame, base_config: TrainingConfig):
         """Test that omitting non-existent feature raises warning."""
         base_config.feature_filtering.omit_features = ["nonexistent_feature", "census_b"]
-        with pytest.warns(UserWarning, match="No columns matched in omit_features"):
+        with pytest.warns(UserWarning, match="No columns matched for omit_features patterns"):
             result = filter_features(sample_data.copy(), base_config)
 
         # Only census_b should be removed

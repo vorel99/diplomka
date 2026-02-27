@@ -52,7 +52,7 @@ class Trainer:
         data = data.dropna(subset=[self.config.target_variable])
 
         # filter features
-        X = filter_features(data, self.config)
+        X = filter_features(data.drop(columns=[self.config.target_variable]), self.config)
         y = data[self.config.target_variable]
 
         # Split into train and test sets

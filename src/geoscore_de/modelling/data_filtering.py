@@ -97,7 +97,7 @@ def filter_features(data: pd.DataFrame, config: TrainingConfig) -> pd.DataFrame:
                 unmatched.append(pattern)
 
         if unmatched:
-            warnings.warn(f"No columns matched in use_features for patterns: {set(unmatched)}")
+            warnings.warn(f"No columns matched for use_features patterns: {set(unmatched)}")
 
         # Preserve order based on patterns / regex matches
         data = data[selected]
@@ -119,7 +119,7 @@ def filter_features(data: pd.DataFrame, config: TrainingConfig) -> pd.DataFrame:
                 unmatched.append(pattern)
 
         if unmatched:
-            warnings.warn(f"No columns matched in omit_features for patterns: {set(unmatched)}")
+            warnings.warn(f"No columns matched for omit_features patterns: {set(unmatched)}")
 
         if to_drop:
             data = data.drop(columns=to_drop, errors="ignore")
