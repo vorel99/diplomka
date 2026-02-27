@@ -3,6 +3,7 @@ from typing import Any
 
 import matplotlib.pyplot as plt
 import pandas as pd
+import plotnine as gg
 from sklearn.metrics import (
     explained_variance_score,
     max_error,
@@ -140,47 +141,81 @@ class TrainingResult:
 
         return self.metrics
 
-    def plot_diagnostics(self, save_path: str | None = None) -> None:
+    def plot_diagnostics(self, save_path: str | None = None) -> None | gg.ggplot:
         """Plot predicted-vs-actual and residual diagnostics for holdout set."""
         y_pred = self.best_estimator.predict(self.X_test)
-        self._plot_diagnostics(self.y_test, y_pred, save_path=save_path)
+        return self._plot_diagnostics(self.y_test, y_pred, save_path=save_path)
 
     def log_best_model(self, artifact_path: str = "best_model") -> None:
         """Log the best estimator to MLflow."""
         mlflow_wrapper.log_model(self.best_estimator, artifact_path)
 
-    def _plot_diagnostics(self, y_true, y_pred, save_path: str | None = None) -> None:
+    @classmethod
+    def predicted_vs_actual_plot(cls, y_true, y_pred) -> gg.ggplot:
+        """Create a predicted vs actual values plot."""
+        try:
+            df = pd.DataFrame({"Actual": y_true, "Predicted": y_pred})
+            plot = (
+                gg.ggplot(df, gg.aes(x="Actual", y="Predicted"))
+                + gg.geom_point(alpha=0.6, size=1.8)
+                + gg.geom_abline(
+                    intercept=0.0,
+                    slope=1.0,
+                    color="red",
+                    linetype="dashed",
+                )
+                + gg.labs(
+                    x="Actual Values",
+                    y="Predicted Values",
+                    title="Predicted vs Actual Values",
+                )
+                + gg.coord_equal()
+                + gg.theme(aspect_ratio=1)
+                + gg.theme_bw()
+            )
+
+            return plot
+        except Exception as e:
+            print(f"Warning: Could not create predicted vs actual plot: {e}")
+
+    @classmethod
+    def residual_plot(cls, y_true, y_pred) -> gg.ggplot:
+        """Create a residuals plot."""
+        try:
+            residuals = y_true - y_pred
+            df = pd.DataFrame({"Predicted": y_pred, "Residuals": residuals})
+            plot = (
+                gg.ggplot(df, gg.aes(x="Predicted", y="Residuals"))
+                + gg.geom_point(alpha=0.6, size=1.8)
+                + gg.geom_hline(
+                    yintercept=0.0,
+                    color="red",
+                    linetype="dashed",
+                )
+                + gg.labs(
+                    x="Predicted Values",
+                    y="Residuals",
+                    title="Residual Plot",
+                )
+                + gg.theme_bw()
+            )
+
+            return plot
+        except Exception as e:
+            print(f"Warning: Could not create residual plot: {e}")
+
+    def _plot_diagnostics(self, y_true, y_pred, save_path: str | None = None) -> None | Any:
         """Create diagnostic plots for model evaluation."""
         try:
-            fig, axes = plt.subplots(1, 2, figsize=(14, 5))
-
-            axes[0].scatter(y_true, y_pred, alpha=0.6, edgecolors="k", linewidth=0.5)
-            min_val = min(y_true.min(), y_pred.min())
-            max_val = max(y_true.max(), y_pred.max())
-            axes[0].plot([min_val, max_val], [min_val, max_val], "r--", lw=2, label="Perfect prediction")
-            axes[0].set_xlabel("Actual Values", fontsize=12)
-            axes[0].set_ylabel("Predicted Values", fontsize=12)
-            axes[0].set_title("Predicted vs Actual Values", fontsize=14, fontweight="bold")
-            axes[0].legend()
-            axes[0].grid(True, alpha=0.3)
-
-            residuals = y_true - y_pred
-            axes[1].scatter(y_pred, residuals, alpha=0.6, edgecolors="k", linewidth=0.5)
-            axes[1].axhline(y=0, color="r", linestyle="--", lw=2)
-            axes[1].set_xlabel("Predicted Values", fontsize=12)
-            axes[1].set_ylabel("Residuals", fontsize=12)
-            axes[1].set_title("Residual Plot", fontsize=14, fontweight="bold")
-            axes[1].grid(True, alpha=0.3)
-
-            plt.tight_layout()
+            predicted_vs_actual_plot = self.predicted_vs_actual_plot(y_true, y_pred)
+            residuals_plot = self.residual_plot(y_true, y_pred)
+            diagnostic_plot = predicted_vs_actual_plot | residuals_plot
 
             if save_path:
-                plt.savefig(save_path, dpi=300, bbox_inches="tight")
+                diagnostic_plot.save(save_path, dpi=300, width=14, height=5, units="in", verbose=False)
                 print(f"Diagnostic plots saved to: {save_path}")
             else:
-                plt.show()
-
-            plt.close()
+                return diagnostic_plot
 
             if save_path:
                 mlflow_wrapper.log_artifact(save_path)
