@@ -3,10 +3,14 @@ title: "Training Report"
 author: "Jan Cap"
 date: now
 output: html_document
+format:
+  html:
+    embed-resources: true
 ---
 
 ```{python}
 #| tags: [parameters]
+#| label: parameters-setup
 
 input_path: str = "data/final/feature_matrix.csv"
 training_config_path: str = "configs/training.yaml"
@@ -14,11 +18,21 @@ training_config_path: str = "configs/training.yaml"
 ```
 
 ```{python}
-#| label: load-data
+#| label: libraries-setup
+
+import os
+
+import matplotlib.pyplot as plt
 import pandas as pd
+import shap
 import yaml
+from IPython.display import display, Markdown
 from geoscore_de.modelling.config import TrainingConfig
 from geoscore_de.modelling.train import Trainer
+```
+
+```{python}
+#| label: load-data
 
 # load input data
 df = pd.read_csv(input_path)
@@ -31,6 +45,8 @@ with open(training_config_path, "r") as f:
 ## Preprocessing and feature engineering
 
 ```{python}
+#| label: feature-selection-summary
+
 # Print summary of feature selection for report
 feature_cfg = training_config.feature_filtering
 
@@ -47,6 +63,55 @@ print("\n**Features to omit:**", omitted_features)
 
 ```{python}
 #| label: model-training
+#| output: false
+
 # train model
-model = Trainer(training_config).train(df)
+grid_search = Trainer(training_config).train(df)
+```
+
+## Model evaluation
+
+```{python}
+# Evaluate model on test set and display evaluation metrics in the report
+trainer = Trainer(training_config)
+X_train_val, X_test, y_train_val, y_test = trainer._prepare_data(df)
+# Get the best model (from GridSearchCV)
+best_model = grid_search.best_estimator_
+metrics = trainer._evaluate(best_model, X_test, y_test, create_plots=True)
+
+# Show evaluation metrics as a styled DataFrame
+metrics_df = pd.DataFrame(list(metrics.items()), columns=["Metric", "Value"])
+display(metrics_df.style.format({"Value": "{:.4f}"}).set_caption("Test set evaluation metrics"))
+
+# Optionally display diagnostic plots
+if os.path.exists("model_diagnostics.png"):
+    print("### Model Diagnostics Plot")
+    display(Markdown(f"![Model Diagnostics Plot](model_diagnostics.png)"))
+```
+
+## SHAP analysis
+```{python}
+# SHAP analysis: Identify most relevant features for model predictions
+
+
+# Use the best trained model from the earlier section
+explainer = shap.Explainer(best_model, X_test)
+shap_values = explainer(X_test)
+
+
+
+# Plot feature importance (summary plot) inline (do not save to disk)
+display(Markdown("### SHAP Feature Importance"))
+shap.summary_plot(shap_values, X_test, show=True)
+plt.tight_layout()
+plt.show()
+plt.close()
+
+# Optionally, show a bar plot for average absolute SHAP values inline (do not save to disk)
+display(Markdown("#### SHAP Feature Importance (Bar)"))
+shap.summary_plot(shap_values, X_test, plot_type="bar", show=True)
+plt.tight_layout()
+plt.show()
+plt.close()
+```
 ```
