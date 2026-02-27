@@ -17,6 +17,7 @@ from sklearn.metrics import (
 from sklearn.model_selection import GridSearchCV
 
 from geoscore_de import mlflow_wrapper
+from geoscore_de.modelling.plots.diagnostic_plots import build_predicted_vs_actual_plot, build_residual_plot
 
 
 class TrainingResult:
@@ -150,65 +151,11 @@ class TrainingResult:
         """Log the best estimator to MLflow."""
         mlflow_wrapper.log_model(self.best_estimator, artifact_path)
 
-    @classmethod
-    def predicted_vs_actual_plot(cls, y_true, y_pred) -> gg.ggplot:
-        """Create a predicted vs actual values plot."""
-        try:
-            df = pd.DataFrame({"Actual": y_true, "Predicted": y_pred})
-            plot = (
-                gg.ggplot(df, gg.aes(x="Actual", y="Predicted"))
-                + gg.geom_point(alpha=0.6, size=1.8)
-                + gg.geom_abline(
-                    intercept=0.0,
-                    slope=1.0,
-                    color="red",
-                    linetype="dashed",
-                )
-                + gg.labs(
-                    x="Actual Values",
-                    y="Predicted Values",
-                    title="Predicted vs Actual Values",
-                )
-                + gg.coord_equal()
-                + gg.theme(aspect_ratio=1)
-                + gg.theme_bw()
-            )
-
-            return plot
-        except Exception as e:
-            print(f"Warning: Could not create predicted vs actual plot: {e}")
-
-    @classmethod
-    def residual_plot(cls, y_true, y_pred) -> gg.ggplot:
-        """Create a residuals plot."""
-        try:
-            residuals = y_true - y_pred
-            df = pd.DataFrame({"Predicted": y_pred, "Residuals": residuals})
-            plot = (
-                gg.ggplot(df, gg.aes(x="Predicted", y="Residuals"))
-                + gg.geom_point(alpha=0.6, size=1.8)
-                + gg.geom_hline(
-                    yintercept=0.0,
-                    color="red",
-                    linetype="dashed",
-                )
-                + gg.labs(
-                    x="Predicted Values",
-                    y="Residuals",
-                    title="Residual Plot",
-                )
-                + gg.theme_bw()
-            )
-
-            return plot
-        except Exception as e:
-            print(f"Warning: Could not create residual plot: {e}")
-
     def _plot_diagnostics(self, y_true, y_pred, save_path: str | None = None) -> None | Any:
         """Create diagnostic plots for model evaluation."""
         try:
-            predicted_vs_actual_plot = self.predicted_vs_actual_plot(y_true, y_pred)
-            residuals_plot = self.residual_plot(y_true, y_pred)
+            predicted_vs_actual_plot = build_predicted_vs_actual_plot(y_true, y_pred)
+            residuals_plot = build_residual_plot(y_true, y_pred)
             diagnostic_plot = predicted_vs_actual_plot | residuals_plot
 
             if save_path:
