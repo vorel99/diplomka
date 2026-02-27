@@ -6,6 +6,8 @@ output: html_document
 format:
   html:
     embed-resources: true
+execute:
+  echo: false
 ---
 
 ```{python}
@@ -28,6 +30,7 @@ import shap
 import yaml
 from IPython.display import display, Markdown
 from geoscore_de.modelling.config import TrainingConfig
+from geoscore_de.modelling.plots.diagnostic_plots import build_predicted_vs_actual_plot, build_residual_plot
 from geoscore_de.modelling.train import Trainer
 ```
 
@@ -66,18 +69,23 @@ print("\n**Features to omit:**", omitted_features)
 #| output: false
 
 # train model
-grid_search = Trainer(training_config).train(df)
+result = Trainer(training_config).train(df)
 ```
 
 ## Model evaluation
 
 ```{python}
-# Evaluate model on test set and display evaluation metrics in the report
-trainer = Trainer(training_config)
-X_train_val, X_test, y_train_val, y_test = trainer._prepare_data(df)
-# Get the best model (from GridSearchCV)
-best_model = grid_search.best_estimator_
-metrics = trainer._evaluate(best_model, X_test, y_test, create_plots=True)
+# | label: model-evaluation
+metrics = result.evaluate(create_plots=False)
+
+# plot real vs predicted values and residuals
+y_pred = result.best_estimator.predict(result.X_test)
+
+red_v_actual_plot = build_predicted_vs_actual_plot(result.y_test, y_pred)
+display(red_v_actual_plot)
+
+residual_plot = build_residual_plot(result.y_test, y_pred)
+display(residual_plot)
 
 # Show evaluation metrics as a styled DataFrame
 metrics_df = pd.DataFrame(list(metrics.items()), columns=["Metric", "Value"])
@@ -95,21 +103,21 @@ if os.path.exists("model_diagnostics.png"):
 
 
 # Use the best trained model from the earlier section
-explainer = shap.Explainer(best_model, X_test)
-shap_values = explainer(X_test)
+explainer = shap.Explainer(result.best_estimator, result.X_test)
+shap_values = explainer(result.X_test)
 
 
 
 # Plot feature importance (summary plot) inline (do not save to disk)
 display(Markdown("### SHAP Feature Importance"))
-shap.summary_plot(shap_values, X_test, show=True)
+shap.summary_plot(shap_values, result.X_test, show=True)
 plt.tight_layout()
 plt.show()
 plt.close()
 
 # Optionally, show a bar plot for average absolute SHAP values inline (do not save to disk)
 display(Markdown("#### SHAP Feature Importance (Bar)"))
-shap.summary_plot(shap_values, X_test, plot_type="bar", show=True)
+shap.summary_plot(shap_values, result.X_test, plot_type="bar", show=True)
 plt.tight_layout()
 plt.show()
 plt.close()
