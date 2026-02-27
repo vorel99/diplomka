@@ -2,7 +2,7 @@ import pandas as pd
 import pytest
 
 from geoscore_de.modelling.config import FeatureFilteringConfig, ModelConfig, TrainingConfig
-from geoscore_de.modelling.train import Trainer
+from geoscore_de.modelling.data_filtering import filter_features
 
 
 class TestFeatureFiltering:
@@ -27,8 +27,7 @@ class TestFeatureFiltering:
 
     def test_no_filtering(self, sample_data, base_config):
         """Test that all features are kept when no filtering is specified."""
-        trainer = Trainer(base_config)
-        result = trainer._filter_features(sample_data.copy())
+        result = filter_features(sample_data.copy(), base_config)
 
         assert list(result.columns) == list(sample_data.columns)
         pd.testing.assert_frame_equal(result, sample_data)
@@ -36,9 +35,7 @@ class TestFeatureFiltering:
     def test_use_features_only(self, sample_data, base_config):
         """Test selecting specific features with use_features."""
         base_config.feature_filtering.use_features = ["feature_a", "feature_c"]
-        trainer = Trainer(base_config)
-
-        result = trainer._filter_features(sample_data.copy())
+        result = filter_features(sample_data.copy(), base_config)
 
         assert list(result.columns) == ["feature_a", "feature_c"]
         assert len(result) == 4  # All rows preserved
@@ -47,9 +44,7 @@ class TestFeatureFiltering:
     def test_omit_features_only(self, sample_data, base_config):
         """Test excluding specific features with omit_features."""
         base_config.feature_filtering.omit_features = ["feature_b", "feature_d"]
-        trainer = Trainer(base_config)
-
-        result = trainer._filter_features(sample_data.copy())
+        result = filter_features(sample_data.copy(), base_config)
 
         assert list(result.columns) == ["feature_a", "feature_c"]
         assert len(result) == 4  # All rows preserved
@@ -63,9 +58,7 @@ class TestFeatureFiltering:
         # First select a, b, c, then omit b
         base_config.feature_filtering.use_features = ["feature_a", "feature_b", "feature_c"]
         base_config.feature_filtering.omit_features = ["feature_b"]
-        trainer = Trainer(base_config)
-
-        result = trainer._filter_features(sample_data.copy())
+        result = filter_features(sample_data.copy(), base_config)
 
         # Should have a and c only (d excluded by use_features, b excluded by omit_features)
         assert list(result.columns) == ["feature_a", "feature_c"]
@@ -74,20 +67,16 @@ class TestFeatureFiltering:
     def test_use_nonexistent_feature(self, sample_data, base_config):
         """Test that using non-existent feature raises warning."""
         base_config.feature_filtering.use_features = ["feature_a", "nonexistent_feature"]
-        trainer = Trainer(base_config)
-
-        with pytest.warns(UserWarning, match="Missing features in use_features"):
-            result = trainer._filter_features(sample_data.copy())
+        with pytest.warns(UserWarning, match="No columns matched in use_features"):
+            result = filter_features(sample_data.copy(), base_config)
 
         assert list(result.columns) == ["feature_a"]
 
     def test_omit_nonexistent_feature(self, sample_data, base_config):
         """Test that omitting non-existent feature raises warning."""
         base_config.feature_filtering.omit_features = ["nonexistent_feature", "feature_b"]
-        trainer = Trainer(base_config)
-
-        with pytest.warns(UserWarning, match="Missing features in omit_features"):
-            result = trainer._filter_features(sample_data.copy())
+        with pytest.warns(UserWarning, match="No columns matched in omit_features"):
+            result = filter_features(sample_data.copy(), base_config)
 
         # Only feature_b should be removed
         assert list(result.columns) == ["feature_a", "feature_c", "feature_d"]
@@ -95,9 +84,7 @@ class TestFeatureFiltering:
     def test_use_single_feature(self, sample_data, base_config):
         """Test selecting a single feature."""
         base_config.feature_filtering.use_features = ["feature_c"]
-        trainer = Trainer(base_config)
-
-        result = trainer._filter_features(sample_data.copy())
+        result = filter_features(sample_data.copy(), base_config)
 
         assert list(result.columns) == ["feature_c"]
         assert result.shape == (4, 1)
@@ -105,9 +92,7 @@ class TestFeatureFiltering:
     def test_omit_all_features(self, sample_data, base_config):
         """Test omitting all features results in empty DataFrame."""
         base_config.feature_filtering.omit_features = ["feature_a", "feature_b", "feature_c", "feature_d"]
-        trainer = Trainer(base_config)
-
-        result = trainer._filter_features(sample_data.copy())
+        result = filter_features(sample_data.copy(), base_config)
 
         assert len(result.columns) == 0
         assert len(result) == 4  # Rows still present
@@ -116,9 +101,7 @@ class TestFeatureFiltering:
         """Test that use_features preserves the specified order."""
         # Specify features in different order than DataFrame
         base_config.feature_filtering.use_features = ["feature_d", "feature_a", "feature_c"]
-        trainer = Trainer(base_config)
-
-        result = trainer._filter_features(sample_data.copy())
+        result = filter_features(sample_data.copy(), base_config)
 
         # Should maintain order from use_features
         assert list(result.columns) == ["feature_d", "feature_a", "feature_c"]
