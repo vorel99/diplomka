@@ -1,8 +1,8 @@
 import pandas as pd
 import pytest
 
-from geoscore_de.modelling.config import FeatureFilteringConfig, ModelConfig, TrainingConfig
-from geoscore_de.modelling.data_filtering import filter_features
+from geoscore_de.modelling.config import FeatureFilteringConfig, ModelConfig, RowFilteringConfig, TrainingConfig
+from geoscore_de.modelling.data_filtering import filter_features, filter_rows
 
 
 class TestFeatureFiltering:
@@ -121,3 +121,102 @@ class TestFeatureFiltering:
 
         assert list(result.columns) == ["census_a", "census_b"]
         pd.testing.assert_frame_equal(result, sample_data[["census_a", "census_b"]])
+
+
+class TestRowFiltering:
+    """Test row filtering functionality."""
+
+    @pytest.fixture
+    def sample_data(self) -> pd.DataFrame:
+        """Create sample DataFrame with AGS and region columns."""
+        return pd.DataFrame(
+            {
+                "AGS": ["02000", "02123", "03000", "09162", "09163"],
+                "land": ["Hamburg", "Hamburg", "Niedersachsen", "Bayern", "Bayern"],
+                "value": [1.0, 2.0, 3.0, 4.0, 5.0],
+            }
+        )
+
+    @pytest.fixture
+    def base_config(self) -> TrainingConfig:
+        """Create base training config with no row filtering."""
+        return TrainingConfig(
+            target_variable="value",
+            feature_filtering=FeatureFilteringConfig(),
+            row_filtering=RowFilteringConfig(),
+            model=ModelConfig(),
+        )
+
+    def test_no_filtering(self, sample_data: pd.DataFrame, base_config: TrainingConfig):
+        """Test that all rows are kept when no row filtering is configured."""
+        result = filter_rows(sample_data.copy(), base_config)
+
+        pd.testing.assert_frame_equal(result, sample_data)
+
+    def test_omit_exact_value(self, sample_data: pd.DataFrame, base_config: TrainingConfig):
+        """Test omitting rows with an exact column value."""
+        base_config.row_filtering.omit_rows = {"AGS": ["03000"]}
+        result = filter_rows(sample_data.copy(), base_config)
+
+        assert "03000" not in result["AGS"].values
+        assert len(result) == 4
+
+    def test_omit_glob_pattern(self, sample_data: pd.DataFrame, base_config: TrainingConfig):
+        """Test omitting rows using a glob-style wildcard pattern (e.g. '02*')."""
+        base_config.row_filtering.omit_rows = {"AGS": ["02*"]}
+        result = filter_rows(sample_data.copy(), base_config)
+
+        assert not result["AGS"].str.startswith("02").any()
+        assert len(result) == 3
+        assert list(result["AGS"]) == ["03000", "09162", "09163"]
+
+    def test_omit_multiple_patterns(self, sample_data: pd.DataFrame, base_config: TrainingConfig):
+        """Test omitting rows matching any of multiple patterns."""
+        base_config.row_filtering.omit_rows = {"AGS": ["02*", "03*"]}
+        result = filter_rows(sample_data.copy(), base_config)
+
+        assert len(result) == 2
+        assert list(result["AGS"]) == ["09162", "09163"]
+
+    def test_omit_multiple_columns(self, sample_data: pd.DataFrame, base_config: TrainingConfig):
+        """Test omitting rows based on filters applied to two different columns."""
+        base_config.row_filtering.omit_rows = {"AGS": ["09*"], "land": ["Hamburg"]}
+        result = filter_rows(sample_data.copy(), base_config)
+
+        # Hamburg rows (02000, 02123) and Bayern rows (09162, 09163) should be omitted
+        assert len(result) == 1
+        assert list(result["AGS"]) == ["03000"]
+
+    def test_omit_regex_pattern(self, sample_data: pd.DataFrame, base_config: TrainingConfig):
+        """Test omitting rows using a full regular expression."""
+        # Regex: AGS starts with 09 and ends with 2 or 3
+        base_config.row_filtering.omit_rows = {"AGS": ["0916[23]"]}
+        result = filter_rows(sample_data.copy(), base_config)
+
+        assert len(result) == 3
+        assert "09162" not in result["AGS"].values
+        assert "09163" not in result["AGS"].values
+
+    def test_omit_nonexistent_column_warns(self, sample_data: pd.DataFrame, base_config: TrainingConfig):
+        """Test that a warning is issued when the filter column is not in the data."""
+        base_config.row_filtering.omit_rows = {"nonexistent": ["02*"]}
+        with pytest.warns(UserWarning, match="Column 'nonexistent'"):
+            result = filter_rows(sample_data.copy(), base_config)
+
+        # All rows preserved when column is missing
+        pd.testing.assert_frame_equal(result, sample_data)
+
+    def test_omit_all_rows(self, sample_data: pd.DataFrame, base_config: TrainingConfig):
+        """Test that filtering can remove all rows."""
+        base_config.row_filtering.omit_rows = {"AGS": [".*"]}
+        result = filter_rows(sample_data.copy(), base_config)
+
+        assert len(result) == 0
+        assert list(result.columns) == list(sample_data.columns)
+
+    def test_pattern_matches_no_rows(self, sample_data: pd.DataFrame, base_config: TrainingConfig):
+        """Test that a pattern matching no rows leaves the DataFrame unchanged."""
+        base_config.row_filtering.omit_rows = {"AGS": ["99*"]}
+        result = filter_rows(sample_data.copy(), base_config)
+
+        pd.testing.assert_frame_equal(result, sample_data)

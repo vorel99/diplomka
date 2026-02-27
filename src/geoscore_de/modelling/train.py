@@ -17,7 +17,7 @@ from sklearn.model_selection import GridSearchCV, train_test_split
 
 from geoscore_de import mlflow_wrapper
 from geoscore_de.modelling.config import TrainingConfig
-from geoscore_de.modelling.data_filtering import filter_features
+from geoscore_de.modelling.data_filtering import filter_features, filter_rows
 
 
 class Trainer:
@@ -26,9 +26,8 @@ class Trainer:
     def __init__(self, config: TrainingConfig):
         self.config = config
 
-    # TODO: implement method to filter rows based on config
     def _filter_rows(self, data: pd.DataFrame) -> pd.DataFrame:
-        return data
+        return filter_rows(data, self.config)
 
     def _prepare_data(self, data: pd.DataFrame):
         """Prepare data for model training by applying row and feature filtering
