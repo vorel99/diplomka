@@ -1,4 +1,3 @@
-import warnings
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -18,6 +17,7 @@ from sklearn.model_selection import GridSearchCV, train_test_split
 
 from geoscore_de import mlflow_wrapper
 from geoscore_de.modelling.config import TrainingConfig
+from geoscore_de.modelling.data_filtering import filter_features
 
 
 class Trainer:
@@ -29,31 +29,6 @@ class Trainer:
     # TODO: implement method to filter rows based on config
     def _filter_rows(self, data: pd.DataFrame) -> pd.DataFrame:
         return data
-
-    # TODO: add support for regex in feature filtering
-    def _filter_features(self, X: pd.DataFrame) -> pd.DataFrame:
-        """Filter features based on use_features and omit_features lists in config.
-        Features in use_features are selected first, then features in omit_features are dropped from the result.
-
-        Args:
-            X (pd.DataFrame): Input features DataFrame before filtering.
-        Returns:
-            pd.DataFrame: Filtered features DataFrame.
-        """
-        feature_filter = self.config.feature_filtering
-        if feature_filter.use_features:
-            missing_features = set(feature_filter.use_features) - set(X.columns)
-            if missing_features:
-                warnings.warn(f"Missing features in use_features: {missing_features}")
-            available_features = [f for f in feature_filter.use_features if f in X.columns]
-            X = X[available_features]
-
-        if feature_filter.omit_features:
-            missing_features = set(feature_filter.omit_features) - set(X.columns)
-            if missing_features:
-                warnings.warn(f"Missing features in omit_features: {missing_features}")
-            X = X.drop(columns=feature_filter.omit_features, errors="ignore")
-        return X
 
     def _prepare_data(self, data: pd.DataFrame):
         """Prepare data for model training by applying row and feature filtering
@@ -77,7 +52,7 @@ class Trainer:
         data = data.dropna(subset=[self.config.target_variable])
 
         # filter features
-        X = self._filter_features(data.drop(columns=[self.config.target_variable]))
+        X = filter_features(data.drop(columns=[self.config.target_variable]), self.config)
         y = data[self.config.target_variable]
 
         # Split into train and test sets
