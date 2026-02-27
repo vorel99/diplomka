@@ -1,0 +1,52 @@
+---
+title: "Training Report"
+author: "Jan Cap"
+date: now
+output: html_document
+---
+
+```{python}
+#| tags: [parameters]
+
+input_path: str = "data/final/feature_matrix.csv"
+training_config_path: str = "configs/training.yaml"
+
+```
+
+```{python}
+#| label: load-data
+import pandas as pd
+import yaml
+from geoscore_de.modelling.config import TrainingConfig
+from geoscore_de.modelling.train import Trainer
+
+# load input data
+df = pd.read_csv(input_path)
+
+# load training config
+with open(training_config_path, "r") as f:
+    training_config = TrainingConfig(**yaml.safe_load(f))
+```
+
+## Preprocessing and feature engineering
+
+```{python}
+# Print summary of feature selection for report
+feature_cfg = training_config.feature_filtering
+
+used_features = feature_cfg.use_features or "ALL"
+omitted_features = feature_cfg.omit_features or "NONE"
+
+print("### Feature selection criteria")
+print("\n**Features to use:**", used_features)
+print("\n**Features to omit:**", omitted_features)
+```
+
+
+## Model training
+
+```{python}
+#| label: model-training
+# train model
+model = Trainer(training_config).train(df)
+```
