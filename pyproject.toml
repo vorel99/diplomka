@@ -27,6 +27,9 @@ dependencies = [
     # modelling
     "scikit-learn",
     "lightgbm",
+    # reporting
+    "nbclient",
+    "shap",
 ]
 
 [dependency-groups]
