@@ -1,5 +1,5 @@
 import pandas as pd
-from matplotlib import pyplot as plt
+import plotnine as gg
 
 
 def build_plot_grid_search_results(cv_results_df: pd.DataFrame, best_params: dict) -> None:
@@ -11,41 +11,74 @@ def build_plot_grid_search_results(cv_results_df: pd.DataFrame, best_params: dic
         if not param_cols:
             return
 
-        n_params = len(param_cols)
-        fig, axes = plt.subplots(1, min(n_params, 3), figsize=(6 * min(n_params, 3), 5))
-        if n_params == 1:
-            axes = [axes]
+        plots: list[gg.ggplot] = []
 
-        for idx, param_col in enumerate(param_cols[:3]):
-            ax = axes[idx]
+        for param_col in param_cols[:3]:
             param_name = param_col.replace("param_", "")
 
-            grouped = cv_results_df.groupby(param_col)[score_col].agg(["mean", "std"])
+            grouped = cv_results_df.groupby(param_col)[score_col].agg(["mean", "std"]).reset_index()
+            numeric_param_values = pd.to_numeric(grouped[param_col], errors="coerce")
+            if numeric_param_values.notna().all():
+                grouped = grouped.assign(_param_numeric=numeric_param_values).sort_values("_param_numeric")
+            else:
+                grouped = grouped.sort_values(by=param_col, key=lambda series: series.astype(str))
 
-            x_values = grouped.index.astype(str)
-            y_values = grouped["mean"]
-            y_std = grouped["std"]
-
-            ax.errorbar(x_values, y_values, yerr=y_std, marker="o", capsize=5, capthick=2, linewidth=2)
+            grouped["param_value"] = grouped[param_col].astype(str)
+            grouped["param_value"] = pd.Categorical(
+                grouped["param_value"],
+                categories=grouped["param_value"].tolist(),
+                ordered=True,
+            )
+            grouped["y_min"] = grouped["mean"] - grouped["std"]
+            grouped["y_max"] = grouped["mean"] + grouped["std"]
 
             best_value = str(best_params.get(param_name, ""))
-            if best_value in x_values:
-                best_idx = list(x_values).index(best_value)
-                ax.plot(x_values[best_idx], y_values.iloc[best_idx], "r*", markersize=20, label="Best", zorder=5)
+            best_points = grouped[grouped["param_value"] == best_value]
 
-            ax.set_xlabel(param_name, fontsize=12, fontweight="bold")
-            ax.set_ylabel("Mean CV Score (R²)", fontsize=12)
-            ax.set_title(f"Impact of {param_name}", fontsize=13, fontweight="bold")
-            ax.grid(True, alpha=0.3)
-            ax.legend()
+            plot = (
+                gg.ggplot(grouped, gg.aes(x="param_value", y="mean"))
+                + gg.geom_line(group=1)
+                + gg.geom_point(size=2)
+                + gg.geom_errorbar(gg.aes(ymin="y_min", ymax="y_max"), width=0.2)
+                + gg.labs(
+                    x=param_name,
+                    y="Mean CV Score (R²)",
+                    title=f"Impact of {param_name}",
+                )
+                + gg.theme_bw()
+                + gg.theme(figure_size=(6, 5))
+            )
 
-            if len(x_values) > 5:
-                ax.tick_params(axis="x", rotation=45)
+            if len(grouped) > 5:
+                plot += gg.theme(axis_text_x=gg.element_text(rotation=45, ha="right"))
 
-        plt.tight_layout()
+            if not best_points.empty:
+                plot += gg.geom_point(
+                    data=best_points,
+                    mapping=gg.aes(x="param_value", y="mean"),
+                    color="red",
+                    shape="*",
+                    size=5,
+                )
+
+            plots.append(plot)
+
+        if not plots:
+            return
+
+        combined_plot = plots[0]
+        for plot in plots[1:]:
+            combined_plot = combined_plot | plot
+
         plot_path = "grid_search_param_importance.png"
-        plt.savefig(plot_path, dpi=300, bbox_inches="tight")
-        plt.close()
+        combined_plot.save(
+            filename=plot_path,
+            dpi=300,
+            width=6 * len(plots),
+            height=5,
+            units="in",
+            verbose=False,
+        )
 
     except Exception as e:
         print(f"Warning: Could not create grid search visualization: {e}")
