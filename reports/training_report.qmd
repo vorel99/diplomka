@@ -75,7 +75,107 @@ result = Trainer(training_config).train(df)
 ## Model evaluation
 
 ```{python}
-# | label: model-evaluation
+#| label: train-evaluation
+# Cross-validation stability summary for the best model
+cv_results_df = pd.DataFrame(result.grid_search.cv_results_)
+best_idx = result.grid_search.best_index_
+best_row = cv_results_df.loc[best_idx]
+cv_folds = int(result.grid_search.cv)
+
+metric_specs = [
+    {"key": "r2", "label": "R²", "lower_is_better": False},
+    {"key": "mae", "label": "MAE", "lower_is_better": True},
+    {"key": "mse", "label": "MSE", "lower_is_better": True},
+    {"key": "rmse", "label": "RMSE", "lower_is_better": True},
+    {"key": "mape", "label": "MAPE", "lower_is_better": True},
+    {"key": "median_ae", "label": "Median AE", "lower_is_better": True},
+    {"key": "max_error", "label": "Max Error", "lower_is_better": True},
+    {"key": "explained_variance", "label": "Explained Variance", "lower_is_better": False},
+]
+
+
+def to_display_value(raw_value: float, lower_is_better: bool) -> float:
+    if lower_is_better:
+        return -raw_value
+    return raw_value
+
+
+summary_rows = []
+for spec in metric_specs:
+    metric_key = spec["key"]
+    mean_test_col = f"mean_test_{metric_key}"
+    std_test_col = f"std_test_{metric_key}"
+    mean_train_col = f"mean_train_{metric_key}"
+    std_train_col = f"std_train_{metric_key}"
+
+    if mean_test_col not in cv_results_df.columns or std_test_col not in cv_results_df.columns:
+        continue
+
+    val_mean = to_display_value(best_row[mean_test_col], spec["lower_is_better"])
+    val_std = best_row[std_test_col]
+
+    row = {
+        "Metric": spec["label"],
+        "Validation Mean": val_mean,
+        "Validation Std": val_std,
+        "Validation 95% CI (half-width)": 1.96 * val_std / (cv_folds ** 0.5),
+    }
+
+    if mean_train_col in cv_results_df.columns and std_train_col in cv_results_df.columns:
+        train_mean = to_display_value(best_row[mean_train_col], spec["lower_is_better"])
+        train_std = best_row[std_train_col]
+        row["Training Mean"] = train_mean
+        row["Training Std"] = train_std
+        row["Training 95% CI (half-width)"] = 1.96 * train_std / (cv_folds ** 0.5)
+
+    summary_rows.append(row)
+
+cv_summary_df = pd.DataFrame(summary_rows)
+
+display(Markdown("### Cross-validation stability (best model, all metrics)"))
+display(
+    cv_summary_df.style.format(
+        {
+            "Validation Mean": "{:.4f}",
+            "Validation Std": "{:.4f}",
+            "Validation 95% CI (half-width)": "{:.4f}",
+            "Training Mean": "{:.4f}",
+            "Training Std": "{:.4f}",
+            "Training 95% CI (half-width)": "{:.4f}",
+        }
+    ).set_caption("CV aggregated metrics (mean ± std) for selected hyperparameters")
+)
+
+fold_rows = []
+for spec in metric_specs:
+    metric_key = spec["key"]
+    split_test_cols = sorted(
+        [col for col in cv_results_df.columns if col.startswith("split") and col.endswith(f"_test_{metric_key}")]
+    )
+    for col in split_test_cols:
+        fold_num = int(col.split("_")[0].replace("split", "")) + 1
+        fold_rows.append(
+            {
+                "Metric": spec["label"],
+                "Fold": fold_num,
+                "Validation Score": to_display_value(best_row[col], spec["lower_is_better"]),
+            }
+        )
+
+fold_scores_df = pd.DataFrame(fold_rows).sort_values(["Metric", "Fold"]).reset_index(drop=True)
+
+# add this as hidable detail
+display(Markdown("<details><summary>Fold-level validation scores</summary>"))
+display(
+    fold_scores_df.style.format({"Validation Score": "{:.4f}"}).set_caption(
+        "Fold-level validation scores for selected hyperparameters"
+    )
+)
+display(Markdown("</details>"))
+```
+
+```{python}
+# | label: test-evaluation
 metrics = result.evaluate(create_plots=False)
 
 # plot real vs predicted values and residuals

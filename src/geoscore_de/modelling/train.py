@@ -1,5 +1,15 @@
 import pandas as pd
 from lightgbm import LGBMRegressor
+from sklearn.metrics import (
+    explained_variance_score,
+    make_scorer,
+    max_error,
+    mean_absolute_error,
+    mean_absolute_percentage_error,
+    mean_squared_error,
+    median_absolute_error,
+    root_mean_squared_error,
+)
 from sklearn.model_selection import GridSearchCV, train_test_split
 
 from geoscore_de import mlflow_wrapper
@@ -91,7 +101,24 @@ class Trainer:
 
         # Train with GridSearchCV
         model = self._get_model()
-        grid_search = GridSearchCV(model, self.config.model.param_grid, cv=5, scoring="r2")
+        scoring = {
+            "r2": "r2",
+            "mae": make_scorer(mean_absolute_error, greater_is_better=False),
+            "mse": make_scorer(mean_squared_error, greater_is_better=False),
+            "rmse": make_scorer(root_mean_squared_error, greater_is_better=False),
+            "mape": make_scorer(mean_absolute_percentage_error, greater_is_better=False),
+            "median_ae": make_scorer(median_absolute_error, greater_is_better=False),
+            "max_error": make_scorer(max_error, greater_is_better=False),
+            "explained_variance": make_scorer(explained_variance_score),
+        }
+        grid_search = GridSearchCV(
+            model,
+            self.config.model.param_grid,
+            cv=5,
+            scoring=scoring,
+            refit="r2",
+            return_train_score=True,
+        )
         grid_search.fit(X_train_val, y_train_val)
 
         result = TrainingResult(

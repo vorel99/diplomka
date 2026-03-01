@@ -6,6 +6,7 @@ def build_plot_grid_search_results(cv_results_df: pd.DataFrame, best_params: dic
     """Create visualization of grid search results."""
     try:
         param_cols = [col for col in cv_results_df.columns if col.startswith("param_") and col != "params"]
+        score_col = "mean_test_score" if "mean_test_score" in cv_results_df.columns else "mean_test_r2"
 
         if not param_cols:
             return
@@ -19,7 +20,7 @@ def build_plot_grid_search_results(cv_results_df: pd.DataFrame, best_params: dic
             ax = axes[idx]
             param_name = param_col.replace("param_", "")
 
-            grouped = cv_results_df.groupby(param_col)["mean_test_score"].agg(["mean", "std"])
+            grouped = cv_results_df.groupby(param_col)[score_col].agg(["mean", "std"])
 
             x_values = grouped.index.astype(str)
             y_values = grouped["mean"]
