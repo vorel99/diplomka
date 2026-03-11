@@ -2,7 +2,7 @@ import pandas as pd
 import plotnine as gg
 
 
-def build_plot_grid_search_results(cv_results_df: pd.DataFrame, best_params: dict) -> None:
+def build_plot_grid_search_results(cv_results_df: pd.DataFrame, best_params: dict) -> gg.ggplot:
     """Create visualization of grid search results."""
     try:
         param_cols = [col for col in cv_results_df.columns if col.startswith("param_") and col != "params"]
@@ -70,15 +70,7 @@ def build_plot_grid_search_results(cv_results_df: pd.DataFrame, best_params: dic
         for plot in plots[1:]:
             combined_plot = combined_plot | plot
 
-        plot_path = "grid_search_param_importance.png"
-        combined_plot.save(
-            filename=plot_path,
-            dpi=300,
-            width=6 * len(plots),
-            height=5,
-            units="in",
-            verbose=False,
-        )
+        return combined_plot
 
     except Exception as e:
         print(f"Warning: Could not create grid search visualization: {e}")
