@@ -17,10 +17,19 @@ class FeatureFilteringConfig(BaseModel):
 
 
 class RowFilteringConfig(BaseModel):
-    """Configuration for row filtering."""
+    """Configuration for row filtering.
 
-    omit_land: list[str] = Field(
-        default_factory=list, description="List of 'Land' values to omit from the dataset during model training."
+    Rows are filtered by matching column values against patterns.
+    Patterns support glob-style wildcards (e.g. '02*' matches '0212', '023', etc.)
+    and full regular expressions.
+    """
+
+    omit_rows: dict[str, list[str]] = Field(
+        default_factory=dict,
+        description=(
+            "Dict mapping column names to lists of value patterns. "
+            "Rows where the column value matches any pattern are omitted."
+        ),
     )
 
 
