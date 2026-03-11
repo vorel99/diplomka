@@ -76,7 +76,13 @@ class TrainingResult:
         print(f"\nGrid search results saved to: {cv_results_path}")
 
         try:
-            build_plot_grid_search_results(cv_results_df, self.grid_search.best_params_)
+            grid_search_plot = build_plot_grid_search_results(cv_results_df, self.grid_search.best_params_)
+            if grid_search_plot is not None:
+                grid_search_plot_path = "grid_search_results.png"
+                grid_search_plot.save(grid_search_plot_path, dpi=300, width=14, height=5, units="in", verbose=False)
+                print(f"Grid search plots saved to: {grid_search_plot_path}")
+                mlflow_wrapper.log_artifact(grid_search_plot_path)
+                Path(grid_search_plot_path).unlink(missing_ok=True)
         except Exception as e:
             print(f"Warning: Could not create grid search plots: {e}")
 
