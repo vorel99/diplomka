@@ -70,10 +70,10 @@ class Election25Feature(BaseFeature):
             columns={
                 "Wahlberechtigte (A)": "eligible_voters",
                 "Wählende (B)": "total_voters",
-                "Ungültige - Erststimmen": "invalid_votes_erststimmen",
-                "Gültige - Erststimmen": "valid_votes_erststimmen",
-                "Ungültige - Zweitstimmen": "invalid_votes_zweitstimmen",
-                "Gültige - Zweitstimmen": "valid_votes_zweitstimmen",
+                "Ungültige - Erststimmen": "E_invalid_votes",
+                "Gültige - Erststimmen": "E_valid_votes",
+                "Ungültige - Zweitstimmen": "Z_invalid_votes",
+                "Gültige - Zweitstimmen": "Z_valid_votes",
             }
         )
 
@@ -100,10 +100,10 @@ class Election25Feature(BaseFeature):
                     "AGS",
                     "eligible_voters",
                     "total_voters",
-                    "invalid_votes_erststimmen",
-                    "valid_votes_erststimmen",
-                    "invalid_votes_zweitstimmen",
-                    "valid_votes_zweitstimmen",
+                    "E_invalid_votes",
+                    "E_valid_votes",
+                    "Z_invalid_votes",
+                    "Z_valid_votes",
                 )
             ]
         ]
