@@ -255,17 +255,6 @@ state_counts = (
     .sort_values("state_code")
 )
 
-state_metric_keys = [
-    "r2_score",
-    "mae",
-    "mse",
-    "rmse",
-    "mape",
-    "median_ae",
-    "max_error",
-    "explained_variance",
-]
-
 state_eval_data = []
 for _, row in state_counts.iterrows():
     state_code = row["state_code"]
@@ -320,7 +309,6 @@ for item in state_eval_data:
     state_name = item["state_name"]
     X_state = item["X_state"]
     y_state = item["y_state"]
-    metrics_state = item["metrics"]
 
     print(f"\n### {state_code} - {state_name}")
 
