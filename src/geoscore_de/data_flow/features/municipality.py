@@ -18,7 +18,7 @@ class MunicipalityFeature(BaseFeature):
         self.raw_data_path = raw_data_path
 
     def load(self) -> pd.DataFrame:
-        """Load raw municipality data from CSV."""
+        """Load raw municipality data from CSV and add AGS column."""
         df = pd.read_csv(
             self.raw_data_path,
             skiprows=6,
@@ -36,8 +36,13 @@ class MunicipalityFeature(BaseFeature):
         return df
 
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Transform municipality data by creating AGS column."""
+        """Transform municipality data:
+        - delete unnecessary columns
+        - add `federal_state_id` and `admin_region_id` columns derived from `AGS`
+        """
         df.drop(columns=["MU_ID", "Municipality"], inplace=True)
+        df["federal_state_id"] = df["AGS"].str.slice(0, 2).astype("int16")  # first two digits for federal state level
+        df["admin_region_id"] = df["AGS"].str.slice(2, 3).astype("int8")  # one digit for administrative region level
         return df
 
 
