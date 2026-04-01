@@ -34,12 +34,14 @@ class TrainingResult:
         X_test: pd.DataFrame,
         y_train_val: pd.Series,
         y_test: pd.Series,
+        test_indices: pd.Index | None = None,
     ):
         self.grid_search = grid_search
         self.X_train_val = X_train_val
         self.X_test = X_test
         self.y_train_val = y_train_val
         self.y_test = y_test
+        self.test_indices = test_indices if test_indices is not None else X_test.index
         self.metrics: dict[str, float | None] | None = None
 
     @property
@@ -100,34 +102,20 @@ class TrainingResult:
         """Evaluate the best model on holdout set and store metrics."""
         y_pred = self.best_estimator.predict(self.X_test)
 
-        r2 = r2_score(self.y_test, y_pred)
-        mae = mean_absolute_error(self.y_test, y_pred)
-        mse = mean_squared_error(self.y_test, y_pred)
-        rmse = root_mean_squared_error(self.y_test, y_pred)
-
-        try:
-            mape = mean_absolute_percentage_error(self.y_test, y_pred)
-        except (ZeroDivisionError, ValueError):
-            mape = None
-
-        med_ae = median_absolute_error(self.y_test, y_pred)
-        max_err = max_error(self.y_test, y_pred)
-        explained_var = explained_variance_score(self.y_test, y_pred)
-
-        self.metrics = {
-            "test_r2_score": r2,
-            "test_mae": mae,
-            "test_mse": mse,
-            "test_rmse": rmse,
-            "test_mape": mape,
-            "test_median_ae": med_ae,
-            "test_max_error": max_err,
-            "test_explained_variance": explained_var,
-        }
+        self.metrics = self._compute_metrics(self.y_test, y_pred, metric_prefix="test")
 
         for metric_name, metric_value in self.metrics.items():
             if metric_value is not None:
                 mlflow_wrapper.log_metric(metric_name, metric_value)
+
+        r2 = self.metrics["test_r2_score"]
+        mae = self.metrics["test_mae"]
+        rmse = self.metrics["test_rmse"]
+        mse = self.metrics["test_mse"]
+        mape = self.metrics["test_mape"]
+        med_ae = self.metrics["test_median_ae"]
+        max_err = self.metrics["test_max_error"]
+        explained_var = self.metrics["test_explained_variance"]
 
         print("\n" + "=" * 60)
         print("MODEL EVALUATION RESULTS")
@@ -147,6 +135,42 @@ class TrainingResult:
             self._plot_diagnostics(self.y_test, y_pred, save_path="model_diagnostics.png")
 
         return self.metrics
+
+    def evaluate_subset(
+        self, X_subset: pd.DataFrame, y_subset: pd.Series, metric_prefix: str
+    ) -> dict[str, float | None]:
+        """Evaluate model on a subset using the same metric suite as holdout evaluation."""
+        y_pred = self.best_estimator.predict(X_subset)
+        return self._compute_metrics(y_subset, y_pred, metric_prefix=metric_prefix)
+
+    def _compute_metrics(
+        self, y_true: pd.Series, y_pred: pd.Series | list[float], metric_prefix: str
+    ) -> dict[str, float | None]:
+        """Compute a consistent set of regression metrics with resilient MAPE handling."""
+        r2 = r2_score(y_true, y_pred)
+        mae = mean_absolute_error(y_true, y_pred)
+        mse = mean_squared_error(y_true, y_pred)
+        rmse = root_mean_squared_error(y_true, y_pred)
+
+        try:
+            mape = mean_absolute_percentage_error(y_true, y_pred)
+        except (ZeroDivisionError, ValueError):
+            mape = None
+
+        med_ae = median_absolute_error(y_true, y_pred)
+        max_err = max_error(y_true, y_pred)
+        explained_var = explained_variance_score(y_true, y_pred)
+
+        return {
+            f"{metric_prefix}_r2_score": r2,
+            f"{metric_prefix}_mae": mae,
+            f"{metric_prefix}_mse": mse,
+            f"{metric_prefix}_rmse": rmse,
+            f"{metric_prefix}_mape": mape,
+            f"{metric_prefix}_median_ae": med_ae,
+            f"{metric_prefix}_max_error": max_err,
+            f"{metric_prefix}_explained_variance": explained_var,
+        }
 
     def plot_diagnostics(self, save_path: str | None = None) -> None | gg.ggplot:
         """Plot predicted-vs-actual and residual diagnostics for holdout set.

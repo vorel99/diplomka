@@ -26,6 +26,7 @@ import pandas as pd
 import shap
 import yaml
 from IPython.display import display, Markdown
+from geoscore_de.modelling.plots.diagnostic_plots import build_predicted_vs_actual_plot, build_residual_plot
 from geoscore_de.modelling.config import TrainingConfig
 from geoscore_de.modelling.train import Trainer
 ```
@@ -189,6 +190,90 @@ try:
 except AttributeError:
     # If result does not support diagnostic plotting, skip silently
     pass
+```
+
+```{python}
+#| label: per-state-evaluation
+#| output: asis
+
+STATE_NAMES = {
+    "01": "Schleswig-Holstein",
+    "02": "Hamburg",
+    "03": "Niedersachsen",
+    "04": "Bremen",
+    "05": "Nordrhein-Westfalen",
+    "06": "Hessen",
+    "07": "Rheinland-Pfalz",
+    "08": "Baden-Wuerttemberg",
+    "09": "Bayern",
+    "10": "Saarland",
+    "11": "Berlin",
+    "12": "Brandenburg",
+    "13": "Mecklenburg-Vorpommern",
+    "14": "Sachsen",
+    "15": "Sachsen-Anhalt",
+    "16": "Thueringen",
+}
+
+test_meta = df.loc[result.test_indices, [training_config.id_column]].copy()
+test_meta[training_config.id_column] = test_meta[training_config.id_column].astype(str).str.zfill(8)
+test_meta["state_code"] = test_meta[training_config.id_column].str.slice(0, 2)
+test_meta["state_name"] = test_meta["state_code"].map(STATE_NAMES).fillna("Unknown")
+
+state_counts = (
+    test_meta.groupby(["state_code", "state_name"])
+    .size()
+    .reset_index(name="Municipalities in test set")
+    .sort_values("state_code")
+)
+
+print("### Test set municipalities per federal state")
+display(state_counts.style.hide(axis="index"))
+
+print("\n### Per federal state evaluation")
+print("\n::: {.panel-tabset}\n")
+
+for _, row in state_counts.iterrows():
+    state_code = row["state_code"]
+    state_name = row["state_name"]
+    state_mask = test_meta["state_code"] == state_code
+
+    X_state = result.X_test.loc[state_mask.values]
+    y_state = result.y_test.loc[state_mask.values]
+    metrics_state = result.evaluate_subset(X_state, y_state, metric_prefix=f"state_{state_code}")
+    metrics_df = pd.DataFrame(
+        {
+            "Metric": [
+                "R2",
+                "MAE",
+                "MSE",
+                "RMSE",
+                "MAPE",
+                "Median AE",
+                "Max Error",
+                "Explained Variance",
+            ],
+            "Value": [
+                metrics_state[f"state_{state_code}_r2_score"],
+                metrics_state[f"state_{state_code}_mae"],
+                metrics_state[f"state_{state_code}_mse"],
+                metrics_state[f"state_{state_code}_rmse"],
+                metrics_state[f"state_{state_code}_mape"],
+                metrics_state[f"state_{state_code}_median_ae"],
+                metrics_state[f"state_{state_code}_max_error"],
+                metrics_state[f"state_{state_code}_explained_variance"],
+            ],
+        }
+    )
+
+    print(f"\n#### {state_code} - {state_name}")
+    display(metrics_df.style.format({"Value": "{:.4f}"}).set_caption(f"Metrics for {state_name}"))
+
+    y_pred_state = result.best_estimator.predict(X_state)
+    diag_plot = build_predicted_vs_actual_plot(y_state, y_pred_state) | build_residual_plot(y_state, y_pred_state)
+    display(diag_plot)
+
+print(":::")
 ```
 
 ## SHAP analysis
