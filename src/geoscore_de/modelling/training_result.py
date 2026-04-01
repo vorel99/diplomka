@@ -17,7 +17,7 @@ from sklearn.model_selection import GridSearchCV
 
 from geoscore_de import mlflow_wrapper
 from geoscore_de.modelling.plots.diagnostic_plots import build_predicted_vs_actual_plot, build_residual_plot
-from geoscore_de.modelling.plots.grid_search_plots import build_plot_grid_search_results
+from geoscore_de.modelling.plots.grid_search_plots import build_grid_search_results_plot
 
 
 class TrainingResult:
@@ -76,7 +76,7 @@ class TrainingResult:
         print(f"\nGrid search results logged to MLflow as artifact: {cv_results_path}")
 
         try:
-            grid_search_plot = build_plot_grid_search_results(cv_results_df, self.grid_search.best_params_)
+            grid_search_plot = build_grid_search_results_plot(cv_results_df, self.grid_search.best_params_)
             if grid_search_plot is not None:
                 grid_search_plot_path = "grid_search_results.png"
                 grid_search_plot.save(grid_search_plot_path, dpi=300, width=14, height=5, units="in", verbose=False)
