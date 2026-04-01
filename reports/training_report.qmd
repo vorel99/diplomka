@@ -328,5 +328,15 @@ for item in state_eval_data:
     diag_plot = build_predicted_vs_actual_plot(y_state, y_pred_state) | build_residual_plot(y_state, y_pred_state)
     display(diag_plot)
 
+    try:
+        state_explainer = shap.Explainer(result.best_estimator, X_state)
+        state_shap_values = state_explainer(X_state)
+        shap.summary_plot(state_shap_values, X_state, show=True)
+        plt.tight_layout()
+        plt.show()
+        plt.close()
+    except Exception as exc:
+        print(f"_Could not compute SHAP for this state: {exc}_")
+
 print(":::")
 ```
