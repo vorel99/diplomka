@@ -53,3 +53,18 @@ def test_load_municipality_data(mock_raw_csv_content, tmp_path):
         "01051010",  # Brickeln
     ]
     assert df["AGS"].tolist() == expected_ags
+
+
+def test_transform_creates_categorical_region_features(mock_raw_csv_content, tmp_path):
+    """Test transform creates categorical state/region features from AGS."""
+    temp_csv_path = tmp_path / "municipalities_2022.csv"
+    temp_csv_path.write_text(mock_raw_csv_content)
+
+    feature = MunicipalityFeature(raw_data_path=str(temp_csv_path))
+    loaded_df = feature.load()
+    transformed = feature.transform(loaded_df.copy())
+
+    assert str(transformed["federal_state_id"].dtype) == "category"
+    assert str(transformed["admin_region_id"].dtype) == "category"
+    assert transformed["federal_state_id"].astype(str).tolist()[:4] == ["01", "01", "01", "01"]
+    assert transformed["admin_region_id"].astype(str).tolist()[:4] == ["0", "0", "0", "0"]

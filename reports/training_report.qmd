@@ -192,8 +192,36 @@ except AttributeError:
     pass
 ```
 
+## SHAP analysis
 ```{python}
-#| label: per-state-evaluation
+# SHAP analysis: Identify most relevant features for model predictions
+
+
+# Use the best trained model from the earlier section
+explainer = shap.Explainer(result.best_estimator, result.X_test)
+shap_values = explainer(result.X_test)
+```
+
+### SHAP Feature Importance
+
+```{python}
+
+# Plot feature importance (summary plot) inline (do not save to disk)
+shap.summary_plot(shap_values, result.X_test, show=True)
+plt.tight_layout()
+plt.show()
+plt.close()
+
+```
+
+---
+
+### Evaluations per federal state
+
+In this section we break down the model's performance by federal state, based on the municipality identifiers in the test set. 
+
+```{python}
+#| label: per-state-table
 #| output: asis
 
 STATE_NAMES = {
@@ -227,78 +255,78 @@ state_counts = (
     .sort_values("state_code")
 )
 
-print("### Test set municipalities per federal state")
-display(state_counts.style.hide(axis="index"))
+state_metric_keys = [
+    "r2_score",
+    "mae",
+    "mse",
+    "rmse",
+    "mape",
+    "median_ae",
+    "max_error",
+    "explained_variance",
+]
 
-print("\n### Per federal state evaluation")
-print("\n::: {.panel-tabset}\n")
-
+state_eval_data = []
 for _, row in state_counts.iterrows():
     state_code = row["state_code"]
     state_name = row["state_name"]
     state_mask = test_meta["state_code"] == state_code
-
     X_state = result.X_test.loc[state_mask.values]
     y_state = result.y_test.loc[state_mask.values]
     metrics_state = result.evaluate_subset(X_state, y_state, metric_prefix=f"state_{state_code}")
-    metrics_df = pd.DataFrame(
+
+    state_eval_data.append(
         {
-            "Metric": [
-                "R2",
-                "MAE",
-                "MSE",
-                "RMSE",
-                "MAPE",
-                "Median AE",
-                "Max Error",
-                "Explained Variance",
-            ],
-            "Value": [
-                metrics_state[f"state_{state_code}_r2_score"],
-                metrics_state[f"state_{state_code}_mae"],
-                metrics_state[f"state_{state_code}_mse"],
-                metrics_state[f"state_{state_code}_rmse"],
-                metrics_state[f"state_{state_code}_mape"],
-                metrics_state[f"state_{state_code}_median_ae"],
-                metrics_state[f"state_{state_code}_max_error"],
-                metrics_state[f"state_{state_code}_explained_variance"],
-            ],
+            "state_code": state_code,
+            "state_name": state_name,
+            "Municipalities in test set": row["Municipalities in test set"],
+            "metrics": metrics_state,
+            "X_state": X_state,
+            "y_state": y_state,
         }
     )
 
-    print(f"\n#### {state_code} - {state_name}")
-    display(metrics_df.style.format({"Value": "{:.4f}"}).set_caption(f"Metrics for {state_name}"))
+state_rows = []
+for item in state_eval_data:
+    state_code = item["state_code"]
+    metrics_state = item["metrics"]
+    state_rows.append(
+        {
+            "State Code": state_code,
+            "State": item["state_name"],
+            "Municipalities in test set": item["Municipalities in test set"],
+            "R2": metrics_state[f"state_{state_code}_r2_score"],
+        }
+    )
+
+state_summary_df = pd.DataFrame(state_rows).sort_values("State Code")
+display(
+    state_summary_df.style.hide(axis="index").format(
+        {
+            "R2": "{:.4f}",
+        }
+    )
+)
+```
+
+```{python}
+#| label: per-state-evaluation
+#| output: asis
+
+print("::: {.panel-tabset}")
+
+for item in state_eval_data:
+    state_code = item["state_code"]
+    state_name = item["state_name"]
+    X_state = item["X_state"]
+    y_state = item["y_state"]
+    metrics_state = item["metrics"]
+
+    print(f"\n### {state_code} - {state_name}")
 
     y_pred_state = result.best_estimator.predict(X_state)
     diag_plot = build_predicted_vs_actual_plot(y_state, y_pred_state) | build_residual_plot(y_state, y_pred_state)
     display(diag_plot)
 
 print(":::")
-```
-
-## SHAP analysis
-```{python}
-# SHAP analysis: Identify most relevant features for model predictions
-
-
-# Use the best trained model from the earlier section
-explainer = shap.Explainer(result.best_estimator, result.X_test)
-shap_values = explainer(result.X_test)
-
-
-
-# Plot feature importance (summary plot) inline (do not save to disk)
-display(Markdown("### SHAP Feature Importance"))
-shap.summary_plot(shap_values, result.X_test, show=True)
-plt.tight_layout()
-plt.show()
-plt.close()
-
-# Optionally, show a bar plot for average absolute SHAP values inline (do not save to disk)
-display(Markdown("#### SHAP Feature Importance (Bar)"))
-shap.summary_plot(shap_values, result.X_test, plot_type="bar", show=True)
-plt.tight_layout()
-plt.show()
-plt.close()
-```
 ```
