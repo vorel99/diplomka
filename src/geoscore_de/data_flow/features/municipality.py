@@ -38,11 +38,11 @@ class MunicipalityFeature(BaseFeature):
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
         """Transform municipality data:
         - delete unnecessary columns
-        - add column with federal republic id
+        - add `federal_state_id` and `admin_region_id` columns derived from `AGS`
         """
         df.drop(columns=["MU_ID", "Municipality"], inplace=True)
-        df["federal_state_id"] = df["AGS"].str.slice(0, 2)  # first two digits for federal state level
-        df["admin_region_id"] = df["AGS"].str.slice(2, 3)  # one digit for administrative region level
+        df["federal_state_id"] = df["AGS"].str.slice(0, 2).astype("int16")  # first two digits for federal state level
+        df["admin_region_id"] = df["AGS"].str.slice(2, 3).astype("int8")  # one digit for administrative region level
         return df
 
 
