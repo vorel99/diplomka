@@ -101,8 +101,8 @@ def test_transform_election_25_data_structure(tmp_path, mock_raw_election_csv_fi
     assert "eligible_voters" in df.columns
     assert "total_voters" in df.columns
     assert "election_participation" in df.columns
-    assert "invalid_votes_erststimmen" in df.columns
-    assert "invalid_votes_zweitstimmen" in df.columns
+    assert "E_invalid_votes" in df.columns
+    assert "Z_invalid_votes" in df.columns
 
     # Check that vote columns still exist (now as proportions)
     assert "CDU - Erststimmen" in df.columns
@@ -206,10 +206,10 @@ def test_transform_election_25_column_selection(tmp_path, mock_raw_election_csv_
             or col.endswith(("Erststimmen", "Zweitstimmen"))
             or col
             in [
-                "invalid_votes_erststimmen",
-                "valid_votes_erststimmen",
-                "invalid_votes_zweitstimmen",
-                "valid_votes_zweitstimmen",
+                "E_invalid_votes",
+                "E_valid_votes",
+                "Z_invalid_votes",
+                "Z_valid_votes",
             ]
         ), f"Unexpected column: {col}"
 
