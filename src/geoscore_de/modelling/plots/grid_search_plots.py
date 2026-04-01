@@ -2,7 +2,7 @@ import pandas as pd
 import plotnine as gg
 
 
-def build_plot_grid_search_results(cv_results_df: pd.DataFrame, best_params: dict) -> gg.ggplot:
+def build_plot_grid_search_results(cv_results_df: pd.DataFrame, best_params: dict) -> gg.ggplot | None:
     """Create visualization of grid search results."""
     try:
         param_cols = [col for col in cv_results_df.columns if col.startswith("param_") and col != "params"]

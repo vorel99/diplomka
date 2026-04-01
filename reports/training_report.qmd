@@ -175,7 +175,7 @@ display(Markdown("</details>"))
 ```
 
 ```{python}
-# | label: test-evaluation
+#| label: test-evaluation
 metrics = result.evaluate(create_plots=False)
 
 # plot real vs predicted values and residuals

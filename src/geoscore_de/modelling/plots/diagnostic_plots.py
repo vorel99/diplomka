@@ -27,7 +27,7 @@ def build_predicted_vs_actual_plot(y_true, y_pred) -> gg.ggplot:
 
         return plot
     except Exception as e:
-        print(f"Warning: Could not create predicted vs actual plot: {e}")
+        raise ValueError("Warning: Could not create predicted vs actual plot") from e
 
 
 def build_residual_plot(y_true, y_pred) -> gg.ggplot:
@@ -54,4 +54,4 @@ def build_residual_plot(y_true, y_pred) -> gg.ggplot:
 
         return plot
     except Exception as e:
-        print(f"Warning: Could not create residual plot: {e}")
+        raise ValueError("Warning: Could not create residual plot") from e
