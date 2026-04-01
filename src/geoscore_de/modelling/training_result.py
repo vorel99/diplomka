@@ -149,7 +149,11 @@ class TrainingResult:
         return self.metrics
 
     def plot_diagnostics(self, save_path: str | None = None) -> None | gg.ggplot:
-        """Plot predicted-vs-actual and residual diagnostics for holdout set."""
+        """Plot predicted-vs-actual and residual diagnostics for holdout set.
+
+        Args:
+            save_path: If provided, saves the plot to this path in MLflow.
+        """
         y_pred = self.best_estimator.predict(self.X_test)
         return self._plot_diagnostics(self.y_test, y_pred, save_path=save_path)
 
@@ -166,13 +170,10 @@ class TrainingResult:
 
             if save_path:
                 diagnostic_plot.save(save_path, dpi=300, width=14, height=5, units="in", verbose=False)
-                print(f"Diagnostic plots saved to: {save_path}")
-            else:
-                return diagnostic_plot
-
-            if save_path:
                 mlflow_wrapper.log_artifact(save_path)
                 Path(save_path).unlink(missing_ok=True)
+
+            return diagnostic_plot
 
         except Exception as e:
             print(f"Warning: Could not create diagnostic plots: {e}")

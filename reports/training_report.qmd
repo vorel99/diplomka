@@ -2,7 +2,6 @@
 title: "Training Report"
 author: "Jan Cap"
 date: now
-output: html_document
 format:
   html:
     embed-resources: true
@@ -49,6 +48,7 @@ with open(training_config_path, "r") as f:
 
 ```{python}
 #| label: feature-selection-summary
+#| output: asis
 
 # Print summary of feature selection for report
 feature_cfg = training_config.feature_filtering
@@ -178,23 +178,20 @@ display(Markdown("</details>"))
 #| label: test-evaluation
 metrics = result.evaluate(create_plots=False)
 
-# plot real vs predicted values and residuals
-y_pred = result.best_estimator.predict(result.X_test)
-
-red_v_actual_plot = build_predicted_vs_actual_plot(result.y_test, y_pred)
-display(red_v_actual_plot)
-
-residual_plot = build_residual_plot(result.y_test, y_pred)
-display(residual_plot)
-
 # Show evaluation metrics as a styled DataFrame
 metrics_df = pd.DataFrame(list(metrics.items()), columns=["Metric", "Value"])
 display(metrics_df.style.format({"Value": "{:.4f}"}).set_caption("Test set evaluation metrics"))
 
-# Optionally display diagnostic plots
-if os.path.exists("model_diagnostics.png"):
-    print("### Model Diagnostics Plot")
-    display(Markdown(f"![Model Diagnostics Plot](model_diagnostics.png)"))
+# Generate and display diagnostic plots within the report run
+try:
+    diag_plot_path = "model_diagnostics.png"
+    # Create combined diagnostics image without deleting it prematurely
+    display(Markdown("### Model Diagnostics Plot"))
+    diag_plot = result.plot_diagnostics(save_path=diag_plot_path)
+    display(diag_plot)
+except AttributeError:
+    # If result does not support diagnostic plotting, skip silently
+    pass
 ```
 
 ## SHAP analysis
