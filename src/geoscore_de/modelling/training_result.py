@@ -73,7 +73,7 @@ class TrainingResult:
         cv_results_path = "grid_search_cv_results.csv"
         cv_results_df = pd.DataFrame(self.grid_search.cv_results_)
         mlflow_wrapper.log_data(cv_results_df, artifact_file=cv_results_path, index=False)
-        print(f"\nGrid search results saved to: {cv_results_path}")
+        print(f"\nGrid search results logged to MLflow as artifact: {cv_results_path}")
 
         try:
             grid_search_plot = build_plot_grid_search_results(cv_results_df, self.grid_search.best_params_)

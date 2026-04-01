@@ -21,15 +21,12 @@ training_config_path: str = "configs/training.yaml"
 ```{python}
 #| label: libraries-setup
 
-import os
-
 import matplotlib.pyplot as plt
 import pandas as pd
 import shap
 import yaml
 from IPython.display import display, Markdown
 from geoscore_de.modelling.config import TrainingConfig
-from geoscore_de.modelling.plots.diagnostic_plots import build_predicted_vs_actual_plot, build_residual_plot
 from geoscore_de.modelling.train import Trainer
 ```
 
@@ -185,7 +182,7 @@ display(metrics_df.style.format({"Value": "{:.4f}"}).set_caption("Test set evalu
 # Generate and display diagnostic plots within the report run
 try:
     diag_plot_path = "model_diagnostics.png"
-    # Create combined diagnostics image without deleting it prematurely
+    # Create and display combined diagnostics image (helper may clean up the file)
     display(Markdown("### Model Diagnostics Plot"))
     diag_plot = result.plot_diagnostics(save_path=diag_plot_path)
     display(diag_plot)
