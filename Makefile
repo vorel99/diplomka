@@ -4,7 +4,7 @@ PYTHON = $(VENV)/bin/python
 install_dev:
 	# uv installed in devcontainer
 	# setup venv and install package in editable mode with dev dependencies
-	uv venv $(VENV) --clear --python 3.10
+	uv venv $(VENV) --clear --python 3.12
 
 	# Install monorepo workspace with dev dependencies
 	uv sync --all-packages
