@@ -35,8 +35,8 @@ def test_get_area_metadata_rostock(retriever):
 
     assert result is not None
     assert "AGS" in result
-    assert "GEN" in result  # Municipality name
-    assert result["GEN"] == "Rostock"
+    assert "Gemeinde name (short)" in result
+    assert result["Gemeinde name (short)"] == "Rostock"
 
 
 def test_get_area_metadata_hamburg(retriever):
@@ -49,8 +49,8 @@ def test_get_area_metadata_hamburg(retriever):
 
     assert result is not None
     assert "AGS" in result
-    assert "GEN" in result
-    assert result["GEN"] == "Hamburg"
+    assert "Gemeinde name (short)" in result
+    assert result["Gemeinde name (short)"] == "Hamburg"
 
 
 def test_get_area_metadata_outside_germany(retriever):
@@ -64,19 +64,17 @@ def test_get_area_metadata_outside_germany(retriever):
     assert result is None
 
 
-def test_get_area_metadata_contains_destatis(retriever):
-    """Test that area metadata contains destatis information."""
+def test_get_area_metadata_contains_georef_columns(retriever):
+    """Test that area metadata contains key columns from georef dataset."""
     latitude = 54.0888
     longitude = 12.1359
 
     result = retriever.get_area_metadata(latitude, longitude)
 
     assert result is not None
-    assert "destatis" in result
-
-    destatis_data = result["destatis"]
-    assert "population" in destatis_data
-    assert "area" in destatis_data
+    assert "Gemeinde name" in result
+    assert "Land name" in result
+    assert "Type" in result
 
 
 def test_get_ags_valid_position(retriever):
