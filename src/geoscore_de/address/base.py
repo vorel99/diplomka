@@ -3,16 +3,17 @@ from abc import ABCMeta, abstractmethod
 import geopandas as gpd
 
 from geoscore_de.address.models import Position, StructAddress
+from geoscore_de.data_flow.geo import load_geo_data
 
 
 class BaseStructAddressRetriever(metaclass=ABCMeta):
     # Cache GeoDataFrames by their source path to avoid re-reading the same file
     _geojson_cache = {}
 
-    def __init__(self, geojson_path: str = "data/gemeinden_simplify200.geojson") -> None:
+    def __init__(self, geojson_path: str = "data/georef-germany-gemeinde.csv") -> None:
         # Lazy-load and cache the GeoJSON file per path
         if geojson_path not in self.__class__._geojson_cache:
-            self.__class__._geojson_cache[geojson_path] = gpd.read_file(geojson_path)
+            self.__class__._geojson_cache[geojson_path] = load_geo_data(geojson_path)
         self.geojson = self.__class__._geojson_cache[geojson_path]
 
     @abstractmethod

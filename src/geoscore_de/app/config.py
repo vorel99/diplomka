@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     )
 
     # Data paths
-    geojson_path: str = Field(default="data/gemeinden_simplify200.geojson", env="GEOJSON_PATH")
+    geojson_path: str = Field(default="data/georef-germany-gemeinde.csv", env="GEOJSON_PATH")
 
     # Server settings
     api_host: str = Field(default="0.0.0.0", env="API_HOST", description="Host address for the API server")

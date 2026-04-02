@@ -21,7 +21,7 @@ def test_settings_default_values(monkeypatch):
     settings = Settings(_env_file=None)
 
     assert settings.mapy_com_api_key == "test-key"
-    assert settings.geojson_path == "data/gemeinden_simplify200.geojson"
+    assert settings.geojson_path == "data/georef-germany-gemeinde.csv"
     assert settings.api_host == "0.0.0.0"
     assert settings.api_port == 8000
     assert settings.api_reload is False
