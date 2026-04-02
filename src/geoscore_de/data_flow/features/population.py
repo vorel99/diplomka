@@ -1,5 +1,6 @@
 import logging
 
+import numpy as np
 import pandas as pd
 
 from geoscore_de.data_flow.features.base import BaseFeature
@@ -89,9 +90,13 @@ class PopulationFeature(BaseFeature):
         }
         tform_df.rename(columns=age_group_rename_map, inplace=True)
 
-        # Change all columns from absolute counts to proportions of the total population
-        # Replace 0 with NaN to avoid division by zero (inf values)
-        total_pop = tform_df["total_population"].replace(0, pd.NA)
+        # Ensure numeric math with missing values represented as NaN.
+        value_columns = [col for col in tform_df.columns if col != "AGS"]
+        tform_df[value_columns] = tform_df[value_columns].apply(pd.to_numeric, errors="coerce")
+
+        # Change all columns from absolute counts to proportions of the total population.
+        # Replace 0 with NaN to avoid division by zero (inf values).
+        total_pop = tform_df["total_population"].replace(0, np.nan)
 
         for col in tform_df.columns:
             if col != "AGS" and col != "total_population":
