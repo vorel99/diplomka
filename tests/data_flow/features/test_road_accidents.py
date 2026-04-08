@@ -42,7 +42,7 @@ def test_load_road_accidents_data(mock_raw_csv_content, tmp_path):
 
     # Check columns exist
     assert "AGS" in df.columns
-    assert "accident_count" in df.columns
+    assert "accident_total" in df.columns
     assert "injury_accidents" in df.columns
     assert "property_damage_accidents" in df.columns
     assert "fatalities" in df.columns
@@ -50,7 +50,7 @@ def test_load_road_accidents_data(mock_raw_csv_content, tmp_path):
 
     # check dtypes
     assert df["AGS"].dtype == object  # AGS should be string
-    assert df["accident_count"].dtype in [int, float]
+    assert df["accident_total"].dtype in [int, float]
     assert df["injury_accidents"].dtype in [int, float]
     assert df["property_damage_accidents"].dtype in [int, float]
     assert df["fatalities"].dtype in [int, float]

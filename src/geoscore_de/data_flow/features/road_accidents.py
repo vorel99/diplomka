@@ -31,7 +31,7 @@ class RoadAccidentsFeature(BaseFeature):
         self.tform_data_path = tform_data_path
         self.municipality_data_path = municipality_data_path
         self.accident_columns = [
-            "accident_count",
+            "accident_total",
             "injury_accidents",
             "property_damage_accidents",
             "fatalities",
@@ -44,7 +44,7 @@ class RoadAccidentsFeature(BaseFeature):
         Returns:
             pd.DataFrame: DataFrame containing the loaded road accident data.
                 Dataframe includes columns: `AGS` with 8-character municipality codes,
-                `accident_count` with the total number of accidents,
+                `accident_total` with the total number of accidents,
                 `injury_accidents` with the number of accidents that resulted in injuries,
                 `property_damage_accidents` with the number of accidents that resulted in property damage,
                 `fatalities` with the number of fatalities resulting from road accidents,
@@ -76,7 +76,7 @@ class RoadAccidentsFeature(BaseFeature):
             df (pd.DataFrame): Raw road accident DataFrame.
 
         Returns:
-            pd.DataFrame: Transformed DataFrame with columns `AGS`, `accident_count`, `injury_accidents`,
+            pd.DataFrame: Transformed DataFrame with columns `AGS`, `accident_total`, `injury_accidents`,
             `property_damage_accidents`, `fatalities` and `injured` normalized by population.
         """
         municipality_feature = MunicipalityFeature(self.municipality_data_path)

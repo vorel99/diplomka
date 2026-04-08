@@ -41,6 +41,10 @@
   - notebook outputs
 - Do not hardcode secrets or add new dependencies when existing project libraries already cover the use case.
 
+## Graphics
+For plots and visualizations, use plotnine (ggplot).
+Use default fill colors and white borders for histograms and bar charts to maintain a consistent style.
+
 ## Reference Files
 - `src/geoscore_de/app/config.py`
 - `src/geoscore_de/app/main.py`
