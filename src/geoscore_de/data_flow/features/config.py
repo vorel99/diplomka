@@ -6,11 +6,14 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from geoscore_de.config import FeatureFilteringConfig
 from geoscore_de.data_flow.feature_engineering.config import (
     BASE_MODULE,
     ComponentConfig,
     FeatureEngineeringConfig,
 )
+
+__all__ = ["FeatureFilteringConfig"]
 
 
 class FeatureConfig(ComponentConfig):
@@ -22,6 +25,13 @@ class FeatureConfig(ComponentConfig):
     )
     before_transforms: list[FeatureEngineeringConfig] = Field(
         default_factory=list, description="Transformations on raw data before this feature's transformation"
+    )
+    column_filter: FeatureFilteringConfig | None = Field(
+        default=None,
+        description=(
+            "Optional column filtering applied to this feature's data at matrix build time. "
+            "Use use_features to whitelist columns and omit_features to blacklist columns."
+        ),
     )
 
 

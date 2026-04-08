@@ -5,6 +5,7 @@ import pytest
 import yaml
 from pydantic import ValidationError
 
+from geoscore_de.config import FeatureFilteringConfig
 from geoscore_de.data_flow.features.matrix_builder import FeatureMatrixBuilder
 
 # Module path for DeltaFeatureEngineering (used in after_transforms configs)
@@ -450,3 +451,148 @@ def test_default_config():
     """Test that default config is set correctly."""
     builder = FeatureMatrixBuilder()
     assert builder.municipalities is not None
+
+
+class TestColumnFiltering:
+    """Tests for column-level filtering in FeatureMatrixBuilder."""
+
+    @pytest.fixture(autouse=True)
+    def setup_mock(self, mock_feature_class):
+        self.MockFeature = mock_feature_class
+
+    def _make_config_file(self, tmp_path, mock_feature_module, column_filter: dict | None = None):
+        """Helper to build a config YAML with an optional column_filter."""
+        feature_cfg = {
+            "name": "feat",
+            "class": "MockFeature",
+            "module": mock_feature_module,
+            "params": {},
+        }
+        if column_filter is not None:
+            feature_cfg["column_filter"] = column_filter
+
+        config_data = {
+            "municipalities": {"class": "MockFeature", "module": mock_feature_module},
+            "features": [feature_cfg],
+            "matrix": {"join_key": "AGS", "save_output": False},
+        }
+        config_file = tmp_path / "config.yaml"
+        config_file.write_text(yaml.dump(config_data))
+        return str(config_file)
+
+    # ------------------------------------------------------------------
+    # filter_features unit tests (join key excluded before passing)
+    # ------------------------------------------------------------------
+
+    def test_filter_features_use_keeps_only_selected(self):
+        """use_features keeps only the listed columns."""
+        df = pd.DataFrame({"a": [10, 20], "b": [30, 40], "c": [50, 60]})
+        cf = FeatureFilteringConfig(use_features=["a", "c"])
+        from geoscore_de.filtering import filter_features
+
+        result = filter_features(df, cf)
+        assert list(result.columns) == ["a", "c"]
+
+    def test_filter_features_omit_drops_listed_columns(self):
+        """omit_features removes the listed columns but keeps the rest."""
+        df = pd.DataFrame({"a": [10, 20], "b": [30, 40], "c": [50, 60]})
+        cf = FeatureFilteringConfig(omit_features=["b"])
+        from geoscore_de.filtering import filter_features
+
+        result = filter_features(df, cf)
+        assert "b" not in result.columns
+        assert "a" in result.columns
+        assert "c" in result.columns
+
+    def test_filter_features_combined(self):
+        """use_features then omit_features narrows down correctly."""
+        df = pd.DataFrame({"a": [1], "b": [2], "c": [3], "d": [4]})
+        cf = FeatureFilteringConfig(use_features=["a", "b", "c"], omit_features=["b"])
+        from geoscore_de.filtering import filter_features
+
+        result = filter_features(df, cf)
+        assert list(result.columns) == ["a", "c"]
+
+    def test_filter_features_join_key_preserved_when_excluded(self, tmp_path, mock_feature_module):
+        """Join key is never removed when filtering is applied via build_matrix."""
+        config_path = self._make_config_file(
+            tmp_path, mock_feature_module, column_filter={"omit_features": ["value", "weight"]}
+        )
+        builder = FeatureMatrixBuilder(config_path=config_path)
+        matrix = builder.build_matrix()
+        assert "AGS" in matrix.columns
+
+    def test_filter_features_glob_use(self):
+        """use_features supports glob/regex patterns."""
+        df = pd.DataFrame({"unemp_total": [5], "unemp_male": [3], "pop_total": [100]})
+        cf = FeatureFilteringConfig(use_features=["unemp_*"])
+        from geoscore_de.filtering import filter_features
+
+        result = filter_features(df, cf)
+        assert set(result.columns) == {"unemp_total", "unemp_male"}
+        assert "pop_total" not in result.columns
+
+    def test_filter_features_glob_omit(self):
+        """omit_features supports glob/regex patterns."""
+        df = pd.DataFrame({"unemp_total": [5], "unemp_male": [3], "pop_total": [100]})
+        cf = FeatureFilteringConfig(omit_features=["unemp_*"])
+        from geoscore_de.filtering import filter_features
+
+        result = filter_features(df, cf)
+        assert "unemp_total" not in result.columns
+        assert "unemp_male" not in result.columns
+        assert "pop_total" in result.columns
+
+    def test_filter_features_no_filter_is_no_op(self):
+        """An empty FeatureFilteringConfig leaves all columns unchanged."""
+        df = pd.DataFrame({"a": [10, 20], "b": [30, 40]})
+        cf = FeatureFilteringConfig()
+        from geoscore_de.filtering import filter_features
+
+        result = filter_features(df, cf)
+        assert list(result.columns) == ["a", "b"]
+
+    def test_filter_features_unknown_pattern_warns(self):
+        """A use_features pattern that matches nothing issues a warning."""
+        import warnings
+
+        df = pd.DataFrame({"a": [10]})
+        cf = FeatureFilteringConfig(use_features=["nonexistent_col"])
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            from geoscore_de.filtering import filter_features
+
+            filter_features(df, cf)
+        assert any("use_features" in str(warning.message) for warning in w)
+
+    # ------------------------------------------------------------------
+    # Integration: filtering applied during build_matrix
+    # ------------------------------------------------------------------
+
+    def test_build_matrix_use_features(self, tmp_path, mock_feature_module):
+        """use_features filters columns before prefixing in build_matrix."""
+        config_path = self._make_config_file(tmp_path, mock_feature_module, column_filter={"use_features": ["value"]})
+        builder = FeatureMatrixBuilder(config_path=config_path)
+        # MockFeature returns AGS, value, weight
+        matrix = builder.build_matrix()
+        assert "feat_value" in matrix.columns
+        assert "feat_weight" not in matrix.columns
+        assert "AGS" in matrix.columns
+
+    def test_build_matrix_omit_features(self, tmp_path, mock_feature_module):
+        """omit_features drops the specified column before prefixing in build_matrix."""
+        config_path = self._make_config_file(tmp_path, mock_feature_module, column_filter={"omit_features": ["weight"]})
+        builder = FeatureMatrixBuilder(config_path=config_path)
+        matrix = builder.build_matrix()
+        assert "feat_value" in matrix.columns
+        assert "feat_weight" not in matrix.columns
+        assert "AGS" in matrix.columns
+
+    def test_build_matrix_no_column_filter(self, tmp_path, mock_feature_module):
+        """Without column_filter all columns are kept."""
+        config_path = self._make_config_file(tmp_path, mock_feature_module, column_filter=None)
+        builder = FeatureMatrixBuilder(config_path=config_path)
+        matrix = builder.build_matrix()
+        assert "feat_value" in matrix.columns
+        assert "feat_weight" in matrix.columns
+        assert "AGS" in matrix.columns

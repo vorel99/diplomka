@@ -1,8 +1,10 @@
 import pandas as pd
 import pytest
 
-from geoscore_de.modelling.config import FeatureFilteringConfig, ModelConfig, RowFilteringConfig, TrainingConfig
-from geoscore_de.modelling.data_filtering import filter_features, filter_rows
+from geoscore_de.config import FeatureFilteringConfig
+from geoscore_de.filtering import filter_features
+from geoscore_de.modelling.config import ModelConfig, RowFilteringConfig, TrainingConfig
+from geoscore_de.modelling.data_filtering import filter_rows
 
 
 class TestFeatureFiltering:
@@ -21,102 +23,102 @@ class TestFeatureFiltering:
         )
 
     @pytest.fixture
-    def base_config(self) -> TrainingConfig:
-        """Create base training config."""
-        return TrainingConfig(target_variable="target", feature_filtering=FeatureFilteringConfig(), model=ModelConfig())
+    def base_config(self) -> FeatureFilteringConfig:
+        """Create base feature filtering config."""
+        return FeatureFilteringConfig()
 
-    def test_no_filtering(self, sample_data: pd.DataFrame, base_config: TrainingConfig):
+    def test_no_filtering(self, sample_data: pd.DataFrame, base_config: FeatureFilteringConfig):
         """Test that all features are kept when no filtering is specified."""
         result = filter_features(sample_data.copy(), base_config)
 
         assert list(result.columns) == list(sample_data.columns)
         pd.testing.assert_frame_equal(result, sample_data)
 
-    def test_use_features_only(self, sample_data: pd.DataFrame, base_config: TrainingConfig):
+    def test_use_features_only(self, sample_data: pd.DataFrame, base_config: FeatureFilteringConfig):
         """Test selecting specific features with use_features."""
-        base_config.feature_filtering.use_features = ["census_a", "feature_c"]
+        base_config.use_features = ["census_a", "feature_c"]
         result = filter_features(sample_data.copy(), base_config)
 
         assert list(result.columns) == ["census_a", "feature_c"]
         assert len(result) == 4  # All rows preserved
         pd.testing.assert_frame_equal(result, sample_data[["census_a", "feature_c"]])
 
-    def test_omit_features_only(self, sample_data: pd.DataFrame, base_config: TrainingConfig):
+    def test_omit_features_only(self, sample_data: pd.DataFrame, base_config: FeatureFilteringConfig):
         """Test excluding specific features with omit_features."""
-        base_config.feature_filtering.omit_features = ["census_b", "feature_d"]
+        base_config.omit_features = ["census_b", "feature_d"]
         result = filter_features(sample_data.copy(), base_config)
 
         assert list(result.columns) == ["census_a", "feature_c"]
         assert len(result) == 4  # All rows preserved
         pd.testing.assert_frame_equal(result, sample_data[["census_a", "feature_c"]])
 
-    def test_use_and_omit_features(self, sample_data: pd.DataFrame, base_config: TrainingConfig):
+    def test_use_and_omit_features(self, sample_data: pd.DataFrame, base_config: FeatureFilteringConfig):
         """Test using both use_features and omit_features together.
 
         First use_features selects subset, then omit_features excludes from that subset.
         """
         # First select a, b, c, then omit b
-        base_config.feature_filtering.use_features = ["census_a", "census_b", "feature_c"]
-        base_config.feature_filtering.omit_features = ["census_b"]
+        base_config.use_features = ["census_a", "census_b", "feature_c"]
+        base_config.omit_features = ["census_b"]
         result = filter_features(sample_data.copy(), base_config)
 
         # Should have a and c only (d excluded by use_features, b excluded by omit_features)
         assert list(result.columns) == ["census_a", "feature_c"]
         pd.testing.assert_frame_equal(result, sample_data[["census_a", "feature_c"]])
 
-    def test_use_nonexistent_feature(self, sample_data: pd.DataFrame, base_config: TrainingConfig):
+    def test_use_nonexistent_feature(self, sample_data: pd.DataFrame, base_config: FeatureFilteringConfig):
         """Test that using non-existent feature raises warning."""
-        base_config.feature_filtering.use_features = ["census_a", "nonexistent_feature"]
+        base_config.use_features = ["census_a", "nonexistent_feature"]
         with pytest.warns(UserWarning, match="No columns matched for use_features patterns"):
             result = filter_features(sample_data.copy(), base_config)
 
         assert list(result.columns) == ["census_a"]
 
-    def test_omit_nonexistent_feature(self, sample_data: pd.DataFrame, base_config: TrainingConfig):
+    def test_omit_nonexistent_feature(self, sample_data: pd.DataFrame, base_config: FeatureFilteringConfig):
         """Test that omitting non-existent feature raises warning."""
-        base_config.feature_filtering.omit_features = ["nonexistent_feature", "census_b"]
+        base_config.omit_features = ["nonexistent_feature", "census_b"]
         with pytest.warns(UserWarning, match="No columns matched for omit_features patterns"):
             result = filter_features(sample_data.copy(), base_config)
 
         # Only census_b should be removed
         assert list(result.columns) == ["census_a", "feature_c", "feature_d"]
 
-    def test_use_single_feature(self, sample_data: pd.DataFrame, base_config: TrainingConfig):
+    def test_use_single_feature(self, sample_data: pd.DataFrame, base_config: FeatureFilteringConfig):
         """Test selecting a single feature."""
-        base_config.feature_filtering.use_features = ["feature_c"]
+        base_config.use_features = ["feature_c"]
         result = filter_features(sample_data.copy(), base_config)
 
         assert list(result.columns) == ["feature_c"]
         assert result.shape == (4, 1)
 
-    def test_omit_all_features(self, sample_data: pd.DataFrame, base_config: TrainingConfig):
+    def test_omit_all_features(self, sample_data: pd.DataFrame, base_config: FeatureFilteringConfig):
         """Test omitting all features results in empty DataFrame."""
-        base_config.feature_filtering.omit_features = ["census_a", "census_b", "feature_c", "feature_d"]
+        base_config.omit_features = ["census_a", "census_b", "feature_c", "feature_d"]
         result = filter_features(sample_data.copy(), base_config)
 
         assert len(result.columns) == 0
         assert len(result) == 4  # Rows still present
 
-    def test_use_features_preserves_order(self, sample_data: pd.DataFrame, base_config: TrainingConfig):
+    def test_use_features_preserves_order(self, sample_data: pd.DataFrame, base_config: FeatureFilteringConfig):
         """Test that use_features preserves the specified order."""
         # Specify features in different order than DataFrame
-        base_config.feature_filtering.use_features = ["feature_d", "census_a", "feature_c"]
+        base_config.use_features = ["feature_d", "census_a", "feature_c"]
         result = filter_features(sample_data.copy(), base_config)
 
         # Should maintain order from use_features
         assert list(result.columns) == ["feature_d", "census_a", "feature_c"]
 
-    def test_use_features_regex(self, sample_data: pd.DataFrame, base_config: TrainingConfig):
+    def test_use_features_regex(self, sample_data: pd.DataFrame, base_config: FeatureFilteringConfig):
         """Test using regex patterns in use_features."""
-        base_config.feature_filtering.use_features = ["census_*"]
+        base_config.use_features = ["census_*"]
         result = filter_features(sample_data.copy(), base_config)
 
         assert list(result.columns) == ["census_a", "census_b"]
         pd.testing.assert_frame_equal(result, sample_data[["census_a", "census_b"]])
 
-    def test_omit_features_regex(self, sample_data: pd.DataFrame, base_config: TrainingConfig):
+    def test_omit_features_regex(self, sample_data: pd.DataFrame, base_config: FeatureFilteringConfig):
         """Test using regex patterns in omit_features."""
-        base_config.feature_filtering.omit_features = ["feature_*"]
+        base_config.omit_features = ["feature_*"]
         result = filter_features(sample_data.copy(), base_config)
 
         assert list(result.columns) == ["census_a", "census_b"]

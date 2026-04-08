@@ -11,6 +11,7 @@ from geoscore_de import mlflow_wrapper
 from geoscore_de.data_flow.feature_engineering.base import instantiate_feature_engineering_class
 from geoscore_de.data_flow.features.base import BaseFeature, instantiate_feature
 from geoscore_de.data_flow.features.config import FeaturesYAMLConfig
+from geoscore_de.filtering import filter_features
 
 logger = logging.getLogger(__name__)
 
@@ -104,6 +105,9 @@ class FeatureMatrixBuilder:
 
         logger.info(f"Building feature matrix with {len(self.features)} features")
 
+        # Build a name -> config lookup for O(1) access inside the feature loop
+        feature_config_map = {fc.name: fc for fc in self.config.features}
+
         # Load and transform each feature
         feature_dfs = []
         for feature_name, feature_instance in self.features.items():
@@ -118,6 +122,21 @@ class FeatureMatrixBuilder:
                     msg = f"Join key '{join_key}' not found in {feature_name} dataframe"
                     logger.error(msg)
                     raise KeyError(msg)
+
+                # Apply column filtering if configured (join key is temporarily excluded)
+                feature_config = feature_config_map.get(feature_name)
+                if feature_config is not None and feature_config.column_filter is not None:
+                    before_cols = set(df.columns) - {join_key}
+                    # Separate join key, apply filter_features on feature columns only, then restore join key
+                    join_key_series = df[[join_key]]
+                    feature_cols_df = df.drop(columns=[join_key])
+                    feature_cols_df = filter_features(feature_cols_df, feature_config.column_filter)
+                    df = pd.concat([join_key_series, feature_cols_df], axis=1)
+                    dropped = before_cols - set(feature_cols_df.columns)
+                    if dropped:
+                        logger.info(
+                            f"Column filter dropped {len(dropped)} columns from '{feature_name}': {sorted(dropped)}"
+                        )
 
                 # Add feature name prefix to columns (except join key)
                 df = df.rename(columns={col: f"{feature_name}_{col}" for col in df.columns if col != join_key})
