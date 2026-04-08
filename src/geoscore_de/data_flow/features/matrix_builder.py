@@ -8,6 +8,7 @@ import yaml
 from pydantic import ValidationError
 
 from geoscore_de import mlflow_wrapper
+from geoscore_de.data_flow.feature_engineering.base import instantiate_feature_engineering_class
 from geoscore_de.data_flow.features.base import BaseFeature, instantiate_feature
 from geoscore_de.data_flow.features.config import FeaturesYAMLConfig
 
@@ -139,6 +140,18 @@ class FeatureMatrixBuilder:
         for df in feature_dfs:
             result_df = result_df.merge(df, on=join_key, how="left")
             logger.info(f"Merged dataframe shape: {result_df.shape}")
+
+        # Apply after_transforms (e.g. delta features) before missing-value handling
+        if self.config.after_transforms:
+            logger.info(f"Applying {len(self.config.after_transforms)} after-merge transforms")
+            for transform_config in self.config.after_transforms:
+                try:
+                    transform = instantiate_feature_engineering_class(transform_config)
+                    result_df = transform.apply(result_df)
+                    logger.info(f"Applied after-transform '{transform_config.name}', shape: {result_df.shape}")
+                except Exception as e:
+                    logger.error(f"Failed to apply after-transform '{transform_config.name}': {e}")
+                    raise
 
         # Handle missing values
         if matrix_config.missing_values == "drop":

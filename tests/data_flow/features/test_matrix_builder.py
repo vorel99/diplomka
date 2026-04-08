@@ -7,6 +7,9 @@ from pydantic import ValidationError
 
 from geoscore_de.data_flow.features.matrix_builder import FeatureMatrixBuilder
 
+# Module path for DeltaFeatureEngineering (used in after_transforms configs)
+DELTA_MODULE = "geoscore_de.data_flow.feature_engineering"
+
 
 @pytest.fixture
 def temp_config_file(tmp_path, mock_feature_module):
@@ -285,7 +288,166 @@ class TestFeatureMatrixBuilder:
         assert "feature2_AGS" not in matrix.columns
 
 
+class TestAfterTransforms:
+    """Integration tests for after_transforms (post-merge delta features)."""
+
+    @pytest.fixture(autouse=True)
+    def setup_mock(self, mock_feature_class):
+        self.MockFeature = mock_feature_class
+
+    def _build_config_with_after_transforms(self, tmp_path, mock_feature_module, after_transforms):
+        """Helper to create a config file with after_transforms."""
+        config_data = {
+            "municipalities": {"class": "MockFeature", "module": mock_feature_module},
+            "features": [
+                {"name": "f1", "class": "MockFeature", "module": mock_feature_module},
+                {"name": "f2", "class": "MockFeature", "module": mock_feature_module},
+            ],
+            "after_transforms": after_transforms,
+            "matrix": {"join_key": "AGS", "save_output": False},
+        }
+        config_file = tmp_path / "after_tform_config.yaml"
+        config_file.write_text(yaml.dump(config_data))
+        return str(config_file)
+
+    def test_delta_column_added_to_matrix(self, tmp_path, mock_feature_module):
+        """Delta column is computed and appended to the merged matrix."""
+        after_transforms = [
+            {
+                "name": "val_delta",
+                "class": "DeltaFeatureEngineering",
+                "module": DELTA_MODULE,
+                "input_columns": ["f2_value", "f1_value"],
+                "output_column": "val_delta",
+                "params": {},
+            }
+        ]
+        config_path = self._build_config_with_after_transforms(tmp_path, mock_feature_module, after_transforms)
+        builder = FeatureMatrixBuilder(config_path=config_path)
+
+        # Override features so f1_value and f2_value land in matrix with known values
+        builder.features["f1"] = self.MockFeature(pd.DataFrame({"AGS": [1, 2, 3], "value": [10.0, 20.0, 30.0]}))
+        builder.features["f2"] = self.MockFeature(pd.DataFrame({"AGS": [1, 2, 3], "value": [15.0, 25.0, 35.0]}))
+
+        matrix = builder.build_matrix()
+
+        assert "val_delta" in matrix.columns
+        # delta = f2_value - f1_value = 5 for all rows
+        assert list(matrix["val_delta"]) == [5.0, 5.0, 5.0]
+
+    def test_delta_null_propagation(self, tmp_path, mock_feature_module):
+        """NaN in either input column propagates to the delta column."""
+        after_transforms = [
+            {
+                "name": "val_delta",
+                "class": "DeltaFeatureEngineering",
+                "module": DELTA_MODULE,
+                "input_columns": ["f2_value", "f1_value"],
+                "output_column": "val_delta",
+                "params": {},
+            }
+        ]
+        config_path = self._build_config_with_after_transforms(tmp_path, mock_feature_module, after_transforms)
+        builder = FeatureMatrixBuilder(config_path=config_path)
+
+        builder.features["f1"] = self.MockFeature(pd.DataFrame({"AGS": [1, 2, 3], "value": [10.0, None, 30.0]}))
+        builder.features["f2"] = self.MockFeature(pd.DataFrame({"AGS": [1, 2, 3], "value": [15.0, 25.0, 35.0]}))
+
+        matrix = builder.build_matrix()
+
+        import numpy as np
+
+        assert matrix["val_delta"].iloc[0] == 5.0
+        assert np.isnan(matrix["val_delta"].iloc[1])
+        assert matrix["val_delta"].iloc[2] == 5.0
+
+    def test_multiple_after_transforms_applied_in_order(self, tmp_path, mock_feature_module):
+        """Multiple after_transforms are applied sequentially."""
+        after_transforms = [
+            {
+                "name": "delta_a",
+                "class": "DeltaFeatureEngineering",
+                "module": DELTA_MODULE,
+                "input_columns": ["f2_value", "f1_value"],
+                "output_column": "delta_a",
+                "params": {},
+            },
+            {
+                "name": "delta_b",
+                "class": "DeltaFeatureEngineering",
+                "module": DELTA_MODULE,
+                "input_columns": ["f2_weight", "f1_weight"],
+                "output_column": "delta_b",
+                "params": {},
+            },
+        ]
+        config_path = self._build_config_with_after_transforms(tmp_path, mock_feature_module, after_transforms)
+        builder = FeatureMatrixBuilder(config_path=config_path)
+
+        builder.municipalities = self.MockFeature(pd.DataFrame({"AGS": [1, 2]}))
+        builder.features["f1"] = self.MockFeature(
+            pd.DataFrame({"AGS": [1, 2], "value": [10.0, 20.0], "weight": [100.0, 200.0]})
+        )
+        builder.features["f2"] = self.MockFeature(
+            pd.DataFrame({"AGS": [1, 2], "value": [15.0, 25.0], "weight": [110.0, 210.0]})
+        )
+
+        matrix = builder.build_matrix()
+
+        assert "delta_a" in matrix.columns
+        assert "delta_b" in matrix.columns
+        assert list(matrix["delta_a"]) == [5.0, 5.0]
+        assert list(matrix["delta_b"]) == [10.0, 10.0]
+
+    def test_original_columns_still_present(self, tmp_path, mock_feature_module):
+        """After delta transform, the original source columns are still in the matrix."""
+        after_transforms = [
+            {
+                "name": "val_delta",
+                "class": "DeltaFeatureEngineering",
+                "module": DELTA_MODULE,
+                "input_columns": ["f2_value", "f1_value"],
+                "output_column": "val_delta",
+                "params": {},
+            }
+        ]
+        config_path = self._build_config_with_after_transforms(tmp_path, mock_feature_module, after_transforms)
+        builder = FeatureMatrixBuilder(config_path=config_path)
+
+        builder.features["f1"] = self.MockFeature(pd.DataFrame({"AGS": [1, 2], "value": [10.0, 20.0]}))
+        builder.features["f2"] = self.MockFeature(pd.DataFrame({"AGS": [1, 2], "value": [15.0, 25.0]}))
+
+        matrix = builder.build_matrix()
+
+        # originals and delta all present
+        assert "f1_value" in matrix.columns
+        assert "f2_value" in matrix.columns
+        assert "val_delta" in matrix.columns
+
+    def test_invalid_after_transform_column_raises(self, tmp_path, mock_feature_module):
+        """An after_transform referencing a non-existent column raises an error."""
+        after_transforms = [
+            {
+                "name": "bad_delta",
+                "class": "DeltaFeatureEngineering",
+                "module": DELTA_MODULE,
+                "input_columns": ["nonexistent_col", "f1_value"],
+                "output_column": "bad_delta",
+                "params": {},
+            }
+        ]
+        config_path = self._build_config_with_after_transforms(tmp_path, mock_feature_module, after_transforms)
+        builder = FeatureMatrixBuilder(config_path=config_path)
+
+        builder.features["f1"] = self.MockFeature(pd.DataFrame({"AGS": [1, 2], "value": [10.0, 20.0]}))
+        builder.features["f2"] = self.MockFeature(pd.DataFrame({"AGS": [1, 2], "value": [15.0, 25.0]}))
+
+        with pytest.raises(ValueError):
+            builder.build_matrix()
+
+
 def test_default_config():
     """Test that default config is set correctly."""
     builder = FeatureMatrixBuilder()
     assert builder.municipalities is not None
+
