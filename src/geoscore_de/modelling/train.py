@@ -1,3 +1,6 @@
+import warnings
+from math import ceil
+
 import pandas as pd
 from lightgbm import LGBMRegressor
 from sklearn.metrics import (
@@ -27,7 +30,38 @@ class Trainer:
     def _filter_rows(self, data: pd.DataFrame) -> pd.DataFrame:
         return filter_rows(data, self.config)
 
-    def _prepare_data(self, data: pd.DataFrame):
+    def _derive_state_labels(self, data: pd.DataFrame) -> pd.Series:
+        """Build state labels used for stratified train/test split."""
+        if self.config.federal_state_column in data.columns:
+            return data[self.config.federal_state_column].astype(str)
+
+        raise ValueError(
+            "State stratification requires either federal_state_column or id_column to be present in input data."
+        )
+
+    def _is_stratification_feasible(self, labels: pd.Series, total_samples: int) -> tuple[bool, str]:
+        """Check whether sklearn stratified split constraints are satisfiable."""
+        class_counts = labels.value_counts(dropna=False)
+        if class_counts.empty:
+            return False, "No labels available for stratification."
+
+        if class_counts.min() < 2:
+            return False, "At least one class has fewer than 2 samples."
+
+        test_size = 1 - self.config.train_test_split_ratio
+        n_test = ceil(total_samples * test_size)
+        n_train = total_samples - n_test
+        n_classes = class_counts.size
+
+        if n_test < n_classes or n_train < n_classes:
+            return (
+                False,
+                f"Split sizes are too small for {n_classes} classes (n_train={n_train}, n_test={n_test}).",
+            )
+
+        return True, ""
+
+    def _prepare_data(self, data: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
         """Prepare data for model training by applying row and feature filtering
         and splitting into train and test sets.
 
@@ -47,15 +81,44 @@ class Trainer:
 
         # drop rows with missing target variable
         data = data.dropna(subset=[self.config.target_variable])
-
         # filter features
         X = filter_features(data.drop(columns=[self.config.target_variable]), self.config)
         y = data[self.config.target_variable]
 
+        state_labels = None
+        if self.config.split_strategy == "stratified_federal_state":
+            candidate_labels = self._derive_state_labels(data)
+            feasible, reason = self._is_stratification_feasible(candidate_labels, total_samples=len(data))
+            if feasible:
+                state_labels = candidate_labels
+            else:
+                warnings.warn(
+                    "Stratified federal-state split is not feasible for this dataset. "
+                    f"Falling back to random split. Reason: {reason}",
+                    UserWarning,
+                )
+
         # Split into train and test sets
-        X_train_val, X_test, y_train_val, y_test = train_test_split(
-            X, y, test_size=1 - self.config.train_test_split_ratio, random_state=self.config.random_state
-        )
+        split_kwargs = {
+            "test_size": 1 - self.config.train_test_split_ratio,
+            "random_state": self.config.random_state,
+        }
+        if state_labels is not None:
+            split_kwargs["stratify"] = state_labels
+
+        try:
+            X_train_val, X_test, y_train_val, y_test = train_test_split(X, y, **split_kwargs)
+        except ValueError as exc:
+            if "stratify" not in split_kwargs:
+                raise
+
+            warnings.warn(
+                "Stratified federal-state split is not feasible for this dataset. "
+                f"Falling back to random split. Original error: {exc}",
+                UserWarning,
+            )
+            split_kwargs.pop("stratify", None)
+            X_train_val, X_test, y_train_val, y_test = train_test_split(X, y, **split_kwargs)
 
         return X_train_val, X_test, y_train_val, y_test
 
@@ -126,6 +189,7 @@ class Trainer:
             X_test=X_test,
             y_train_val=y_train_val,
             y_test=y_test,
+            test_indices=X_test.index,
         )
 
         # Keep previous side effects for existing workflows

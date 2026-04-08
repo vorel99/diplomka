@@ -1,4 +1,6 @@
-from pydantic import BaseModel, Field
+from typing import Literal
+
+from pydantic import BaseModel, Field, model_validator
 
 
 class FeatureFilteringConfig(BaseModel):
@@ -59,5 +61,22 @@ class TrainingConfig(BaseModel):
     train_test_split_ratio: float = Field(
         default=0.8, description="Ratio for splitting the dataset into training and testing sets."
     )
+    split_strategy: Literal["random", "stratified_federal_state"] = Field(
+        default="random",
+        description=(
+            "Train/test split strategy. Use 'random' for plain random split or "
+            "'stratified_federal_state' to keep federal state proportions in both sets."
+        ),
+    )
+    federal_state_column: str = Field(
+        default="federal_republic_id",
+        description="Column used for state-level stratification when split_strategy is 'stratified_federal_state'.",
+    )
     random_state: int = Field(default=42, description="Random state for reproducibility of train-test split.")
     model: ModelConfig = Field(default_factory=ModelConfig, description="Configuration for the model.")
+
+    @model_validator(mode="after")
+    def _validate_split_ratio(self) -> "TrainingConfig":
+        if not 0 < self.train_test_split_ratio < 1:
+            raise ValueError("train_test_split_ratio must be strictly between 0 and 1.")
+        return self

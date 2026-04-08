@@ -12,6 +12,8 @@ feature_filtering:
   ]
 
 train_test_split_ratio: 0.8
+split_strategy: stratified_federal_state
+federal_state_column: federal_state_id
 
 random_state: 42
 
