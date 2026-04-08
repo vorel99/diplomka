@@ -14,9 +14,7 @@ class FeatureFilteringConfig(BaseModel):
     expressions.
     """
 
-    omit_features: list[str] = Field(
-        default_factory=list, description="List of features to omit from the dataset."
-    )
+    omit_features: list[str] = Field(default_factory=list, description="List of features to omit from the dataset.")
     use_features: list[str] = Field(
         default_factory=list,
         description="List of features to use. If empty, all features will be used.",

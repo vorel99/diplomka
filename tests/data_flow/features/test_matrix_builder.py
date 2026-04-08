@@ -571,9 +571,7 @@ class TestColumnFiltering:
 
     def test_build_matrix_use_features(self, tmp_path, mock_feature_module):
         """use_features filters columns before prefixing in build_matrix."""
-        config_path = self._make_config_file(
-            tmp_path, mock_feature_module, column_filter={"use_features": ["value"]}
-        )
+        config_path = self._make_config_file(tmp_path, mock_feature_module, column_filter={"use_features": ["value"]})
         builder = FeatureMatrixBuilder(config_path=config_path)
         # MockFeature returns AGS, value, weight
         matrix = builder.build_matrix()
@@ -583,9 +581,7 @@ class TestColumnFiltering:
 
     def test_build_matrix_omit_features(self, tmp_path, mock_feature_module):
         """omit_features drops the specified column before prefixing in build_matrix."""
-        config_path = self._make_config_file(
-            tmp_path, mock_feature_module, column_filter={"omit_features": ["weight"]}
-        )
+        config_path = self._make_config_file(tmp_path, mock_feature_module, column_filter={"omit_features": ["weight"]})
         builder = FeatureMatrixBuilder(config_path=config_path)
         matrix = builder.build_matrix()
         assert "feat_value" in matrix.columns
