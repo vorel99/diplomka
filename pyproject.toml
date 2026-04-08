@@ -29,6 +29,7 @@ dependencies = [
     "lightgbm",
     # reporting
     "shap",
+    "papermill==2.7.0",
 ]
 
 [dependency-groups]
