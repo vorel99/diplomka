@@ -488,7 +488,7 @@ class TestColumnFiltering:
         """use_features keeps only the listed columns."""
         df = pd.DataFrame({"a": [10, 20], "b": [30, 40], "c": [50, 60]})
         cf = FeatureFilteringConfig(use_features=["a", "c"])
-        from geoscore_de.modelling.data_filtering import filter_features
+        from geoscore_de.filtering import filter_features
 
         result = filter_features(df, cf)
         assert list(result.columns) == ["a", "c"]
@@ -497,7 +497,7 @@ class TestColumnFiltering:
         """omit_features removes the listed columns but keeps the rest."""
         df = pd.DataFrame({"a": [10, 20], "b": [30, 40], "c": [50, 60]})
         cf = FeatureFilteringConfig(omit_features=["b"])
-        from geoscore_de.modelling.data_filtering import filter_features
+        from geoscore_de.filtering import filter_features
 
         result = filter_features(df, cf)
         assert "b" not in result.columns
@@ -508,7 +508,7 @@ class TestColumnFiltering:
         """use_features then omit_features narrows down correctly."""
         df = pd.DataFrame({"a": [1], "b": [2], "c": [3], "d": [4]})
         cf = FeatureFilteringConfig(use_features=["a", "b", "c"], omit_features=["b"])
-        from geoscore_de.modelling.data_filtering import filter_features
+        from geoscore_de.filtering import filter_features
 
         result = filter_features(df, cf)
         assert list(result.columns) == ["a", "c"]
@@ -526,7 +526,7 @@ class TestColumnFiltering:
         """use_features supports glob/regex patterns."""
         df = pd.DataFrame({"unemp_total": [5], "unemp_male": [3], "pop_total": [100]})
         cf = FeatureFilteringConfig(use_features=["unemp_*"])
-        from geoscore_de.modelling.data_filtering import filter_features
+        from geoscore_de.filtering import filter_features
 
         result = filter_features(df, cf)
         assert set(result.columns) == {"unemp_total", "unemp_male"}
@@ -536,7 +536,7 @@ class TestColumnFiltering:
         """omit_features supports glob/regex patterns."""
         df = pd.DataFrame({"unemp_total": [5], "unemp_male": [3], "pop_total": [100]})
         cf = FeatureFilteringConfig(omit_features=["unemp_*"])
-        from geoscore_de.modelling.data_filtering import filter_features
+        from geoscore_de.filtering import filter_features
 
         result = filter_features(df, cf)
         assert "unemp_total" not in result.columns
@@ -547,7 +547,7 @@ class TestColumnFiltering:
         """An empty FeatureFilteringConfig leaves all columns unchanged."""
         df = pd.DataFrame({"a": [10, 20], "b": [30, 40]})
         cf = FeatureFilteringConfig()
-        from geoscore_de.modelling.data_filtering import filter_features
+        from geoscore_de.filtering import filter_features
 
         result = filter_features(df, cf)
         assert list(result.columns) == ["a", "b"]
@@ -560,7 +560,7 @@ class TestColumnFiltering:
         cf = FeatureFilteringConfig(use_features=["nonexistent_col"])
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
-            from geoscore_de.modelling.data_filtering import filter_features
+            from geoscore_de.filtering import filter_features
 
             filter_features(df, cf)
         assert any("use_features" in str(warning.message) for warning in w)

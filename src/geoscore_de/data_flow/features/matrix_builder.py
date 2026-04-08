@@ -11,7 +11,7 @@ from geoscore_de import mlflow_wrapper
 from geoscore_de.data_flow.feature_engineering.base import instantiate_feature_engineering_class
 from geoscore_de.data_flow.features.base import BaseFeature, instantiate_feature
 from geoscore_de.data_flow.features.config import FeaturesYAMLConfig
-from geoscore_de.modelling.data_filtering import filter_features
+from geoscore_de.filtering import filter_features
 
 logger = logging.getLogger(__name__)
 
@@ -105,7 +105,7 @@ class FeatureMatrixBuilder:
 
         logger.info(f"Building feature matrix with {len(self.features)} features")
 
-        # Build a name → config lookup for O(1) access inside the feature loop
+        # Build a name -> config lookup for O(1) access inside the feature loop
         feature_config_map = {fc.name: fc for fc in self.config.features}
 
         # Load and transform each feature

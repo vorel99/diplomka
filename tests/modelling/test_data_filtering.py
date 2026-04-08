@@ -2,8 +2,9 @@ import pandas as pd
 import pytest
 
 from geoscore_de.config import FeatureFilteringConfig
+from geoscore_de.filtering import filter_features
 from geoscore_de.modelling.config import ModelConfig, RowFilteringConfig, TrainingConfig
-from geoscore_de.modelling.data_filtering import filter_features, filter_rows
+from geoscore_de.modelling.data_filtering import filter_rows
 
 
 class TestFeatureFiltering:
