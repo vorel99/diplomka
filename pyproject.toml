@@ -6,7 +6,7 @@ build-backend = "uv_build"
 name = "geoscore-de"
 description = "GeoScore Germany"
 version = "0.1"
-requires-python = ">= 3.11"
+requires-python = ">= 3.12"
 dependencies = [
     "scipy",
     "numpy",
