@@ -16,7 +16,7 @@ def test_load_geo_data_from_geojson(tmp_path):
     geo_shape = json.dumps({"type": "Polygon", "coordinates": [list(geometry.exterior.coords)]})
     pd.DataFrame(
         {
-            "Gemeinde code": ["12345.6.789"],
+            "Gemeinde code": ["12345.6.7890"],
             "Geo Shape": [geo_shape],
             "name": ["Test Municipality"],
         }
@@ -25,7 +25,7 @@ def test_load_geo_data_from_geojson(tmp_path):
     loaded = load_geo_data(str(csv_path))
 
     assert isinstance(loaded, gpd.GeoDataFrame)
-    assert list(loaded["AGS"]) == ["1234589"]
+    assert list(loaded["AGS"]) == ["12345890"]
     assert loaded.crs.to_string() == "EPSG:4326"
 
 
