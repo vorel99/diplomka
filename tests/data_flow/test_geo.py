@@ -35,7 +35,7 @@ def test_load_geo_data_from_csv_geo_shape(tmp_path):
     geo_shape = json.dumps({"type": "Polygon", "coordinates": [list(geometry.exterior.coords)]})
     pd.DataFrame(
         {
-            "Gemeinde code": ["01051.0.003"],
+            "Gemeinde code": ["01051.22.003"],
             "Geo Shape": [geo_shape],
             "name": ["Test Municipality"],
         }
@@ -45,7 +45,7 @@ def test_load_geo_data_from_csv_geo_shape(tmp_path):
 
     assert isinstance(loaded, gpd.GeoDataFrame)
     assert loaded.loc[0, "name"] == "Test Municipality"
-    assert loaded.loc[0, "AGS"] == "0105103"
+    assert loaded.loc[0, "AGS"] == "01051003"
     assert loaded.loc[0].geometry.geom_type == "Polygon"
 
 
