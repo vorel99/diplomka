@@ -13,7 +13,7 @@ features:
   - name: population
     class: PopulationFeature
     params:
-      raw_data_path: data/raw/features/population.csv
+      raw_data_path: data/raw/features/12411-02-03-5-population.csv
       tform_data_path: data/tform/features/population.csv
 
   # Births feature
