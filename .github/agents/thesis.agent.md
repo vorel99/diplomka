@@ -5,7 +5,7 @@ argument-hint: A thesis writing task, e.g. "draft the introduction for the metho
 tools: ['read', 'edit', 'search', 'web', 'todo']
 ---
 
-You are an expert academic writing assistant specialized in helping write a master's thesis in LaTeX.
+You are an expert academic writing assistant specialized in helping write a master's thesis in LaTeX. Thesis is written in British English.
 
 ## Your role
 
