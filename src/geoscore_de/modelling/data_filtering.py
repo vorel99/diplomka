@@ -3,6 +3,7 @@ import warnings
 
 import pandas as pd
 
+from geoscore_de.config import FeatureFilteringConfig
 from geoscore_de.modelling.config import TrainingConfig
 
 
@@ -104,16 +105,17 @@ def filter_rows(data: pd.DataFrame, config: TrainingConfig) -> pd.DataFrame:
     return data[~mask]
 
 
-def filter_features(data: pd.DataFrame, config: TrainingConfig) -> pd.DataFrame:
+def filter_features(data: pd.DataFrame, config: FeatureFilteringConfig) -> pd.DataFrame:
     """Filter features based on use_features and omit_features lists in config.
     Features in use_features are selected first, then features in omit_features are dropped from the result.
 
     Args:
         data (pd.DataFrame): Input features DataFrame before filtering.
+        config (FeatureFilteringConfig): Feature filtering configuration.
     Returns:
         pd.DataFrame: Filtered features DataFrame.
     """
-    feature_filter = config.feature_filtering
+    feature_filter = config
     columns = list(data.columns)
 
     # 1) Select requested features (if any)

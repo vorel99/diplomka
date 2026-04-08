@@ -82,7 +82,7 @@ class Trainer:
         # drop rows with missing target variable
         data = data.dropna(subset=[self.config.target_variable])
         # filter features
-        X = filter_features(data.drop(columns=[self.config.target_variable]), self.config)
+        X = filter_features(data.drop(columns=[self.config.target_variable]), self.config.feature_filtering)
         y = data[self.config.target_variable]
 
         state_labels = None
