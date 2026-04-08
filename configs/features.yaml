@@ -72,30 +72,7 @@ features:
       tform_data_path: data/tform/features/unemployment.csv
 
 # Post-merge delta transforms (trend features): delta = newer_column - older_column
-after_transforms:
-  # Change in election participation between the 2021 and 2025 federal elections
-  - name: election_participation_delta
-    class: DeltaFeatureEngineering
-    input_columns: ["election_2025_election_participation", "election_2021_election_participation"]
-    output_column: election_participation_delta
-
-  # Change in vote-homogeneity index between elections (higher = more uniform outcome)
-  - name: election_homogeneity_delta
-    class: DeltaFeatureEngineering
-    input_columns: ["election_2025_homogeneity", "election_2021_homogeneity"]
-    output_column: election_homogeneity_delta
-
-  # Change in first-vote invalid-ballot share between elections
-  - name: election_invalid_votes_first_delta
-    class: DeltaFeatureEngineering
-    input_columns: ["election_2025_E_invalid_votes", "election_2021_E_invalid_votes"]
-    output_column: election_invalid_votes_first_delta
-
-  # Change in second-vote invalid-ballot share between elections
-  - name: election_invalid_votes_second_delta
-    class: DeltaFeatureEngineering
-    input_columns: ["election_2025_Z_invalid_votes", "election_2021_Z_invalid_votes"]
-    output_column: election_invalid_votes_second_delta
+# after_transforms:
 
 # Matrix building configuration
 matrix:

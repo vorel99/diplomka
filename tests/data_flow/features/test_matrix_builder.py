@@ -450,4 +450,3 @@ def test_default_config():
     """Test that default config is set correctly."""
     builder = FeatureMatrixBuilder()
     assert builder.municipalities is not None
-
