@@ -70,6 +70,13 @@ features:
     params:
       raw_data_path: data/raw/features/unemployment.csv
       tform_data_path: data/tform/features/unemployment.csv
+    # Example: only keep the columns needed for delta/trend transforms.
+    # Supports fnmatch glob patterns (e.g. 'unemp_total_*').
+    # column_filter:
+    #   select_columns:
+    #     - unemp_total_current
+    #     - unemp_total_previous
+    #   omit_columns: []
 
 # Post-merge delta transforms (trend features): delta = newer_column - older_column
 # after_transforms:

@@ -1,5 +1,6 @@
 """Feature Matrix Builder for combining multiple feature datasets."""
 
+import fnmatch
 import logging
 from pathlib import Path
 
@@ -10,7 +11,7 @@ from pydantic import ValidationError
 from geoscore_de import mlflow_wrapper
 from geoscore_de.data_flow.feature_engineering.base import instantiate_feature_engineering_class
 from geoscore_de.data_flow.features.base import BaseFeature, instantiate_feature
-from geoscore_de.data_flow.features.config import FeaturesYAMLConfig
+from geoscore_de.data_flow.features.config import ColumnFilteringConfig, FeaturesYAMLConfig
 
 logger = logging.getLogger(__name__)
 
@@ -119,6 +120,18 @@ class FeatureMatrixBuilder:
                     logger.error(msg)
                     raise KeyError(msg)
 
+                # Apply column filtering if configured
+                feature_config = next((fc for fc in self.config.features if fc.name == feature_name), None)
+                if feature_config is not None and feature_config.column_filter is not None:
+                    before_cols = set(df.columns) - {join_key}
+                    df = self._apply_column_filter(df, join_key, feature_config.column_filter)
+                    after_cols = set(df.columns) - {join_key}
+                    dropped = before_cols - after_cols
+                    if dropped:
+                        logger.info(
+                            f"Column filter dropped {len(dropped)} columns from '{feature_name}': {sorted(dropped)}"
+                        )
+
                 # Add feature name prefix to columns (except join key)
                 df = df.rename(columns={col: f"{feature_name}_{col}" for col in df.columns if col != join_key})
 
@@ -173,6 +186,53 @@ class FeatureMatrixBuilder:
         mlflow_wrapper.log_data(result_df, artifact_file="data/feature_matrix.csv", index=False)
 
         return result_df
+
+    @staticmethod
+    def _apply_column_filter(df: pd.DataFrame, join_key: str, column_filter: ColumnFilteringConfig) -> pd.DataFrame:
+        """Apply select_columns and omit_columns filtering to a feature DataFrame.
+
+        The join key is always preserved. Filtering is applied in this order:
+        1. ``select_columns`` whitelist (fnmatch patterns)
+        2. ``omit_columns`` blacklist (fnmatch patterns)
+
+        Args:
+            df: Feature DataFrame (must contain ``join_key`` column).
+            join_key: Name of the column used as the join key (always kept).
+            column_filter: Column filtering configuration.
+
+        Returns:
+            DataFrame with only the requested columns (plus join key).
+        """
+        feature_cols = [c for c in df.columns if c != join_key]
+
+        # Step 1: apply select_columns whitelist
+        if column_filter.select_columns is not None:
+            matched: list[str] = []
+            for pattern in column_filter.select_columns:
+                hits = fnmatch.filter(feature_cols, pattern)
+                if not hits:
+                    logger.warning(f"Column filter pattern '{pattern}' matched no columns")
+                matched.extend(hits)
+            # Preserve original column order, deduplicate
+            seen: set[str] = set()
+            selected: list[str] = []
+            for c in feature_cols:
+                if c in matched and c not in seen:
+                    selected.append(c)
+                    seen.add(c)
+            feature_cols = selected
+
+        # Step 2: apply omit_columns blacklist
+        if column_filter.omit_columns:
+            omit_set: set[str] = set()
+            for pattern in column_filter.omit_columns:
+                omit_set.update(fnmatch.filter(feature_cols, pattern))
+            feature_cols = [c for c in feature_cols if c not in omit_set]
+
+        if not feature_cols:
+            logger.warning(f"Column filtering left no feature columns (only '{join_key}' remains)")
+
+        return df[[join_key] + feature_cols]
 
     def get_feature_names(self) -> list[str]:
         """Get the names of all loaded features.

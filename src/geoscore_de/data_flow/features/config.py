@@ -13,6 +13,29 @@ from geoscore_de.data_flow.feature_engineering.config import (
 )
 
 
+class ColumnFilteringConfig(BaseModel):
+    """Configuration for column-level filtering applied at matrix build time.
+
+    Filtering is applied in order: first ``select_columns`` (whitelist), then ``omit_columns`` (blacklist).
+    The join key (e.g. ``AGS``) is always preserved regardless of these settings.
+    """
+
+    select_columns: list[str] | None = Field(
+        default=None,
+        description=(
+            "If specified, only these columns (plus the join key) are kept from the feature dataset. "
+            "Supports fnmatch-style glob patterns (e.g. 'unemp_*')."
+        ),
+    )
+    omit_columns: list[str] = Field(
+        default_factory=list,
+        description=(
+            "Columns to drop from the feature dataset after select_columns is applied. "
+            "Supports fnmatch-style glob patterns (e.g. 'unemp_*')."
+        ),
+    )
+
+
 class FeatureConfig(ComponentConfig):
     module: str = Field(
         default=f"{BASE_MODULE}.features",
@@ -22,6 +45,13 @@ class FeatureConfig(ComponentConfig):
     )
     before_transforms: list[FeatureEngineeringConfig] = Field(
         default_factory=list, description="Transformations on raw data before this feature's transformation"
+    )
+    column_filter: ColumnFilteringConfig | None = Field(
+        default=None,
+        description=(
+            "Optional column filtering applied to this feature's data at matrix build time. "
+            "Use select_columns to whitelist columns and omit_columns to blacklist columns."
+        ),
     )
 
 

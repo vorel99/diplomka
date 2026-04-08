@@ -5,6 +5,7 @@ import pytest
 import yaml
 from pydantic import ValidationError
 
+from geoscore_de.data_flow.features.config import ColumnFilteringConfig
 from geoscore_de.data_flow.features.matrix_builder import FeatureMatrixBuilder
 
 # Module path for DeltaFeatureEngineering (used in after_transforms configs)
@@ -450,3 +451,136 @@ def test_default_config():
     """Test that default config is set correctly."""
     builder = FeatureMatrixBuilder()
     assert builder.municipalities is not None
+
+
+class TestColumnFiltering:
+    """Tests for column-level filtering in FeatureMatrixBuilder."""
+
+    @pytest.fixture(autouse=True)
+    def setup_mock(self, mock_feature_class):
+        self.MockFeature = mock_feature_class
+
+    def _make_config_file(self, tmp_path, mock_feature_module, column_filter: dict | None = None):
+        """Helper to build a config YAML with an optional column_filter."""
+        feature_cfg = {
+            "name": "feat",
+            "class": "MockFeature",
+            "module": mock_feature_module,
+            "params": {},
+        }
+        if column_filter is not None:
+            feature_cfg["column_filter"] = column_filter
+
+        config_data = {
+            "municipalities": {"class": "MockFeature", "module": mock_feature_module},
+            "features": [feature_cfg],
+            "matrix": {"join_key": "AGS", "save_output": False},
+        }
+        config_file = tmp_path / "config.yaml"
+        config_file.write_text(yaml.dump(config_data))
+        return str(config_file)
+
+    # ------------------------------------------------------------------
+    # _apply_column_filter unit tests
+    # ------------------------------------------------------------------
+
+    def test_apply_column_filter_select_keeps_only_selected(self):
+        """select_columns keeps only the listed columns (plus join key)."""
+        df = pd.DataFrame({"AGS": [1, 2], "a": [10, 20], "b": [30, 40], "c": [50, 60]})
+        cf = ColumnFilteringConfig(select_columns=["a", "c"])
+        result = FeatureMatrixBuilder._apply_column_filter(df, "AGS", cf)
+        assert list(result.columns) == ["AGS", "a", "c"]
+
+    def test_apply_column_filter_omit_drops_listed_columns(self):
+        """omit_columns removes the listed columns but keeps the rest."""
+        df = pd.DataFrame({"AGS": [1, 2], "a": [10, 20], "b": [30, 40], "c": [50, 60]})
+        cf = ColumnFilteringConfig(omit_columns=["b"])
+        result = FeatureMatrixBuilder._apply_column_filter(df, "AGS", cf)
+        assert "b" not in result.columns
+        assert "a" in result.columns
+        assert "c" in result.columns
+        assert "AGS" in result.columns
+
+    def test_apply_column_filter_combined(self):
+        """select_columns then omit_columns narrows down correctly."""
+        df = pd.DataFrame({"AGS": [1], "a": [1], "b": [2], "c": [3], "d": [4]})
+        cf = ColumnFilteringConfig(select_columns=["a", "b", "c"], omit_columns=["b"])
+        result = FeatureMatrixBuilder._apply_column_filter(df, "AGS", cf)
+        assert list(result.columns) == ["AGS", "a", "c"]
+
+    def test_apply_column_filter_join_key_always_preserved(self):
+        """Join key is never removed even if all feature columns are filtered out."""
+        df = pd.DataFrame({"AGS": [1, 2], "x": [10, 20]})
+        cf = ColumnFilteringConfig(omit_columns=["x"])
+        result = FeatureMatrixBuilder._apply_column_filter(df, "AGS", cf)
+        assert "AGS" in result.columns
+
+    def test_apply_column_filter_glob_select(self):
+        """select_columns supports fnmatch glob patterns."""
+        df = pd.DataFrame({"AGS": [1], "unemp_total": [5], "unemp_male": [3], "pop_total": [100]})
+        cf = ColumnFilteringConfig(select_columns=["unemp_*"])
+        result = FeatureMatrixBuilder._apply_column_filter(df, "AGS", cf)
+        assert set(result.columns) == {"AGS", "unemp_total", "unemp_male"}
+        assert "pop_total" not in result.columns
+
+    def test_apply_column_filter_glob_omit(self):
+        """omit_columns supports fnmatch glob patterns."""
+        df = pd.DataFrame({"AGS": [1], "unemp_total": [5], "unemp_male": [3], "pop_total": [100]})
+        cf = ColumnFilteringConfig(omit_columns=["unemp_*"])
+        result = FeatureMatrixBuilder._apply_column_filter(df, "AGS", cf)
+        assert "unemp_total" not in result.columns
+        assert "unemp_male" not in result.columns
+        assert "pop_total" in result.columns
+
+    def test_apply_column_filter_no_filter_is_no_op(self):
+        """An empty ColumnFilteringConfig leaves all columns unchanged."""
+        df = pd.DataFrame({"AGS": [1, 2], "a": [10, 20], "b": [30, 40]})
+        cf = ColumnFilteringConfig()  # select_columns=None, omit_columns=[]
+        result = FeatureMatrixBuilder._apply_column_filter(df, "AGS", cf)
+        assert list(result.columns) == ["AGS", "a", "b"]
+
+    def test_apply_column_filter_unknown_pattern_warns(self, caplog):
+        """A select_columns pattern that matches nothing issues a warning."""
+        import logging
+
+        df = pd.DataFrame({"AGS": [1], "a": [10]})
+        cf = ColumnFilteringConfig(select_columns=["nonexistent_col"])
+        with caplog.at_level(logging.WARNING):
+            FeatureMatrixBuilder._apply_column_filter(df, "AGS", cf)
+        assert any("matched no columns" in msg for msg in caplog.messages)
+
+    # ------------------------------------------------------------------
+    # Integration: filtering applied during build_matrix
+    # ------------------------------------------------------------------
+
+    def test_build_matrix_select_columns(self, tmp_path, mock_feature_module):
+        """select_columns filters columns before prefixing in build_matrix."""
+        config_path = self._make_config_file(
+            tmp_path, mock_feature_module, column_filter={"select_columns": ["value"]}
+        )
+        builder = FeatureMatrixBuilder(config_path=config_path)
+        # MockFeature returns AGS, value, weight
+        matrix = builder.build_matrix()
+        assert "feat_value" in matrix.columns
+        assert "feat_weight" not in matrix.columns
+        assert "AGS" in matrix.columns
+
+    def test_build_matrix_omit_columns(self, tmp_path, mock_feature_module):
+        """omit_columns drops the specified column before prefixing in build_matrix."""
+        config_path = self._make_config_file(
+            tmp_path, mock_feature_module, column_filter={"omit_columns": ["weight"]}
+        )
+        builder = FeatureMatrixBuilder(config_path=config_path)
+        matrix = builder.build_matrix()
+        assert "feat_value" in matrix.columns
+        assert "feat_weight" not in matrix.columns
+        assert "AGS" in matrix.columns
+
+    def test_build_matrix_no_column_filter(self, tmp_path, mock_feature_module):
+        """Without column_filter all columns are kept."""
+        config_path = self._make_config_file(tmp_path, mock_feature_module, column_filter=None)
+        builder = FeatureMatrixBuilder(config_path=config_path)
+        matrix = builder.build_matrix()
+        assert "feat_value" in matrix.columns
+        assert "feat_weight" in matrix.columns
+        assert "AGS" in matrix.columns
