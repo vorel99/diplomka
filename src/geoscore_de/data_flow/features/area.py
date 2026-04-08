@@ -2,7 +2,7 @@ import pandas as pd
 
 from geoscore_de.data_flow.features.base import BaseFeature
 
-DEFAULT_RAW_DATA_PATH = "data/raw/features/31111-01-01-5-area.csv"
+DEFAULT_RAW_DATA_PATH = "data/raw/features/33111-01-03-5-land-area.csv"
 DEFAULT_TFORM_DATA_PATH = "data/tform/features/area.csv"
 
 # Column mapping from raw data (1-indexed in the source, 0-indexed in pandas)
@@ -10,24 +10,25 @@ AREA_COLUMNS = {
     "total_land_area": "Total Land Area",  # Bodenfläche Insgesamt (ha)
     "total_settlement_area": "Settlement Area",  # Siedlung Insgesamt (ha)
     "total_traffic_area": "Traffic Area",  # Verkehr Insgesamt (ha)
-    "total_vegetation": "Agricultural Vegetation",  # Landwirtschaft Insgesamt (ha)
-    "christmas_tree_cultivation": "Christmas Tree Cultivation",  # Weihnachtsbaumkultur (ha)
-    "forestry_area": "Forestry Area",  # Forstwirtschaftsfläche Insgesamt (ha)
+    "total_vegetation_area": "Vegetation Area",  # Vegetation Insgesamt (ha)
+    "agricultural_vegetation": "Agricultural Vegetation",  # Landwirtschaft Insgesamt (ha)
+    "christmas_tree_cultivation_area": "Christmas Tree Cultivation",  # Weihnachtsbaumkultur (ha)
+    "forestry_use_area": "Forestry Area",  # Forstwirtschaftsfläche Insgesamt (ha)
     "forest_burial_area": "Forest Burial Area",  # Waldbestattungsfläche (ha)
     "forest_area": "Forest Area",  # Wald Insgesamt (ha)
-    "shrubland": "Shrubland",  # Gehölz Insgesamt (ha)
+    "shrubland_area": "Shrubland",  # Gehölz Insgesamt (ha)
     "heathland": "Heathland",  # Heide Insgesamt (ha)
     "moorland": "Moorland",  # Moor Insgesamt (ha)
-    "swamp": "Swamp",  # Sumpf Insgesamt (ha)
-    "barren_area": "Barren/Vegetation-free Area",  # Unland, Vegetationslose Fläche Insgesamt (ha)
+    "swamp_area": "Swamp",  # Sumpf Insgesamt (ha)
+    "barren_vegetation_free_area": "Barren/Vegetation-free Area",  # Unland, Vegetationslose Fläche Insgesamt (ha)
     "total_water_area": "Total Water Area",  # Gewässer Insgesamt (ha)
-    "flowing_water": "Flowing Water",  # Fließgewässer Insgesamt (ha)
+    "flowing_water_area": "Flowing Water",  # Fließgewässer Insgesamt (ha)
     "canal": "Canal",  # Kanal Insgesamt (ha)
-    "harbor_basin": "Harbor Basin",  # Hafenbecken Insgesamt (ha)
-    "standing_water": "Standing Water",  # Stehendes Gewässer Insgesamt (ha)
+    "harbor_basin_area": "Harbor Basin",  # Hafenbecken Insgesamt (ha)
+    "standing_water_area": "Standing Water",  # Stehendes Gewässer Insgesamt (ha)
     "reservoir": "Reservoir",  # Stausee Insgesamt (ha)
-    "storage_basin": "Storage Basin",  # Speicherbecken Insgesamt (ha)
-    "sea": "Sea",  # Meer Insgesamt (ha)
+    "storage_basin_area": "Storage Basin",  # Speicherbecken Insgesamt (ha)
+    "sea_area": "Sea",  # Meer Insgesamt (ha)
 }
 
 
@@ -66,7 +67,7 @@ class AreaFeature(BaseFeature):
             self.raw_data_path,
             sep=";",
             encoding="latin1",
-            skiprows=5,
+            skiprows=9,
             skipfooter=4,
             engine="python",
             na_values=["-", "."],
@@ -75,8 +76,8 @@ class AreaFeature(BaseFeature):
         )
 
         # Columns 1-3 are identifiers, columns 4-24 contain area data
-        # Rename to: AGS, MU_name, and area type columns
-        column_names = ["date", "MU_ID", "MU_name"] + list(AREA_COLUMNS.keys())
+        # Rename to: date, MU_ID, MU_NAME, and area type columns
+        column_names = ["date", "MU_ID", "MU_NAME"] + list(AREA_COLUMNS.keys())
         df.columns = column_names[: len(df.columns)]
 
         # Add AGS column by right-padding MU_ID with zeros to 8 characters
@@ -106,7 +107,7 @@ class AreaFeature(BaseFeature):
         # Calculate proportions for each area type
         total_land_area = df["total_land_area"]
 
-        for col_key, col_display_name in AREA_COLUMNS.items():
+        for col_key, _ in AREA_COLUMNS.items():
             if col_key != "total_land_area":  # Skip total land area itself
                 result_df[col_key] = df[col_key] / total_land_area
 
