@@ -105,6 +105,9 @@ class FeatureMatrixBuilder:
 
         logger.info(f"Building feature matrix with {len(self.features)} features")
 
+        # Build a name → config lookup for O(1) access inside the feature loop
+        feature_config_map = {fc.name: fc for fc in self.config.features}
+
         # Load and transform each feature
         feature_dfs = []
         for feature_name, feature_instance in self.features.items():
@@ -121,7 +124,7 @@ class FeatureMatrixBuilder:
                     raise KeyError(msg)
 
                 # Apply column filtering if configured
-                feature_config = next((fc for fc in self.config.features if fc.name == feature_name), None)
+                feature_config = feature_config_map.get(feature_name)
                 if feature_config is not None and feature_config.column_filter is not None:
                     before_cols = set(df.columns) - {join_key}
                     df = self._apply_column_filter(df, join_key, feature_config.column_filter)
