@@ -32,6 +32,9 @@ dependencies = [
     "papermill==2.7.0",
 ]
 
+[project.scripts]
+geoscore = "geoscore_de.cli:main"
+
 [dependency-groups]
 dev = [
     {include-group = "analysis"},
