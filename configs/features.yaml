@@ -71,6 +71,9 @@ features:
       raw_data_path: data/raw/features/unemployment.csv
       tform_data_path: data/tform/features/unemployment.csv
 
+# Post-merge delta transforms (trend features): delta = newer_column - older_column
+# after_transforms:
+
 # Matrix building configuration
 matrix:
   # Key column to join all features on (municipality code)
