@@ -1,17 +1,13 @@
 """Typer CLI for geoscore_de: feature-matrix creation and model training."""
 
-import subprocess
 from pathlib import Path
 
 import mlflow
-import pandas as pd
+import quarto
 import typer
-import yaml
 
 from geoscore_de import mlflow_wrapper
 from geoscore_de.data_flow.features.matrix_builder import FeatureMatrixBuilder
-from geoscore_de.modelling.config import TrainingConfig
-from geoscore_de.modelling.train import Trainer
 
 app = typer.Typer(name="geoscore", help="GeoScore Germany CLI.")
 
@@ -58,27 +54,14 @@ def train(
         Path("reports/training_report.qmd"),
         "--report",
         "-r",
-        help="Path to the Quarto report template to render after training.",
+        help="Path to the Quarto report template to render (training runs inside the report).",
         resolve_path=True,
     ),
 ) -> None:
-    """Train the model using the provided config and input CSV, then render and log the report."""
-    typer.echo(f"Loading training config from: {config_path}")
-    with open(config_path) as f:
-        config_dict = yaml.safe_load(f)
-    training_config = TrainingConfig(**config_dict)
-
-    typer.echo(f"Loading data from: {input_path}")
-    df = pd.read_csv(input_path)
-
+    """Render the training report (training runs inside it) and log artifacts to MLflow."""
     with mlflow.start_run():
         mlflow_wrapper.log_param("config_path", str(config_path))
         mlflow_wrapper.log_param("input_path", str(input_path))
-
-        typer.echo("Starting model training...")
-        trainer = Trainer(training_config)
-        trainer.train(df)
-        typer.echo("Training complete.")
 
         _render_and_log_report(report_path, config_path, input_path)
 
@@ -93,28 +76,16 @@ def _render_and_log_report(report_path: Path, config_path: Path, input_path: Pat
     typer.echo(f"Rendering Quarto report: {report_path}")
 
     try:
-        result = subprocess.run(
-            [
-                "quarto",
-                "render",
-                str(report_path),
-                "--to",
-                "html",
-                "--execute-param",
-                f"training_config_path:{config_path}",
-                "--execute-param",
-                f"input_path:{input_path}",
-            ],
-            check=True,
-            capture_output=True,
-            text=True,
+        quarto.render(
+            str(report_path),
+            output_format="html",
+            execute_params={
+                "training_config_path": str(config_path),
+                "input_path": str(input_path),
+            },
         )
-        typer.echo(result.stdout)
-    except FileNotFoundError:
-        typer.echo("Warning: quarto executable not found, skipping report rendering.", err=True)
-        return
-    except subprocess.CalledProcessError as exc:
-        typer.echo(f"Warning: Quarto rendering failed:\n{exc.stderr}", err=True)
+    except Exception as exc:
+        typer.echo(f"Warning: Quarto rendering failed: {exc}", err=True)
         return
 
     mlflow_wrapper.log_artifact(str(report_path), artifact_path="report")

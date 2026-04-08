@@ -40,14 +40,6 @@ def input_csv(tmp_path):
     return path
 
 
-@pytest.fixture()
-def report_qmd(tmp_path):
-    """Create a dummy .qmd file and return its path."""
-    path = tmp_path / "training_report.qmd"
-    path.write_text("# dummy report")
-    return path
-
-
 # ---------------------------------------------------------------------------
 # create_feature_matrix command
 # ---------------------------------------------------------------------------
@@ -93,19 +85,16 @@ class TestTrainCommand:
         result = runner.invoke(app, ["train", str(training_config_file), str(tmp_path / "no.csv")])
         assert result.exit_code != 0
 
-    def test_starts_mlflow_run(self, runner, training_config_file, input_csv, tmp_path):
+    def test_starts_mlflow_run(self, runner, training_config_file, input_csv):
         """The train command must start exactly one MLflow run."""
         with (
             patch("geoscore_de.cli.mlflow") as mock_mlflow,
-            patch("geoscore_de.cli.Trainer") as MockTrainer,
             patch("geoscore_de.cli._render_and_log_report"),
         ):
             mock_run_ctx = MagicMock()
             mock_mlflow.start_run.return_value = mock_run_ctx
             mock_run_ctx.__enter__ = MagicMock(return_value=MagicMock())
             mock_run_ctx.__exit__ = MagicMock(return_value=False)
-
-            MockTrainer.return_value.train.return_value = MagicMock()
 
             result = runner.invoke(app, ["train", str(training_config_file), str(input_csv)])
 
@@ -117,15 +106,12 @@ class TestTrainCommand:
         with (
             patch("geoscore_de.cli.mlflow") as mock_mlflow,
             patch("geoscore_de.cli.mlflow_wrapper") as mock_wrapper,
-            patch("geoscore_de.cli.Trainer") as MockTrainer,
             patch("geoscore_de.cli._render_and_log_report"),
         ):
             mock_run_ctx = MagicMock()
             mock_mlflow.start_run.return_value = mock_run_ctx
             mock_run_ctx.__enter__ = MagicMock(return_value=MagicMock())
             mock_run_ctx.__exit__ = MagicMock(return_value=False)
-
-            MockTrainer.return_value.train.return_value = MagicMock()
 
             result = runner.invoke(app, ["train", str(training_config_file), str(input_csv)])
 
@@ -135,45 +121,17 @@ class TestTrainCommand:
         assert "config_path" in keys_logged
         assert "input_path" in keys_logged
 
-    def test_trainer_called_with_correct_config(self, runner, training_config_file, input_csv):
-        """Trainer should be instantiated with a TrainingConfig and called with the DataFrame."""
-        from geoscore_de.modelling.config import TrainingConfig
-
+    def test_render_report_called(self, runner, training_config_file, input_csv):
+        """_render_and_log_report should be called within the MLflow run."""
         with (
             patch("geoscore_de.cli.mlflow") as mock_mlflow,
             patch("geoscore_de.cli.mlflow_wrapper"),
-            patch("geoscore_de.cli.Trainer") as MockTrainer,
-            patch("geoscore_de.cli._render_and_log_report"),
-        ):
-            mock_run_ctx = MagicMock()
-            mock_mlflow.start_run.return_value = mock_run_ctx
-            mock_run_ctx.__enter__ = MagicMock(return_value=MagicMock())
-            mock_run_ctx.__exit__ = MagicMock(return_value=False)
-            MockTrainer.return_value.train.return_value = MagicMock()
-
-            result = runner.invoke(app, ["train", str(training_config_file), str(input_csv)])
-
-        assert result.exit_code == 0, result.output
-        config_arg = MockTrainer.call_args.args[0]
-        assert isinstance(config_arg, TrainingConfig)
-        assert config_arg.target_variable == "y"
-
-        df_arg = MockTrainer.return_value.train.call_args.args[0]
-        assert isinstance(df_arg, pd.DataFrame)
-
-    def test_render_report_called_after_training(self, runner, training_config_file, input_csv):
-        """_render_and_log_report should be called after Trainer.train()."""
-        with (
-            patch("geoscore_de.cli.mlflow") as mock_mlflow,
-            patch("geoscore_de.cli.mlflow_wrapper"),
-            patch("geoscore_de.cli.Trainer") as MockTrainer,
             patch("geoscore_de.cli._render_and_log_report") as mock_render,
         ):
             mock_run_ctx = MagicMock()
             mock_mlflow.start_run.return_value = mock_run_ctx
             mock_run_ctx.__enter__ = MagicMock(return_value=MagicMock())
             mock_run_ctx.__exit__ = MagicMock(return_value=False)
-            MockTrainer.return_value.train.return_value = MagicMock()
 
             result = runner.invoke(app, ["train", str(training_config_file), str(input_csv)])
 
@@ -187,7 +145,7 @@ class TestTrainCommand:
 
 
 class TestRenderAndLogReport:
-    def test_missing_report_warns_and_returns(self, tmp_path, capsys):
+    def test_missing_report_warns_and_returns(self, tmp_path):
         """When the .qmd file does not exist, a warning is printed and no further action taken."""
         from geoscore_de.cli import _render_and_log_report
 
@@ -195,34 +153,15 @@ class TestRenderAndLogReport:
             _render_and_log_report(tmp_path / "no.qmd", tmp_path / "cfg.yaml", tmp_path / "data.csv")
             mock_wrapper.log_artifact.assert_not_called()
 
-    def test_quarto_not_found_warns(self, tmp_path):
-        """When quarto is not installed, a warning is printed and no artifact logged."""
-        from geoscore_de.cli import _render_and_log_report
-
-        qmd = tmp_path / "report.qmd"
-        qmd.write_text("# hello")
-
-        with (
-            patch("geoscore_de.cli.subprocess.run", side_effect=FileNotFoundError),
-            patch("geoscore_de.cli.mlflow_wrapper") as mock_wrapper,
-        ):
-            _render_and_log_report(qmd, tmp_path / "cfg.yaml", tmp_path / "data.csv")
-            mock_wrapper.log_artifact.assert_not_called()
-
     def test_quarto_failure_warns(self, tmp_path):
-        """When quarto exits with non-zero code, a warning is printed and no artifact logged."""
-        import subprocess
-
+        """When quarto.render raises, a warning is printed and no artifact logged."""
         from geoscore_de.cli import _render_and_log_report
 
         qmd = tmp_path / "report.qmd"
         qmd.write_text("# hello")
 
         with (
-            patch(
-                "geoscore_de.cli.subprocess.run",
-                side_effect=subprocess.CalledProcessError(1, "quarto", stderr="oops"),
-            ),
+            patch("geoscore_de.cli.quarto.render", side_effect=Exception("render failed")),
             patch("geoscore_de.cli.mlflow_wrapper") as mock_wrapper,
         ):
             _render_and_log_report(qmd, tmp_path / "cfg.yaml", tmp_path / "data.csv")
@@ -238,7 +177,7 @@ class TestRenderAndLogReport:
         html.write_text("<html/>")
 
         with (
-            patch("geoscore_de.cli.subprocess.run", return_value=MagicMock(returncode=0, stdout="")),
+            patch("geoscore_de.cli.quarto.render"),
             patch("geoscore_de.cli.mlflow_wrapper") as mock_wrapper,
         ):
             _render_and_log_report(qmd, tmp_path / "cfg.yaml", tmp_path / "data.csv")
@@ -256,9 +195,34 @@ class TestRenderAndLogReport:
         qmd.write_text("# hello")
 
         with (
-            patch("geoscore_de.cli.subprocess.run", return_value=MagicMock(returncode=0, stdout="")),
+            patch("geoscore_de.cli.quarto.render"),
             patch("geoscore_de.cli.mlflow_wrapper") as mock_wrapper,
         ):
             _render_and_log_report(qmd, tmp_path / "cfg.yaml", tmp_path / "data.csv")
 
         mock_wrapper.log_artifact.assert_called_once_with(str(qmd), artifact_path="report")
+
+    def test_quarto_render_called_with_correct_params(self, tmp_path):
+        """quarto.render should be called with the report path and execute_params."""
+        from geoscore_de.cli import _render_and_log_report
+
+        qmd = tmp_path / "report.qmd"
+        qmd.write_text("# hello")
+        cfg = tmp_path / "cfg.yaml"
+        data = tmp_path / "data.csv"
+
+        with (
+            patch("geoscore_de.cli.quarto.render") as mock_render,
+            patch("geoscore_de.cli.mlflow_wrapper"),
+        ):
+            _render_and_log_report(qmd, cfg, data)
+
+        mock_render.assert_called_once_with(
+            str(qmd),
+            output_format="html",
+            execute_params={
+                "training_config_path": str(cfg),
+                "input_path": str(data),
+            },
+        )
+
