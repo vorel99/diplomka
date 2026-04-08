@@ -27,7 +27,6 @@ dependencies = [
     # modelling
     "scikit-learn",
     "lightgbm",
-    "numba>=0.60",
     # reporting
     "shap",
 ]
