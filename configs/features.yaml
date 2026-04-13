@@ -71,6 +71,12 @@ features:
       raw_data_path: data/raw/features/13211-01-03-5-unemployment.csv
       tform_data_path: data/tform/features/unemployment.csv
 
+  - name: area
+    class: AreaFeature
+    params:
+      raw_data_path: data/raw/features/33111-01-03-5-land-area.csv
+      tform_data_path: data/tform/features/area.csv
+
 # Matrix building configuration
 matrix:
   # Key column to join all features on (municipality code)
