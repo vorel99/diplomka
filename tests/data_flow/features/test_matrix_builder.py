@@ -143,10 +143,8 @@ class TestFeatureMatrixBuilder:
 
         config_file = tmp_path / "bad_config.yaml"
         config_file.write_text(yaml.dump(config_data))
-
-        builder = FeatureMatrixBuilder(config_path=str(config_file))
-        # Should not raise, but features dict should be empty
-        assert len(builder.features) == 0
+        with pytest.raises(RuntimeError, match="Failed to load feature bad_feature"):
+            FeatureMatrixBuilder(config_path=str(config_file))
 
     def test_build_matrix_single_feature(self, temp_config_file):
         """Test building matrix with a single feature."""
