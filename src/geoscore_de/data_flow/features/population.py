@@ -7,7 +7,7 @@ from geoscore_de.data_flow.features.base import BaseFeature
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_RAW_DATA_PATH = "data/raw/features/population.csv"
+DEFAULT_RAW_DATA_PATH = "data/raw/features/12411-02-03-5-population.csv"
 DEFAULT_TFORM_DATA_PATH = "data/tform/features/population.csv"
 
 

@@ -4,7 +4,7 @@ from geoscore_de.data_flow.features.base import BaseFeature
 from geoscore_de.data_flow.features.municipality import DEFAULT_RAW_DATA_PATH as MUNICIPALITY_RAW_DATA_PATH
 from geoscore_de.data_flow.features.municipality import MunicipalityFeature
 
-DEFAULT_RAW_DATA_PATH = "data/raw/features/unemployment.csv"
+DEFAULT_RAW_DATA_PATH = "data/raw/features/13211-01-03-5-unemployment.csv"
 DEFAULT_TFORM_DATA_PATH = "data/tform/features/unemployment.csv"
 
 
@@ -37,19 +37,24 @@ class UnemploymentFeature(BaseFeature):
             self.raw_data_path,
             sep=";",
             encoding="latin1",
-            skiprows=7,
+            skiprows=9,
             skipfooter=4,
             engine="python",
             na_values=["-", "."],
             dtype={"MU_ID": str},
+            header=None,
+            names=[
+                "MU_ID",
+                "Municipality",
+                "unemployment_total",
+                "unemployment_foreigners",
+                "unemployment_disabled",
+                "unemployment_15_20",
+                "unemployment_15_25",
+                "unemployment_55_65",
+                "unemployment_long_term",
+            ],
         )
-        df.rename(
-            columns={"Unnamed: 0": "MU_ID", "Unnamed: 1": "Municipality", "Unnamed: 2": "unemployment_total"},
-            inplace=True,
-        )
-
-        # drop first row which contains column descriptions
-        df = df.iloc[1:].reset_index(drop=True)
 
         df["unemployment_total"] = pd.to_numeric(df["unemployment_total"])
 

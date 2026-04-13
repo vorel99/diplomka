@@ -80,10 +80,7 @@ class FeatureMatrixBuilder:
                 feature_instance = instantiate_feature(feature_config)
                 self.features[feature_config.name] = feature_instance
             except Exception as e:
-                logger.error(f"Failed to load feature {feature_config.name}: {e}")
-                # Depending on requirements, you might want to raise or continue
-                # For now, we'll continue to try loading other features
-                continue
+                raise RuntimeError(f"Failed to load feature {feature_config.name}") from e
 
         logger.info(f"Loaded {len(self.features)} features")
 

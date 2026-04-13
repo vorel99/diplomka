@@ -72,12 +72,12 @@ class Trainer:
             Tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]: Split data into
             X_train_val, X_test, y_train_val, y_test.
         """
+        # filter rows
+        data = self._filter_rows(data)
+
         # remove ID column if it exists
         if self.config.id_column in data.columns:
             data = data.drop(columns=[self.config.id_column])
-
-        # filter rows
-        data = self._filter_rows(data)
 
         # drop rows with missing target variable
         data = data.dropna(subset=[self.config.target_variable])

@@ -13,7 +13,7 @@ features:
   - name: population
     class: PopulationFeature
     params:
-      raw_data_path: data/raw/features/population.csv
+      raw_data_path: data/raw/features/12411-02-03-5-population.csv
       tform_data_path: data/tform/features/population.csv
 
   # Births feature
@@ -68,7 +68,7 @@ features:
   - name: unemployment
     class: UnemploymentFeature
     params:
-      raw_data_path: data/raw/features/unemployment.csv
+      raw_data_path: data/raw/features/13211-01-03-5-unemployment.csv
       tform_data_path: data/tform/features/unemployment.csv
     # Example: only keep the columns needed for delta/trend transforms.
     # Supports glob/regex patterns (e.g. 'unemp_total_*').
@@ -80,6 +80,12 @@ features:
 
 # Post-merge delta transforms (trend features): delta = newer_column - older_column
 # after_transforms:
+
+  - name: area
+    class: AreaFeature
+    params:
+      raw_data_path: data/raw/features/33111-01-03-5-land-area.csv
+      tform_data_path: data/tform/features/area.csv
 
 # Matrix building configuration
 matrix:

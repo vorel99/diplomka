@@ -3,12 +3,12 @@ target_variable: unemployment_unemployment_per_capita
 feature_filtering:
   omit_features: [
     "unemployment_unemployment_total",
-    "unemployment_ausländisch",
-    "unemployment_schwerbehindert",
-    "unemployment_15 bis unter 20 Jahre",
-    "unemployment_15 bis unter 25 Jahre",
-    "unemployment_55 bis unter 65 Jahre",
-    "unemployment_langzeitarbeitslos"
+    "unemployment_unemployment_foreigners",
+    "unemployment_unemployment_disabled",
+    "unemployment_unemployment_15_20",
+    "unemployment_unemployment_15_25",
+    "unemployment_unemployment_55_65",
+    "unemployment_unemployment_long_term",
   ]
 
 train_test_split_ratio: 0.8
@@ -20,6 +20,11 @@ random_state: 42
 model:
   model_type: lightgbm
   param_grid:
-    n_estimators: [10, 20, 50, 100]
+    n_estimators: [25, 50, 100, 200]
     max_depth: [2, 3, 5]
     num_leaves: [10, 20, 31]
+    # regularization parameters
+    # reg_alpha: [0.0, 0.1, 1.0, 5.0]
+    # reg_lambda: [0.0, 0.1, 1.0, 5.0]
+    # subsample: [0.7, 0.9, 1.0]
+    # subsample_freq: [1, 5]
