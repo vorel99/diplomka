@@ -78,6 +78,14 @@ print("\n**Features to omit:**", omitted_features)
 result = Trainer(training_config).train(df)
 ```
 
+```{python}
+#| label: model-training-desc
+#| output: asis
+
+print(f"- Number of train/val samples: {result.X_train_val.shape[0]}")
+print(f"- Number of test samples: {result.X_test.shape[0]}")
+```
+
 ## Best parameters and CV results
 
 ```{python}
@@ -97,6 +105,8 @@ best_params_df = (
 
 display(Markdown("### Best hyperparameters"))
 display(best_params_df.style.hide(axis="index"))
+# show res for best params
+display(best_row[["params", "mean_test_r2", "mean_train_r2", "std_test_r2", "std_train_r2"]].to_frame(name="Best CV Result"))
 
 # add detail that plots build_grid_search_results_plot
 display(Markdown("<details>"))
