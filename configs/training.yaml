@@ -17,6 +17,15 @@ federal_state_column: federal_state_id
 
 random_state: 42
 
+# ---------------------------------------------------------------------------
+# Model selection
+# ---------------------------------------------------------------------------
+# Set model_type to one of:
+#   lightgbm         – LGBMRegressor (default)
+#   random_forest    – RandomForestRegressor
+#   gradient_boosting – GradientBoostingRegressor
+#   xgboost          – XGBRegressor  (requires: pip install xgboost)
+# ---------------------------------------------------------------------------
 model:
   model_type: lightgbm
   param_grid:
@@ -28,3 +37,26 @@ model:
     # reg_lambda: [0.0, 0.1, 1.0, 5.0]
     # subsample: [0.7, 0.9, 1.0]
     # subsample_freq: [1, 5]
+
+# --- Alternative model examples (uncomment to use) ---
+
+# model:
+#   model_type: random_forest
+#   param_grid:
+#     n_estimators: [100, 200, 500]
+#     max_depth: [5, 10, null]
+#     min_samples_split: [2, 5]
+
+# model:
+#   model_type: gradient_boosting
+#   param_grid:
+#     n_estimators: [100, 200]
+#     max_depth: [2, 3, 5]
+#     learning_rate: [0.05, 0.1, 0.2]
+
+# model:
+#   model_type: xgboost
+#   param_grid:
+#     n_estimators: [100, 200]
+#     max_depth: [3, 6]
+#     learning_rate: [0.05, 0.1]
