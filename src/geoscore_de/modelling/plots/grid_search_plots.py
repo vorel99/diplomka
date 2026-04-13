@@ -13,7 +13,7 @@ def build_grid_search_results_plot(cv_results_df: pd.DataFrame, best_params: dic
 
         plots: list[gg.ggplot] = []
 
-        for param_col in param_cols[:3]:
+        for param_col in param_cols:
             param_name = param_col.replace("param_", "")
 
             grouped = cv_results_df.groupby(param_col)[score_col].agg(["mean", "std"]).reset_index()
@@ -68,7 +68,7 @@ def build_grid_search_results_plot(cv_results_df: pd.DataFrame, best_params: dic
 
         combined_plot = plots[0]
         for plot in plots[1:]:
-            combined_plot = combined_plot | plot
+            combined_plot = combined_plot / plot
 
         return combined_plot
 
