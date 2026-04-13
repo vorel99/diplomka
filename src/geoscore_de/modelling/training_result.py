@@ -13,7 +13,6 @@ from sklearn.metrics import (
     r2_score,
     root_mean_squared_error,
 )
-from sklearn.model_selection import GridSearchCV
 
 from geoscore_de import mlflow_wrapper
 from geoscore_de.modelling.plots.diagnostic_plots import build_predicted_vs_actual_plot, build_residual_plot
@@ -23,18 +22,19 @@ from geoscore_de.modelling.plots.grid_search_plots import build_grid_search_resu
 class TrainingResult:
     """Container for training artifacts with post-training utilities.
 
-    The object wraps the fitted ``GridSearchCV`` and keeps holdout data so callers can
+    The object wraps the fitted sklearn search object and keeps holdout data so callers can
     evaluate, plot diagnostics, and log artifacts without going back to ``Trainer``.
     """
 
     def __init__(
         self,
-        grid_search: GridSearchCV,
+        grid_search: Any,
         X_train_val: pd.DataFrame,
         X_test: pd.DataFrame,
         y_train_val: pd.Series,
         y_test: pd.Series,
         test_indices: pd.Index | None = None,
+        best_estimator_override: Any | None = None,
     ):
         self.grid_search = grid_search
         self.X_train_val = X_train_val
@@ -42,16 +42,19 @@ class TrainingResult:
         self.y_train_val = y_train_val
         self.y_test = y_test
         self.test_indices = test_indices if test_indices is not None else X_test.index
+        self._best_estimator_override = best_estimator_override
         self.metrics: dict[str, float | None] | None = None
 
     @property
     def best_estimator(self):
+        if self._best_estimator_override is not None:
+            return self._best_estimator_override
         return self.grid_search.best_estimator_
 
     @property
     def best_estimator_(self):
         """Backwards-compatible alias with sklearn naming style."""
-        return self.grid_search.best_estimator_
+        return self.best_estimator
 
     @property
     def best_params_(self):
@@ -92,8 +95,14 @@ class TrainingResult:
         mlflow_wrapper.log_metric("n_models_trained", n_models)
         print(f"\nTotal models evaluated: {n_models}")
 
-        param_grid = self.grid_search.param_grid
-        n_params = len(param_grid)
+        if hasattr(self.grid_search, "param_grid"):
+            param_space = self.grid_search.param_grid
+        elif hasattr(self.grid_search, "param_distributions"):
+            param_space = self.grid_search.param_distributions
+        else:
+            param_space = {}
+
+        n_params = len(param_space)
         mlflow_wrapper.log_metric("n_hyperparameters_tuned", n_params)
 
         print("=" * 60 + "\n")
@@ -203,5 +212,5 @@ class TrainingResult:
             print(f"Warning: Could not create diagnostic plots: {e}")
 
     def __getattr__(self, name: str) -> Any:
-        """Delegate unknown attributes to wrapped GridSearchCV for compatibility."""
+        """Delegate unknown attributes to wrapped sklearn search object for compatibility."""
         return getattr(self.grid_search, name)

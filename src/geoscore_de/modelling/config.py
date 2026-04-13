@@ -30,9 +30,35 @@ class ModelConfig(BaseModel):
     model_type: str = Field(
         "lightgbm", description="Type of model to use for training (e.g., 'lightgbm', 'random_forest')."
     )
+    search_type: Literal["grid", "randomized"] = Field(
+        default="grid",
+        description="Hyperparameter search strategy: exhaustive grid search or randomized search.",
+    )
     param_grid: dict = Field(
         default_factory=dict,
         description="Dictionary specifying the hyperparameters and their corresponding values for grid search.",
+    )
+    param_distributions: dict = Field(
+        default_factory=dict,
+        description="Dictionary specifying the hyperparameter distributions/choices for randomized search.",
+    )
+    n_iter: int = Field(
+        default=30,
+        ge=1,
+        description="Number of sampled parameter settings for randomized search.",
+    )
+    cv: int = Field(default=5, ge=2, description="Number of cross-validation folds used during hyperparameter search.")
+    refit_metric: str = Field(default="r2", description="Scoring metric used to refit the best model after search.")
+    early_stopping_rounds: int | None = Field(
+        default=100,
+        ge=1,
+        description="Rounds without improvement before LightGBM early stopping. Set to null to disable.",
+    )
+    early_stopping_validation_fraction: float = Field(
+        default=0.15,
+        gt=0,
+        lt=1,
+        description="Fraction of training data reserved for LightGBM early stopping after hyperparameter search.",
     )
 
 
