@@ -225,4 +225,3 @@ class TestRenderAndLogReport:
                 "input_path": str(data),
             },
         )
-
