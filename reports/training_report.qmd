@@ -176,6 +176,9 @@ except AttributeError:
 ## SHAP analysis
 
 ```{python}
+# | label: shap-analysis
+# | output: false
+
 # SHAP analysis: Identify most relevant features for model predictions
 
 
@@ -187,13 +190,13 @@ shap_values = explainer(result.X_test)
 ### SHAP Feature Importance
 
 ```{python}
+# | label: shap-analysis-fig
 
 # Plot feature importance (summary plot) inline (do not save to disk)
 shap.summary_plot(shap_values, result.X_test, show=True)
 plt.tight_layout()
 plt.show()
 plt.close()
-
 ```
 
 ---
