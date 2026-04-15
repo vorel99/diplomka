@@ -46,17 +46,17 @@ class UnemploymentFeature(BaseFeature):
             names=[
                 "MU_ID",
                 "Municipality",
-                "unemployment_total",
-                "unemployment_foreigners",
-                "unemployment_disabled",
-                "unemployment_15_20",
-                "unemployment_15_25",
-                "unemployment_55_65",
-                "unemployment_long_term",
+                "total",
+                "foreigners",
+                "disabled",
+                "age_15_20",
+                "age_15_25",
+                "age_55_65",
+                "long_term",
             ],
         )
 
-        df["unemployment_total"] = pd.to_numeric(df["unemployment_total"])
+        df["total"] = pd.to_numeric(df["total"])
 
         # fill MU_ID on the right with zeros to a total length of 8 characters
         df["AGS"] = df["MU_ID"].str.ljust(8, "0")
@@ -78,7 +78,7 @@ class UnemploymentFeature(BaseFeature):
         df = df.merge(municipality_df, on="AGS", how="left")
 
         # Normalize unemployment by population
-        df["unemployment_per_capita"] = (df["unemployment_total"] / df["Persons"]).round(6)
+        df["per_capita"] = (df["total"] / df["Persons"]).round(6)
 
         # Drop temporary columns
         df = df.drop(columns=["MU_ID", "Municipality", "Persons"])
