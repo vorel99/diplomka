@@ -17,6 +17,7 @@ federal_state_column: federal_state_id
 
 random_state: 42
 
+# model_type options: lightgbm (default), random_forest, gradient_boosting, xgboost
 model:
   model_type: lightgbm
 
@@ -37,6 +38,28 @@ search:
     bagging_freq: [1, 5]
     reg_alpha: [0.0, 0.1, 1.0, 5.0]
     reg_lambda: [0.0, 0.1, 1.0, 5.0]
+
+
+# alternative parameters for different models (uncomment to use)
+
+#   model_type: random_forest
+#   param_grid:
+#     n_estimators: [100, 200, 500]
+#     max_depth: [5, 10, null]
+#     min_samples_split: [2, 5]
+
+#   model_type: gradient_boosting
+#   param_grid:
+#     n_estimators: [100, 200]
+#     max_depth: [2, 3, 5]
+#     learning_rate: [0.05, 0.1, 0.2]
+
+#   model_type: xgboost  # requires: pip install xgboost
+#   param_grid:
+#     n_estimators: [100, 200]
+#     max_depth: [3, 6]
+#     learning_rate: [0.05, 0.1]
+
 
 early_stopping:
   early_stopping_rounds: 100

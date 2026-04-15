@@ -2,7 +2,7 @@ import warnings
 from math import ceil
 
 import pandas as pd
-from lightgbm import LGBMRegressor, early_stopping
+from lightgbm import early_stopping
 from sklearn.base import clone
 from sklearn.metrics import (
     explained_variance_score,
@@ -19,6 +19,7 @@ from sklearn.model_selection import GridSearchCV, RandomizedSearchCV, train_test
 from geoscore_de import mlflow_wrapper
 from geoscore_de.modelling.config import TrainingConfig
 from geoscore_de.modelling.data_filtering import filter_features, filter_rows
+from geoscore_de.modelling.models import get_model_instance
 from geoscore_de.modelling.training_result import TrainingResult
 
 
@@ -123,24 +124,16 @@ class Trainer:
 
         return X_train_val, X_test, y_train_val, y_test
 
-    # TODO: implement method to get model based on config
     def _get_model(self):
-        """Get LGBMRegressor with sensible defaults.
+        """Instantiate the configured regression model with sensible defaults.
 
-        These base parameters reduce warnings and improve training:
-        - verbosity=-1: Suppress info/warning messages
-        - min_child_samples=20: Prevent overfitting to small groups
-        - min_split_gain=0.0: Allow any beneficial split
-        - n_jobs=-1: Use all CPU cores
-
-        GridSearchCV will override these with param_grid values during tuning.
+        Model type and optional single-value overrides are read from
+        ``self.config.model``.  GridSearchCV will apply the ``param_grid``
+        values on top of these defaults during hyperparameter tuning.
         """
-        return LGBMRegressor(
+        return get_model_instance(
+            model_type=self.config.model.model_type,
             random_state=self.config.random_state,
-            verbosity=-1,  # Suppress warnings
-            min_child_samples=20,  # Reasonable default for stability
-            min_split_gain=0.0,  # Allow splits with any gain
-            n_jobs=-1,  # Parallel processing
         )
 
     def _build_search(self, model, scoring: dict):
