@@ -32,6 +32,7 @@ class MigrationFeature(BaseFeature):
             na_values=["-", "."],
             names=["Year", "MU_ID", "Municipality", "in_migration", "out_migration"],
             header=None,
+            dtype={"MU_ID": str},
         )
 
         df["MU_ID"] = df["MU_ID"].astype(str)
