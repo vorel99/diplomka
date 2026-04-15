@@ -40,7 +40,7 @@ class UnemploymentFeature(BaseFeature):
             skiprows=9,
             skipfooter=4,
             engine="python",
-            na_values=["-", "."],
+            na_values=["-", ".", "x"],
             dtype={"MU_ID": str},
             header=None,
             names=[

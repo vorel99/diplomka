@@ -65,11 +65,11 @@ features:
       municipality_data_path: data/raw/municipalities_2022.csv
 
   # Unemployment feature
-  - name: unemployment
+  - name: unemployment_25
     class: UnemploymentFeature
     params:
-      raw_data_path: data/raw/features/13211-01-03-5-unemployment.csv
-      tform_data_path: data/tform/features/unemployment.csv
+      raw_data_path: data/raw/features/13211-01-03-5-unemployment-2025.csv
+      tform_data_path: data/tform/features/unemployment-2025.csv
     # Example: only keep the columns needed for delta/trend transforms.
     # Supports glob/regex patterns (e.g. 'unemp_total_*').
     # column_filter:
@@ -77,6 +77,13 @@ features:
     #     - unemp_total_current
     #     - unemp_total_previous
     #   omit_features: []
+
+  # Unemployment feature
+  - name: unemployment_20
+    class: UnemploymentFeature
+    params:
+      raw_data_path: data/raw/features/13211-01-03-5-unemployment-2020.csv
+      tform_data_path: data/tform/features/unemployment-2020.csv
 
 # Post-merge delta transforms (trend features): delta = newer_column - older_column
 # after_transforms:
