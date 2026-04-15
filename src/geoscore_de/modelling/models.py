@@ -20,10 +20,8 @@ if TYPE_CHECKING:
 
 __all__ = ["SUPPORTED_MODEL_TYPES", "get_model_instance"]
 
-# ---------------------------------------------------------------------------
-# Sensible defaults for each model
-# ---------------------------------------------------------------------------
-
+# Sensible defaults for each model type,
+# which can be overridden by the user via *param_overrides* in get_model_instance.
 _LIGHTGBM_DEFAULTS: dict[str, Any] = {
     "verbosity": -1,
     "min_child_samples": 20,
@@ -58,10 +56,7 @@ _XGBOOST_DEFAULTS: dict[str, Any] = {
     "verbosity": 0,
 }
 
-# ---------------------------------------------------------------------------
 # Registry: model_type → (ModelClass, default_params)
-# ---------------------------------------------------------------------------
-
 _REGISTRY: dict[str, tuple[type, dict[str, Any]]] = {
     "lightgbm": (LGBMRegressor, _LIGHTGBM_DEFAULTS),
     "random_forest": (RandomForestRegressor, _RANDOM_FOREST_DEFAULTS),
