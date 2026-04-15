@@ -145,36 +145,37 @@ class Trainer:
 
     def _build_search(self, model, scoring: dict):
         """Build configured hyperparameter search object."""
-        search_type = self.config.model.search_type
+        search_config = self.config.search
+        search_type = search_config.search_type
 
         if search_type == "randomized":
-            param_distributions = self.config.model.param_distributions or self.config.model.param_grid
+            param_distributions = search_config.param_distributions or search_config.param_grid
             if not param_distributions:
                 raise ValueError(
-                    "Randomized search requires model.param_distributions or model.param_grid to be defined."
+                    "Randomized search requires search.param_distributions or search.param_grid to be defined."
                 )
 
             return RandomizedSearchCV(
                 estimator=model,
                 param_distributions=param_distributions,
-                n_iter=self.config.model.n_iter,
-                cv=self.config.model.cv,
+                n_iter=search_config.n_iter,
+                cv=search_config.cv,
                 scoring=scoring,
-                refit=self.config.model.refit_metric,
+                refit=search_config.refit_metric,
                 return_train_score=True,
                 random_state=self.config.random_state,
                 n_jobs=-1,
             )
 
-        if not self.config.model.param_grid:
-            raise ValueError("Grid search requires model.param_grid to be defined.")
+        if not search_config.param_grid:
+            raise ValueError("Grid search requires search.param_grid to be defined.")
 
         return GridSearchCV(
             estimator=model,
-            param_grid=self.config.model.param_grid,
-            cv=self.config.model.cv,
+            param_grid=search_config.param_grid,
+            cv=search_config.cv,
             scoring=scoring,
-            refit=self.config.model.refit_metric,
+            refit=search_config.refit_metric,
             return_train_score=True,
             n_jobs=-1,
         )
@@ -186,7 +187,8 @@ class Trainer:
         y_train_val: pd.Series,
     ):
         """Refit best estimator with early stopping on an internal validation split."""
-        rounds = self.config.model.early_stopping_rounds
+        early_stopping_config = self.config.early_stopping
+        rounds = early_stopping_config.early_stopping_rounds
         if rounds is None:
             return best_estimator
 
@@ -196,7 +198,7 @@ class Trainer:
         X_train_fit, X_val_fit, y_train_fit, y_val_fit = train_test_split(
             X_train_val,
             y_train_val,
-            test_size=self.config.model.early_stopping_validation_fraction,
+            test_size=early_stopping_config.early_stopping_validation_fraction,
             random_state=self.config.random_state,
         )
 

@@ -1,10 +1,17 @@
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field, model_validator
 
 from geoscore_de.config import FeatureFilteringConfig
 
-__all__ = ["FeatureFilteringConfig"]
+__all__ = [
+    "FeatureFilteringConfig",
+    "RowFilteringConfig",
+    "ModelConfig",
+    "SearchConfig",
+    "EarlyStoppingConfig",
+    "TrainingConfig",
+]
 
 
 class RowFilteringConfig(BaseModel):
@@ -30,15 +37,20 @@ class ModelConfig(BaseModel):
     model_type: str = Field(
         "lightgbm", description="Type of model to use for training (e.g., 'lightgbm', 'random_forest')."
     )
+
+
+class SearchConfig(BaseModel):
+    """Configuration for hyperparameter search."""
+
     search_type: Literal["grid", "randomized"] = Field(
         default="grid",
         description="Hyperparameter search strategy: exhaustive grid search or randomized search.",
     )
-    param_grid: dict = Field(
+    param_grid: dict[str, Any] = Field(
         default_factory=dict,
         description="Dictionary specifying the hyperparameters and their corresponding values for grid search.",
     )
-    param_distributions: dict = Field(
+    param_distributions: dict[str, Any] = Field(
         default_factory=dict,
         description="Dictionary specifying the hyperparameter distributions/choices for randomized search.",
     )
@@ -49,6 +61,11 @@ class ModelConfig(BaseModel):
     )
     cv: int = Field(default=5, ge=2, description="Number of cross-validation folds used during hyperparameter search.")
     refit_metric: str = Field(default="r2", description="Scoring metric used to refit the best model after search.")
+
+
+class EarlyStoppingConfig(BaseModel):
+    """Configuration for LightGBM early stopping during refit."""
+
     early_stopping_rounds: int | None = Field(
         default=100,
         ge=1,
@@ -89,6 +106,10 @@ class TrainingConfig(BaseModel):
     )
     random_state: int = Field(default=42, description="Random state for reproducibility of train-test split.")
     model: ModelConfig = Field(default_factory=ModelConfig, description="Configuration for the model.")
+    search: SearchConfig = Field(default_factory=SearchConfig, description="Configuration for hyperparameter search.")
+    early_stopping: EarlyStoppingConfig = Field(
+        default_factory=EarlyStoppingConfig, description="Configuration for LightGBM early stopping."
+    )
 
     @model_validator(mode="after")
     def _validate_split_ratio(self) -> "TrainingConfig":

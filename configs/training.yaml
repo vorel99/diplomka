@@ -19,12 +19,12 @@ random_state: 42
 
 model:
   model_type: lightgbm
+
+search:
   search_type: randomized
   n_iter: 80
   cv: 5
   refit_metric: r2
-  early_stopping_rounds: 100
-  early_stopping_validation_fraction: 0.15
   param_distributions:
     n_estimators: [300, 600, 1200]
     learning_rate: [0.01, 0.03, 0.05]
@@ -37,3 +37,7 @@ model:
     bagging_freq: [1, 5]
     reg_alpha: [0.0, 0.1, 1.0, 5.0]
     reg_lambda: [0.0, 0.1, 1.0, 5.0]
+
+early_stopping:
+  early_stopping_rounds: 100
+  early_stopping_validation_fraction: 0.15

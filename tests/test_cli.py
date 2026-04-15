@@ -21,10 +21,8 @@ def training_config_file(tmp_path):
     config = {
         "target_variable": "y",
         "train_test_split_ratio": 0.8,
-        "model": {
-            "model_type": "lightgbm",
-            "param_grid": {"n_estimators": [10]},
-        },
+        "model": {"model_type": "lightgbm"},
+        "search": {"search_type": "grid", "param_grid": {"n_estimators": [10]}},
     }
     path = tmp_path / "training.yaml"
     path.write_text(yaml.dump(config))
