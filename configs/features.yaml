@@ -64,7 +64,7 @@ features:
       tform_data_path: data/tform/features/road_accidents.csv
       municipality_data_path: data/raw/municipalities_2022.csv
 
-  # Unemployment feature
+  # Unemployment feature for 2025
   - name: unemployment_25
     class: UnemploymentFeature
     params:
@@ -78,7 +78,7 @@ features:
     #     - unemp_total_previous
     #   omit_features: []
 
-  # Unemployment feature
+  # Unemployment feature for 2020
   - name: unemployment_20
     class: UnemploymentFeature
     params:
