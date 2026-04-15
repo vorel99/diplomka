@@ -179,7 +179,9 @@ class Trainer:
         if rounds is None:
             return best_estimator
 
-        if self.config.model.model_type.lower() not in ["lightgbm", "xgboost"]:
+        # TODO: add support for early stopping with other model types if needed
+        # like xgboost or catboost or gradient_boosting
+        if self.config.model.model_type.lower() not in ["lightgbm"]:
             return best_estimator
 
         X_train_fit, X_val_fit, y_train_fit, y_val_fit = train_test_split(
