@@ -33,6 +33,9 @@ dependencies = [
     "papermill==2.7.0",
 ]
 
+[project.optional-dependencies]
+xgboost = ["xgboost"]
+
 [project.scripts]
 geoscore = "geoscore_de.cli:main"
 

@@ -1,10 +1,17 @@
-from typing import Literal
+from typing import Annotated, Literal, Union
 
 from pydantic import BaseModel, Field, model_validator
 
 from geoscore_de.config import FeatureFilteringConfig
 
-__all__ = ["FeatureFilteringConfig"]
+__all__ = [
+    "FeatureFilteringConfig",
+    "LGBMModelConfig",
+    "RandomForestModelConfig",
+    "GradientBoostingModelConfig",
+    "XGBoostModelConfig",
+    "ModelConfig",
+]
 
 
 class RowFilteringConfig(BaseModel):
@@ -24,16 +31,83 @@ class RowFilteringConfig(BaseModel):
     )
 
 
-class ModelConfig(BaseModel):
-    """Configuration for the model."""
+class LGBMModelConfig(BaseModel):
+    """Configuration for LightGBM model.
 
-    model_type: str = Field(
-        "lightgbm", description="Type of model to use for training (e.g., 'lightgbm', 'random_forest')."
-    )
-    param_grid: dict = Field(
+    Example param_grid::
+
+        param_grid:
+          n_estimators: [25, 50, 100, 200]
+          max_depth: [2, 3, 5]
+          num_leaves: [10, 20, 31]
+    """
+
+    model_type: Literal["lightgbm"] = "lightgbm"
+    param_grid: dict[str, list] = Field(
         default_factory=dict,
-        description="Dictionary specifying the hyperparameters and their corresponding values for grid search.",
+        description="Hyperparameter grid for GridSearchCV. Keys must be valid LGBMRegressor parameters.",
     )
+
+
+class RandomForestModelConfig(BaseModel):
+    """Configuration for RandomForestRegressor model.
+
+    Example param_grid::
+
+        param_grid:
+          n_estimators: [100, 200, 500]
+          max_depth: [null, 5, 10]
+          min_samples_split: [2, 5]
+    """
+
+    model_type: Literal["random_forest"] = "random_forest"
+    param_grid: dict[str, list] = Field(
+        default_factory=dict,
+        description="Hyperparameter grid for GridSearchCV. Keys must be valid RandomForestRegressor parameters.",
+    )
+
+
+class GradientBoostingModelConfig(BaseModel):
+    """Configuration for GradientBoostingRegressor model.
+
+    Example param_grid::
+
+        param_grid:
+          n_estimators: [100, 200]
+          max_depth: [2, 3, 5]
+          learning_rate: [0.05, 0.1, 0.2]
+    """
+
+    model_type: Literal["gradient_boosting"] = "gradient_boosting"
+    param_grid: dict[str, list] = Field(
+        default_factory=dict,
+        description="Hyperparameter grid for GridSearchCV. Keys must be valid GradientBoostingRegressor parameters.",
+    )
+
+
+class XGBoostModelConfig(BaseModel):
+    """Configuration for XGBRegressor model (requires ``pip install xgboost``).
+
+    Example param_grid::
+
+        param_grid:
+          n_estimators: [100, 200]
+          max_depth: [3, 6]
+          learning_rate: [0.05, 0.1]
+    """
+
+    model_type: Literal["xgboost"] = "xgboost"
+    param_grid: dict[str, list] = Field(
+        default_factory=dict,
+        description="Hyperparameter grid for GridSearchCV. Keys must be valid XGBRegressor parameters.",
+    )
+
+
+# Discriminated union — Pydantic resolves the correct variant from ``model_type``
+ModelConfig = Annotated[
+    Union[LGBMModelConfig, RandomForestModelConfig, GradientBoostingModelConfig, XGBoostModelConfig],
+    Field(discriminator="model_type"),
+]
 
 
 class TrainingConfig(BaseModel):
@@ -62,7 +136,7 @@ class TrainingConfig(BaseModel):
         description="Column used for state-level stratification when split_strategy is 'stratified_federal_state'.",
     )
     random_state: int = Field(default=42, description="Random state for reproducibility of train-test split.")
-    model: ModelConfig = Field(default_factory=ModelConfig, description="Configuration for the model.")
+    model: ModelConfig = Field(default_factory=LGBMModelConfig, description="Configuration for the model.")
 
     @model_validator(mode="after")
     def _validate_split_ratio(self) -> "TrainingConfig":
