@@ -34,7 +34,7 @@ class RowFilteringConfig(BaseModel):
 class ModelConfig(BaseModel):
     """Configuration for the model."""
 
-    model_type: str = Field(
+    model_type: Literal["lightgbm", "random_forest", "gradient_boosting", "xgboost"] = Field(
         "lightgbm", description="Type of model to use for training (e.g., 'lightgbm', 'random_forest')."
     )
 

@@ -3,7 +3,7 @@ import pytest
 
 from geoscore_de.config import FeatureFilteringConfig
 from geoscore_de.filtering import filter_features
-from geoscore_de.modelling.config import LGBMModelConfig, RowFilteringConfig, TrainingConfig
+from geoscore_de.modelling.config import ModelConfig, RowFilteringConfig, TrainingConfig
 from geoscore_de.modelling.data_filtering import filter_rows
 
 
@@ -146,7 +146,7 @@ class TestRowFiltering:
             target_variable="value",
             feature_filtering=FeatureFilteringConfig(),
             row_filtering=RowFilteringConfig(),
-            model=LGBMModelConfig(),
+            model=ModelConfig(),
         )
 
     def test_no_filtering(self, sample_data: pd.DataFrame, base_config: TrainingConfig):

@@ -5,9 +5,8 @@ from lightgbm import LGBMRegressor
 from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor
 
 from geoscore_de.modelling.config import (
-    GradientBoostingModelConfig,
-    LGBMModelConfig,
-    RandomForestModelConfig,
+    ModelConfig,
+    SearchConfig,
     TrainingConfig,
 )
 from geoscore_de.modelling.models import SUPPORTED_MODEL_TYPES, get_model_instance
@@ -91,30 +90,33 @@ class TestModelConfigDiscriminatedUnion:
     def test_lgbm_config_parsed_from_dict(self):
         cfg = TrainingConfig(
             target_variable="y",
-            model={"model_type": "lightgbm", "param_grid": {"n_estimators": [10]}},
+            model={"model_type": "lightgbm"},
+            search=SearchConfig(param_grid={"n_estimators": [10]}),
         )
-        assert isinstance(cfg.model, LGBMModelConfig)
+        assert isinstance(cfg.model, ModelConfig)
         assert cfg.model.model_type == "lightgbm"
-        assert cfg.model.param_grid == {"n_estimators": [10]}
+        assert cfg.search.param_grid == {"n_estimators": [10]}
 
     def test_random_forest_config_parsed_from_dict(self):
         cfg = TrainingConfig(
             target_variable="y",
-            model={"model_type": "random_forest", "param_grid": {"n_estimators": [100, 200]}},
+            model={"model_type": "random_forest"},
+            search=SearchConfig(param_grid={"n_estimators": [100, 200]}),
         )
-        assert isinstance(cfg.model, RandomForestModelConfig)
+        assert isinstance(cfg.model, ModelConfig)
         assert cfg.model.model_type == "random_forest"
 
     def test_gradient_boosting_config_parsed_from_dict(self):
         cfg = TrainingConfig(
             target_variable="y",
             model={"model_type": "gradient_boosting"},
+            search=SearchConfig(param_grid={"n_estimators": [100, 200]}),
         )
-        assert isinstance(cfg.model, GradientBoostingModelConfig)
+        assert isinstance(cfg.model, ModelConfig)
 
     def test_default_model_is_lightgbm(self):
         cfg = TrainingConfig(target_variable="y")
-        assert isinstance(cfg.model, LGBMModelConfig)
+        assert isinstance(cfg.model, ModelConfig)
         assert cfg.model.model_type == "lightgbm"
 
     def test_invalid_model_type_raises_validation_error(self):
@@ -128,4 +130,4 @@ class TestModelConfigDiscriminatedUnion:
 
     def test_param_grid_defaults_to_empty(self):
         cfg = TrainingConfig(target_variable="y", model={"model_type": "random_forest"})
-        assert cfg.model.param_grid == {}
+        assert cfg.search.param_grid == {}
