@@ -51,7 +51,8 @@ class MatrixConfig(BaseModel):
     join_key: str = Field(default="AGS", description="Column name to join features on")
     save_output: bool = Field(default=True, description="Whether to save the feature matrix to a file")
     output_path: str = Field(
-        default="data/final/feature_matrix.csv", description="Path to save the final feature matrix"
+        default="data/final/feature_matrix.parquet",
+        description="Path to save the final feature matrix (supports .csv and .parquet)",
     )
     missing_values: Literal["drop", "fill"] | None = Field(
         default=None, description="Strategy for handling missing values: 'drop', 'fill', or None"

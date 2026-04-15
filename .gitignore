@@ -18,12 +18,14 @@ mlruns/
 
 # data files
 data/**/*.csv
+data/**/*.parquet
 data/**/*.pdf
 !data/georef-germany-gemeinde.csv
 !data/raw/features/12411-02-03-5-population.csv
 !data/raw/features/12612-91-01-5-births.csv
 !data/raw/features/12711-91-01-5-migration.csv
-!data/raw/features/13211-01-03-5-unemployment.csv
+!data/raw/features/13211-01-03-5-unemployment-2020.csv
+!data/raw/features/13211-01-03-5-unemployment-2025.csv
 !data/raw/features/33111-01-03-5-land-area.csv
 !data/raw/features/46241-01-04-5-road-accidents.csv
 !data/raw/features/46241-01-04-5-road-accidents.csv

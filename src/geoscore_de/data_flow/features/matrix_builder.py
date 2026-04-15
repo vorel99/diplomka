@@ -183,10 +183,18 @@ class FeatureMatrixBuilder:
         if matrix_config.save_output:
             output_path = Path(matrix_config.output_path)
             output_path.parent.mkdir(parents=True, exist_ok=True)
-            result_df.to_csv(output_path, index=False)
+            if output_path.suffix == ".parquet":
+                result_df.to_parquet(output_path, index=False)
+            else:
+                result_df.to_csv(output_path, index=False)
             logger.info(f"Saved feature matrix to {output_path}")
 
-        mlflow_wrapper.log_data(result_df, artifact_file="data/feature_matrix.csv", index=False)
+        artifact_name = (
+            "data/feature_matrix.parquet"
+            if matrix_config.output_path.endswith(".parquet")
+            else "data/feature_matrix.csv"
+        )
+        mlflow_wrapper.log_data(result_df, artifact_file=artifact_name, index=False)
 
         return result_df
 

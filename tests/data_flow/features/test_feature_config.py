@@ -72,7 +72,7 @@ class TestMatrixConfig:
         config = MatrixConfig()
         assert config.join_key == "AGS"
         assert config.save_output is True
-        assert config.output_path == "data/final/feature_matrix.csv"
+        assert config.output_path == "data/final/feature_matrix.parquet"
         assert config.missing_values is None
         assert config.fill_value == 0
 

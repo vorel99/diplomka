@@ -103,7 +103,7 @@ matrix:
   save_output: true
   
   # Path to save the final feature matrix
-  output_path: data/final/feature_matrix.csv
+  output_path: data/final/feature_matrix.parquet
   
   # Handle missing values: 'drop', 'fill', or null for no action
   missing_values: null

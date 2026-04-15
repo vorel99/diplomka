@@ -44,7 +44,7 @@ def train(
     ),
     input_path: Path = typer.Argument(
         ...,
-        help="Path to the input CSV file containing the feature matrix.",
+        help="Path to the input feature matrix file (.csv or .parquet).",
         exists=True,
         file_okay=True,
         dir_okay=False,
