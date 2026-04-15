@@ -84,8 +84,8 @@ class TestGetModelInstance:
         assert "gradient_boosting" in SUPPORTED_MODEL_TYPES
 
 
-class TestModelConfigDiscriminatedUnion:
-    """Tests for the Pydantic discriminated union ModelConfig."""
+class TestModelConfigParsing:
+    """Tests for parsing and validating ModelConfig via TrainingConfig."""
 
     def test_lgbm_config_parsed_from_dict(self):
         cfg = TrainingConfig(
