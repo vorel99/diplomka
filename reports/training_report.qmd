@@ -110,7 +110,16 @@ display(best_row[["params", "mean_test_r2", "mean_train_r2", "std_test_r2", "std
 
 # add detail that plots build_grid_search_results_plot
 print("<details>")
-display(cv_results_df[["params","mean_test_r2", "mean_train_r2", "std_test_r2", "std_train_r2"]].sort_values("mean_test_r2", ascending=False))
+display(
+    cv_results_df[["params", "mean_test_r2", "mean_train_r2", "std_test_r2", "std_train_r2"]]
+    .sort_values("mean_test_r2", ascending=False)
+    .style.format({
+        "mean_test_r2": "{:.4f}",
+        "mean_train_r2": "{:.4f}",
+        "std_test_r2": "{:.4f}",
+        "std_train_r2": "{:.4f}",
+    })
+)
 display(build_grid_search_results_plot(cv_results_df, result.grid_search.best_params_))
 print("</details>")
 ```

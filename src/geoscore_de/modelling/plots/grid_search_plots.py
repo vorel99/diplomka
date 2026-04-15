@@ -70,6 +70,11 @@ def build_grid_search_results_plot(cv_results_df: pd.DataFrame, best_params: dic
         for plot in plots[1:]:
             combined_plot = combined_plot / plot
 
+        # preserve proportions of subplots
+        subplot_height = 5
+        total_height = subplot_height * len(plots)
+        combined_plot = combined_plot + gg.theme(figure_size=(6, total_height))
+
         return combined_plot
 
     except Exception as e:
