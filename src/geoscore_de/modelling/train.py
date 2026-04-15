@@ -157,12 +157,9 @@ class Trainer:
                 n_jobs=-1,
             )
 
-        if not search_config.param_grid:
-            raise ValueError("Grid search requires search.param_grid to be defined.")
-
         return GridSearchCV(
             estimator=model,
-            param_grid=search_config.param_grid,
+            param_grid=search_config.param_grid or {},
             cv=search_config.cv,
             scoring=scoring,
             refit=search_config.refit_metric,
