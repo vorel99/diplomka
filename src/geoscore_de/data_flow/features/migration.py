@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pandas as pd
 
 from geoscore_de.data_flow.features.base import BaseFeature
@@ -73,4 +75,10 @@ class MigrationFeature(BaseFeature):
         )
 
         pivoted.columns = [f"{metric}_{year}" for metric, year in pivoted.columns]
-        return pivoted.reset_index()
+        transformed_df = pivoted.reset_index()
+
+        output_path = Path(self.tform_data_path)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        transformed_df.to_csv(output_path, index=False)
+
+        return transformed_df
