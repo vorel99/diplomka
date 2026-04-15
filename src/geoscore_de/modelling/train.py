@@ -149,15 +149,12 @@ class Trainer:
         search_type = search_config.search_type
 
         if search_type == "randomized":
-            param_distributions = search_config.param_distributions or search_config.param_grid
-            if not param_distributions:
-                raise ValueError(
-                    "Randomized search requires search.param_distributions or search.param_grid to be defined."
-                )
+            if not search_config.param_grid:
+                raise ValueError("Randomized search requires search.param_grid to be defined.")
 
             return RandomizedSearchCV(
                 estimator=model,
-                param_distributions=param_distributions,
+                param_distributions=search_config.param_grid,
                 n_iter=search_config.n_iter,
                 cv=search_config.cv,
                 scoring=scoring,

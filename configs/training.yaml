@@ -25,7 +25,7 @@ search:
   n_iter: 80
   cv: 5
   refit_metric: r2
-  param_distributions:
+  param_grid:
     n_estimators: [300, 600, 1200]
     learning_rate: [0.01, 0.03, 0.05]
     max_depth: [2, 3, 4]

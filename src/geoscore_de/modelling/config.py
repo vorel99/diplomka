@@ -1,4 +1,4 @@
-from typing import Any, Literal
+from typing import Literal
 
 from pydantic import BaseModel, Field, model_validator
 
@@ -46,13 +46,12 @@ class SearchConfig(BaseModel):
         default="grid",
         description="Hyperparameter search strategy: exhaustive grid search or randomized search.",
     )
-    param_grid: dict[str, Any] = Field(
+    param_grid: dict[str, list] = Field(
         default_factory=dict,
-        description="Dictionary specifying the hyperparameters and their corresponding values for grid search.",
-    )
-    param_distributions: dict[str, Any] = Field(
-        default_factory=dict,
-        description="Dictionary specifying the hyperparameter distributions/choices for randomized search.",
+        description=(
+            "Dictionary specifying the hyperparameters and their corresponding candidate values "
+            "for grid/randomized search."
+        ),
     )
     n_iter: int = Field(
         default=30,
