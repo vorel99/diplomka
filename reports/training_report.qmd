@@ -109,10 +109,10 @@ display(best_params_df.style.hide(axis="index"))
 display(best_row[["params", "mean_test_r2", "mean_train_r2", "std_test_r2", "std_train_r2"]].to_frame(name="Best CV Result"))
 
 # add detail that plots build_grid_search_results_plot
-display(Markdown("<details>"))
+print("<details>")
 display(cv_results_df[["params","mean_test_r2", "mean_train_r2", "std_test_r2", "std_train_r2"]].sort_values("mean_test_r2", ascending=False))
 display(build_grid_search_results_plot(cv_results_df, result.grid_search.best_params_))
-display(Markdown("</details>"))
+print("</details>")
 ```
 
 ## Model evaluation
