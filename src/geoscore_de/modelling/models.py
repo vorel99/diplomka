@@ -121,14 +121,8 @@ def get_model_instance(
 
     if model_type not in _REGISTRY:
         if model_type == "xgboost" and XGBRegressor is None:
-            raise ValueError(
-                "model_type='xgboost' requires the xgboost package. "
-                "Install it with: pip install xgboost"
-            )
-        raise ValueError(
-            f"Unknown model_type '{model_type}'. "
-            f"Supported types: {sorted(SUPPORTED_MODEL_TYPES)}"
-        )
+            raise ValueError("model_type='xgboost' requires the xgboost package. Install it with: pip install xgboost")
+        raise ValueError(f"Unknown model_type '{model_type}'. Supported types: {sorted(SUPPORTED_MODEL_TYPES)}")
 
     model_class, defaults = _REGISTRY[model_type]
 
