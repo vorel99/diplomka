@@ -66,9 +66,12 @@ class EarlyStoppingConfig(BaseModel):
     """Configuration for LightGBM early stopping during refit."""
 
     early_stopping_rounds: int | None = Field(
-        default=100,
+        default=None,
         ge=1,
-        description="Rounds without improvement before LightGBM early stopping. Set to null to disable.",
+        description=(
+            "Rounds without improvement before LightGBM early stopping. "
+            "Disabled by default; set to null to keep it disabled."
+        ),
     )
     early_stopping_validation_fraction: float = Field(
         default=0.15,
