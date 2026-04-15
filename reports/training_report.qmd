@@ -27,6 +27,7 @@ import shap
 import yaml
 from IPython.display import display, Markdown
 from geoscore_de.modelling.plots.diagnostic_plots import build_predicted_vs_actual_plot, build_residual_plot
+from geoscore_de.modelling.plots.grid_search_plots import build_grid_search_results_plot
 from geoscore_de.modelling.config import TrainingConfig
 from geoscore_de.modelling.train import Trainer
 ```
@@ -42,10 +43,10 @@ with open(training_config_path, "r") as f:
     training_config = TrainingConfig(**yaml.safe_load(f))
 ```
 
-## Preprocessing and feature engineering
+## Input Data
 
 ```{python}
-#| label: feature-selection-summary
+#| label: setup-and-data
 #| output: asis
 
 # Print summary of feature selection for report
@@ -53,6 +54,13 @@ feature_cfg = training_config.feature_filtering
 
 used_features = feature_cfg.use_features or "ALL"
 omitted_features = feature_cfg.omit_features or "NONE"
+
+# data shape
+print(f"- Total samples: {df.shape[0]}")
+print(f"- Total features before selection: {df.shape[1]}")
+# train setup
+print(f"- target variable: {training_config.target_variable}\n")
+
 
 print("### Feature selection criteria")
 print("\n**Features to use:**", used_features)
@@ -70,15 +78,56 @@ print("\n**Features to omit:**", omitted_features)
 result = Trainer(training_config).train(df)
 ```
 
-## Model evaluation
+```{python}
+#| label: model-training-desc
+#| output: asis
+
+print(f"- Number of train/val samples: {result.X_train_val.shape[0]}")
+print(f"- Number of test samples: {result.X_test.shape[0]}")
+```
+
+## Best parameters and CV results
 
 ```{python}
-#| label: train-evaluation
-# Cross-validation stability summary for the best model
+#| label: best-params-and-cv-results
+#| output: asis
+
 cv_results_df = pd.DataFrame(result.grid_search.cv_results_)
 best_idx = result.grid_search.best_index_
 best_row = cv_results_df.loc[best_idx]
 cv_folds = int(result.grid_search.cv)
+
+best_params_df = (
+    pd.DataFrame(result.best_params_.items(), columns=["Parameter", "Value"])
+    .sort_values("Parameter")
+    .reset_index(drop=True)
+)
+
+display(Markdown("### Best hyperparameters"))
+display(best_params_df.style.hide(axis="index"))
+# show res for best params
+display(best_row[["params", "mean_test_r2", "mean_train_r2", "std_test_r2", "std_train_r2"]].to_frame(name="Best CV Result"))
+
+# add detail that plots build_grid_search_results_plot
+print("<details>")
+display(
+    cv_results_df[["params", "mean_test_r2", "mean_train_r2", "std_test_r2", "std_train_r2"]]
+    .sort_values("mean_test_r2", ascending=False)
+    .style.format({
+        "mean_test_r2": "{:.4f}",
+        "mean_train_r2": "{:.4f}",
+        "std_test_r2": "{:.4f}",
+        "std_train_r2": "{:.4f}",
+    })
+)
+display(build_grid_search_results_plot(cv_results_df, result.grid_search.best_params_))
+print("</details>")
+```
+
+## Model evaluation
+
+```{python}
+#| label: train-evaluation
 
 metric_specs = [
     {"key": "r2", "label": "R²", "lower_is_better": False},
@@ -91,109 +140,54 @@ metric_specs = [
     {"key": "explained_variance", "label": "Explained Variance", "lower_is_better": False},
 ]
 
+train_metrics = result.evaluate_subset(result.X_train_val, result.y_train_val, metric_prefix="train")
+test_metrics = result.evaluate(create_plots=False)
 
-def to_display_value(raw_value: float, lower_is_better: bool) -> float:
-    if lower_is_better:
-        return -raw_value
-    return raw_value
-
-
-summary_rows = []
+combined_metrics = []
 for spec in metric_specs:
     metric_key = spec["key"]
-    mean_test_col = f"mean_test_{metric_key}"
-    std_test_col = f"std_test_{metric_key}"
-    mean_train_col = f"mean_train_{metric_key}"
-    std_train_col = f"std_train_{metric_key}"
+    train_key = f"train_{metric_key if metric_key != 'r2' else 'r2_score'}"
+    test_key = f"test_{metric_key if metric_key != 'r2' else 'r2_score'}"
 
-    if mean_test_col not in cv_results_df.columns or std_test_col not in cv_results_df.columns:
+    if train_key not in train_metrics or test_key not in test_metrics:
         continue
 
-    val_mean = to_display_value(best_row[mean_test_col], spec["lower_is_better"])
-    val_std = best_row[std_test_col]
-
-    row = {
-        "Metric": spec["label"],
-        "Validation Mean": val_mean,
-        "Validation Std": val_std,
-        "Validation 95% CI (half-width)": 1.96 * val_std / (cv_folds ** 0.5),
-    }
-
-    if mean_train_col in cv_results_df.columns and std_train_col in cv_results_df.columns:
-        train_mean = to_display_value(best_row[mean_train_col], spec["lower_is_better"])
-        train_std = best_row[std_train_col]
-        row["Training Mean"] = train_mean
-        row["Training Std"] = train_std
-        row["Training 95% CI (half-width)"] = 1.96 * train_std / (cv_folds ** 0.5)
-
-    summary_rows.append(row)
-
-cv_summary_df = pd.DataFrame(summary_rows)
-
-display(Markdown("### Cross-validation stability (best model, all metrics)"))
-display(
-    cv_summary_df.style.format(
+    combined_metrics.append(
         {
-            "Validation Mean": "{:.4f}",
-            "Validation Std": "{:.4f}",
-            "Validation 95% CI (half-width)": "{:.4f}",
-            "Training Mean": "{:.4f}",
-            "Training Std": "{:.4f}",
-            "Training 95% CI (half-width)": "{:.4f}",
+            "Metric": spec["label"],
+            "Train": train_metrics[train_key],
+            "Test": test_metrics[test_key],
         }
-    ).set_caption("CV aggregated metrics (mean ± std) for selected hyperparameters")
-)
-
-fold_rows = []
-for spec in metric_specs:
-    metric_key = spec["key"]
-    split_test_cols = sorted(
-        [col for col in cv_results_df.columns if col.startswith("split") and col.endswith(f"_test_{metric_key}")]
     )
-    for col in split_test_cols:
-        fold_num = int(col.split("_")[0].replace("split", "")) + 1
-        fold_rows.append(
-            {
-                "Metric": spec["label"],
-                "Fold": fold_num,
-                "Validation Score": to_display_value(best_row[col], spec["lower_is_better"]),
-            }
-        )
 
-fold_scores_df = pd.DataFrame(fold_rows).sort_values(["Metric", "Fold"]).reset_index(drop=True)
+metrics_df = pd.DataFrame(combined_metrics)
 
-# add this as hidable detail
-display(Markdown("<details><summary>Fold-level validation scores</summary>"))
+display(Markdown("### Final refit model: train vs test results"))
 display(
-    fold_scores_df.style.format({"Validation Score": "{:.4f}"}).set_caption(
-        "Fold-level validation scores for selected hyperparameters"
-    )
+    metrics_df.style.format(
+        {
+            "Train": "{:.4f}",
+            "Test": "{:.4f}",
+        }
+    ).set_caption("Metrics for the refit best model on the train/validation split and untouched test split")
 )
-display(Markdown("</details>"))
-```
 
-```{python}
-#| label: test-evaluation
-metrics = result.evaluate(create_plots=False)
-
-# Show evaluation metrics as a styled DataFrame
-metrics_df = pd.DataFrame(list(metrics.items()), columns=["Metric", "Value"])
-display(metrics_df.style.format({"Value": "{:.4f}"}).set_caption("Test set evaluation metrics"))
-
-# Generate and display diagnostic plots within the report run
+# Generate and display diagnostic plots for the refit best model
 try:
     diag_plot_path = "model_diagnostics.png"
-    # Create and display combined diagnostics image (helper may clean up the file)
     display(Markdown("### Model Diagnostics Plot"))
     diag_plot = result.plot_diagnostics(save_path=diag_plot_path)
     display(diag_plot)
 except AttributeError:
-    # If result does not support diagnostic plotting, skip silently
     pass
 ```
 
 ## SHAP analysis
+
 ```{python}
+#| label: shap-analysis
+#| output: false
+
 # SHAP analysis: Identify most relevant features for model predictions
 
 
@@ -205,13 +199,13 @@ shap_values = explainer(result.X_test)
 ### SHAP Feature Importance
 
 ```{python}
+#| label: shap-analysis-fig
 
 # Plot feature importance (summary plot) inline (do not save to disk)
 shap.summary_plot(shap_values, result.X_test, show=True)
 plt.tight_layout()
 plt.show()
 plt.close()
-
 ```
 
 ---

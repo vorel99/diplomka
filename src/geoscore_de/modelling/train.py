@@ -2,6 +2,8 @@ import warnings
 from math import ceil
 
 import pandas as pd
+from lightgbm import early_stopping
+from sklearn.base import clone
 from sklearn.metrics import (
     explained_variance_score,
     make_scorer,
@@ -12,7 +14,7 @@ from sklearn.metrics import (
     median_absolute_error,
     root_mean_squared_error,
 )
-from sklearn.model_selection import GridSearchCV, train_test_split
+from sklearn.model_selection import GridSearchCV, RandomizedSearchCV, train_test_split
 
 from geoscore_de import mlflow_wrapper
 from geoscore_de.modelling.config import TrainingConfig
@@ -134,6 +136,71 @@ class Trainer:
             random_state=self.config.random_state,
         )
 
+    def _build_search(self, model, scoring: dict):
+        """Build configured hyperparameter search object."""
+        search_config = self.config.search
+        search_type = search_config.search_type
+
+        if search_type == "randomized":
+            if not search_config.param_grid:
+                raise ValueError("Randomized search requires search.param_grid to be defined.")
+
+            return RandomizedSearchCV(
+                estimator=model,
+                param_distributions=search_config.param_grid,
+                n_iter=search_config.n_iter,
+                cv=search_config.cv,
+                scoring=scoring,
+                refit=search_config.refit_metric,
+                return_train_score=True,
+                random_state=self.config.random_state,
+                n_jobs=-1,
+            )
+
+        return GridSearchCV(
+            estimator=model,
+            param_grid=search_config.param_grid or {},
+            cv=search_config.cv,
+            scoring=scoring,
+            refit=search_config.refit_metric,
+            return_train_score=True,
+            n_jobs=-1,
+        )
+
+    def _fit_best_model_with_early_stopping(
+        self,
+        best_estimator,
+        X_train_val: pd.DataFrame,
+        y_train_val: pd.Series,
+    ):
+        """Refit best estimator with early stopping on an internal validation split."""
+        early_stopping_config = self.config.early_stopping
+        rounds = early_stopping_config.early_stopping_rounds
+        if rounds is None:
+            return best_estimator
+
+        # TODO: add support for early stopping with other model types if needed
+        # like xgboost or catboost or gradient_boosting
+        if self.config.model.model_type.lower() not in ["lightgbm"]:
+            return best_estimator
+
+        X_train_fit, X_val_fit, y_train_fit, y_val_fit = train_test_split(
+            X_train_val,
+            y_train_val,
+            test_size=early_stopping_config.early_stopping_validation_fraction,
+            random_state=self.config.random_state,
+        )
+
+        estimator = clone(best_estimator)
+        estimator.fit(
+            X_train_fit,
+            y_train_fit,
+            eval_set=[(X_val_fit, y_val_fit)],
+            eval_metric="l2",
+            callbacks=[early_stopping(stopping_rounds=rounds, verbose=False)],
+        )
+        return estimator
+
     def train(self, data: pd.DataFrame) -> TrainingResult:
         """Train the model using the provided data and configuration.
 
@@ -153,7 +220,7 @@ class Trainer:
         sample = X_train_val.head(100)
         mlflow_wrapper.log_data(sample, "train_sample.csv", index=False)
 
-        # Train with GridSearchCV
+        # Train with configured hyperparameter search
         model = self._get_model()
         scoring = {
             "r2": "r2",
@@ -165,15 +232,17 @@ class Trainer:
             "max_error": make_scorer(max_error, greater_is_better=False),
             "explained_variance": make_scorer(explained_variance_score),
         }
-        grid_search = GridSearchCV(
-            model,
-            self.config.model.param_grid,
-            cv=5,
-            scoring=scoring,
-            refit="r2",
-            return_train_score=True,
-        )
+        grid_search = self._build_search(model, scoring)
         grid_search.fit(X_train_val, y_train_val)
+
+        best_estimator = grid_search.best_estimator_
+        try:
+            best_estimator = self._fit_best_model_with_early_stopping(best_estimator, X_train_val, y_train_val)
+        except Exception as exc:
+            warnings.warn(
+                f"Early stopping refit failed and will be skipped. Reason: {exc}",
+                UserWarning,
+            )
 
         result = TrainingResult(
             grid_search=grid_search,
@@ -182,6 +251,7 @@ class Trainer:
             y_train_val=y_train_val,
             y_test=y_test,
             test_indices=X_test.index,
+            best_estimator_override=best_estimator,
         )
 
         # Keep previous side effects for existing workflows

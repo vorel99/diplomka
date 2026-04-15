@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-from geoscore_de.modelling.config import LGBMModelConfig, TrainingConfig
+from geoscore_de.modelling.config import EarlyStoppingConfig, ModelConfig, SearchConfig, TrainingConfig
 from geoscore_de.modelling.train import Trainer
 
 
@@ -29,7 +29,9 @@ def _build_config(split_strategy: str = "random") -> TrainingConfig:
         train_test_split_ratio=0.8,
         split_strategy=split_strategy,
         federal_state_column="federal_republic_id",
-        model=LGBMModelConfig(param_grid={"n_estimators": [10], "max_depth": [2], "num_leaves": [10]}),
+        model=ModelConfig(model_type="lightgbm"),
+        search=SearchConfig(param_grid={"n_estimators": [10], "max_depth": [2], "num_leaves": [10]}),
+        early_stopping=EarlyStoppingConfig(early_stopping_rounds=None),
     )
 
 
