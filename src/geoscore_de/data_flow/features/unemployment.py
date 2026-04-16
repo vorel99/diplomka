@@ -4,7 +4,7 @@ from geoscore_de.data_flow.features.base import BaseFeature
 from geoscore_de.data_flow.features.municipality import DEFAULT_RAW_DATA_PATH as MUNICIPALITY_RAW_DATA_PATH
 from geoscore_de.data_flow.features.municipality import MunicipalityFeature
 
-DEFAULT_RAW_DATA_PATH = "data/raw/features/13211-01-03-5-unemployment.csv"
+DEFAULT_RAW_DATA_PATH = "data/raw/features/13211-01-03-5-unemployment-2025.csv"
 DEFAULT_TFORM_DATA_PATH = "data/tform/features/unemployment.csv"
 
 
