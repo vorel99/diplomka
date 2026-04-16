@@ -13,7 +13,7 @@ execute:
 #| tags: [parameters]
 #| label: parameters-setup
 
-input_path: str = "data/final/feature_matrix.csv"
+input_path: str = "data/final/feature_matrix.parquet"
 training_config_path: str = "configs/training.yaml"
 
 ```
@@ -36,7 +36,10 @@ from geoscore_de.modelling.train import Trainer
 #| label: load-data
 
 # load input data
-df = pd.read_csv(input_path)
+if input_path.endswith(".parquet"):
+    df = pd.read_parquet(input_path)
+else:
+    df = pd.read_csv(input_path)
 
 # load training config
 with open(training_config_path, "r") as f:
@@ -82,7 +85,8 @@ result = Trainer(training_config).train(df)
 #| label: model-training-desc
 #| output: asis
 
-print(f"- Number of train/val samples: {result.X_train_val.shape[0]}")
+print(f"- Number of train samples: {result.X_train.shape[0]}")
+print(f"- Number of val samples: {result.X_val.shape[0] if result.X_val is not None else 'N/A'}")
 print(f"- Number of test samples: {result.X_test.shape[0]}")
 ```
 
@@ -140,7 +144,7 @@ metric_specs = [
     {"key": "explained_variance", "label": "Explained Variance", "lower_is_better": False},
 ]
 
-train_metrics = result.evaluate_subset(result.X_train_val, result.y_train_val, metric_prefix="train")
+train_metrics = result.evaluate_subset(result.X_train, result.y_train, metric_prefix="train")
 test_metrics = result.evaluate(create_plots=False)
 
 combined_metrics = []
@@ -192,8 +196,10 @@ except AttributeError:
 
 
 # Use the best trained model from the earlier section
-explainer = shap.Explainer(result.best_estimator, result.X_test)
-shap_values = explainer(result.X_test)
+# Exclude categorical features so SHAP runs on the non-categorical feature subset.
+X_test_shap = result.X_test.select_dtypes(exclude=['category'])
+explainer = shap.Explainer(result.best_estimator, X_test_shap)
+shap_values = explainer(X_test_shap)
 ```
 
 ### SHAP Feature Importance
@@ -202,7 +208,7 @@ shap_values = explainer(result.X_test)
 #| label: shap-analysis-fig
 
 # Plot feature importance (summary plot) inline (do not save to disk)
-shap.summary_plot(shap_values, result.X_test, show=True)
+shap.summary_plot(shap_values, X_test_shap, show=True)
 plt.tight_layout()
 plt.show()
 plt.close()
@@ -311,9 +317,11 @@ for item in state_eval_data:
     display(diag_plot)
 
     try:
-        state_explainer = shap.Explainer(result.best_estimator, X_state)
-        state_shap_values = state_explainer(X_state)
-        shap.summary_plot(state_shap_values, X_state, show=True)
+        X_test_shap = X_state.select_dtypes(exclude=["category"])
+
+        state_explainer = shap.Explainer(result.best_estimator, X_test_shap)
+        state_shap_values = state_explainer(X_test_shap)
+        shap.summary_plot(state_shap_values, X_test_shap, show=True)
         plt.tight_layout()
         plt.show()
         plt.close()

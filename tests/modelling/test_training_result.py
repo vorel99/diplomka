@@ -15,9 +15,9 @@ class _DummyGridSearch:
 def test_evaluate_subset_returns_prefixed_metric_keys():
     result = TrainingResult(
         grid_search=_DummyGridSearch(),
-        X_train_val=pd.DataFrame({"x": [1.0, 2.0]}),
+        X_train=pd.DataFrame({"x": [1.0, 2.0]}),
         X_test=pd.DataFrame({"x": [1.0, 2.0]}),
-        y_train_val=pd.Series([1.0, 2.0]),
+        y_train=pd.Series([1.0, 2.0]),
         y_test=pd.Series([1.0, 2.0]),
     )
 

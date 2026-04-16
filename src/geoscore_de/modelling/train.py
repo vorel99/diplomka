@@ -26,6 +26,11 @@ from geoscore_de.modelling.training_result import TrainingResult
 class Trainer:
     """Model trainer with comprehensive evaluation and hyperparameter logging."""
 
+    X_train_: pd.DataFrame | None = None
+    y_train_: pd.Series | None = None
+    X_val_: pd.DataFrame | None = None
+    y_val_: pd.Series | None = None
+
     def __init__(self, config: TrainingConfig):
         self.config = config
 
@@ -191,6 +196,11 @@ class Trainer:
             random_state=self.config.random_state,
         )
 
+        self.X_train_ = X_train_fit
+        self.y_train_ = y_train_fit
+        self.X_val_ = X_val_fit
+        self.y_val_ = y_val_fit
+
         estimator = clone(best_estimator)
         estimator.fit(
             X_train_fit,
@@ -246,17 +256,17 @@ class Trainer:
 
         result = TrainingResult(
             grid_search=grid_search,
-            X_train_val=X_train_val,
+            X_train=self.X_train_ if self.X_train_ is not None else X_train_val,
+            X_val=self.X_val_,
             X_test=X_test,
-            y_train_val=y_train_val,
+            y_train=self.y_train_ if self.y_train_ is not None else y_train_val,
+            y_val=self.y_val_,
             y_test=y_test,
             test_indices=X_test.index,
             best_estimator_override=best_estimator,
         )
 
-        # Keep previous side effects for existing workflows
         result.log_grid_search_results()
-        result.evaluate(create_plots=True)
         result.log_best_model("best_model")
 
         return result

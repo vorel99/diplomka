@@ -3,6 +3,12 @@ from pathlib import Path
 import pandas as pd
 
 from geoscore_de.data_flow.features.base import BaseFeature
+from geoscore_de.data_flow.features.municipality import (
+    DEFAULT_RAW_DATA_PATH as MUNICIPALITY_RAW_DATA_PATH,
+)
+from geoscore_de.data_flow.features.municipality import (
+    MunicipalityFeature,
+)
 
 DEFAULT_RAW_DATA_PATH = "data/raw/features/12711-91-01-5-migration.csv"
 DEFAULT_TFORM_DATA_PATH = "data/tform/features/migration.csv"
@@ -10,11 +16,16 @@ DEFAULT_TFORM_DATA_PATH = "data/tform/features/migration.csv"
 
 class MigrationFeature(BaseFeature):
     def __init__(
-        self, raw_data_path: str = DEFAULT_RAW_DATA_PATH, tform_data_path: str = DEFAULT_TFORM_DATA_PATH, **kwargs
+        self,
+        raw_data_path: str = DEFAULT_RAW_DATA_PATH,
+        tform_data_path: str = DEFAULT_TFORM_DATA_PATH,
+        municipality_data_path: str = MUNICIPALITY_RAW_DATA_PATH,
+        **kwargs,
     ):
         super().__init__(**kwargs)
         self.raw_data_path = raw_data_path
         self.tform_data_path = tform_data_path
+        self.municipality_data_path = municipality_data_path
 
     def load(self) -> pd.DataFrame:
         """Load migration data from a CSV file.
@@ -55,19 +66,19 @@ class MigrationFeature(BaseFeature):
             pd.DataFrame: One row per `AGS` with columns for each year, e.g.
                 `in_migration_2022`, `out_migration_2022`, `net_migration_2022`.
         """
-        df_tform = df.copy()
+        df = df.copy()
 
         # Ensure arithmetic and column naming work consistently across years.
-        df_tform["Year"] = pd.to_numeric(df_tform["Year"], errors="coerce").astype("Int64")
-        df_tform["in_migration"] = pd.to_numeric(df_tform["in_migration"], errors="coerce")
-        df_tform["out_migration"] = pd.to_numeric(df_tform["out_migration"], errors="coerce")
+        df["Year"] = pd.to_numeric(df["Year"], errors="coerce").astype("Int64")
+        df["in_migration"] = pd.to_numeric(df["in_migration"], errors="coerce")
+        df["out_migration"] = pd.to_numeric(df["out_migration"], errors="coerce")
 
-        df_tform = df_tform.dropna(subset=["Year"])
-        df_tform["Year"] = df_tform["Year"].astype(int)
-        df_tform["net_migration"] = df_tform["in_migration"] - df_tform["out_migration"]
+        df = df.dropna(subset=["Year"])
+        df["Year"] = df["Year"].astype(int)
+        df["net_migration"] = df["in_migration"] - df["out_migration"]
 
         # Pivot each metric to one column per year and flatten the MultiIndex columns.
-        pivoted = df_tform.pivot_table(
+        pivoted = df.pivot_table(
             index="AGS",
             columns="Year",
             values=["in_migration", "out_migration", "net_migration"],
@@ -77,8 +88,20 @@ class MigrationFeature(BaseFeature):
         pivoted.columns = [f"{metric}_{year}" for metric, year in pivoted.columns]
         transformed_df = pivoted.reset_index()
 
+        # Load municipality data to get population (Persons column) for normalization
+        municipality_feature = MunicipalityFeature(self.municipality_data_path)
+        municipality_df = municipality_feature.load()[["AGS", "Persons"]]
+
+        # merge muni_df with filtered_df to get Persons column
+        merged_df = transformed_df.merge(municipality_df, on="AGS", how="left")
+
+        # Normalize migration by population
+        for col in merged_df.columns:
+            if col.startswith(("in_migration_", "out_migration_", "net_migration_")):
+                merged_df[col] = (merged_df[col] / merged_df["Persons"]).round(6)
+
         output_path = Path(self.tform_data_path)
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        transformed_df.to_csv(output_path, index=False)
+        merged_df.to_csv(output_path, index=False)
 
-        return transformed_df
+        return merged_df
