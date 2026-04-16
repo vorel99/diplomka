@@ -8,7 +8,7 @@ import quarto
 import typer
 
 from geoscore_de import mlflow_wrapper
-from geoscore_de.data_flow.features.matrix_builder import FeatureMatrixBuilder
+from geoscore_de.data_flow.matrix_builder import FeatureMatrixBuilder
 
 app = typer.Typer(name="geoscore", help="GeoScore Germany CLI.")
 

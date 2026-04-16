@@ -6,7 +6,7 @@ import yaml
 from pydantic import ValidationError
 
 from geoscore_de.config import FeatureFilteringConfig
-from geoscore_de.data_flow.features.matrix_builder import FeatureMatrixBuilder
+from geoscore_de.data_flow.matrix_builder import FeatureMatrixBuilder
 
 # Module path for DeltaFeatureEngineering (used in after_transforms configs)
 DELTA_MODULE = "geoscore_de.data_flow.feature_engineering"
