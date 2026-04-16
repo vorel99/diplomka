@@ -85,7 +85,8 @@ result = Trainer(training_config).train(df)
 #| label: model-training-desc
 #| output: asis
 
-print(f"- Number of train/val samples: {result.X_train_val.shape[0]}")
+print(f"- Number of train samples: {result.X_train.shape[0]}")
+print(f"- Number of val samples: {result.X_val.shape[0] if result.X_val is not None else 'N/A'}")
 print(f"- Number of test samples: {result.X_test.shape[0]}")
 ```
 
@@ -143,7 +144,7 @@ metric_specs = [
     {"key": "explained_variance", "label": "Explained Variance", "lower_is_better": False},
 ]
 
-train_metrics = result.evaluate_subset(result.X_train_val, result.y_train_val, metric_prefix="train")
+train_metrics = result.evaluate_subset(result.X_train, result.y_train, metric_prefix="train")
 test_metrics = result.evaluate(create_plots=False)
 
 combined_metrics = []
@@ -196,8 +197,7 @@ except AttributeError:
 
 # Use the best trained model from the earlier section
 # convert category features to object for SHAP compatibility
-cat_columns = result.X_test.select_dtypes(exclude=['category'])
-X_test_shap[cat_columns] = X_test_shap[cat_columns].astype('object')
+X_test_shap = result.X_test.select_dtypes(exclude=['category'])
 explainer = shap.Explainer(result.best_estimator, X_test_shap)
 shap_values = explainer(X_test_shap)
 ```
