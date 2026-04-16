@@ -222,4 +222,5 @@ class TestRenderAndLogReport:
                 "training_config_path": str(cfg),
                 "input_path": str(data),
             },
+            cache=False,
         )
