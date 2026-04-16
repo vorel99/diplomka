@@ -266,7 +266,6 @@ class Trainer:
             best_estimator_override=best_estimator,
         )
 
-        # Keep previous side effects for existing workflows
         result.log_grid_search_results()
         result.log_best_model("best_model")
 
