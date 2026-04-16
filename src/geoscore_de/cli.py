@@ -1,5 +1,6 @@
 """Typer CLI for geoscore_de: feature-matrix creation and model training."""
 
+import logging
 from pathlib import Path
 
 import mlflow
@@ -24,8 +25,12 @@ def create_feature_matrix(
         dir_okay=False,
         resolve_path=True,
     ),
+    verbose: bool = typer.Option(False, "--verbose", "-v", help="Enable verbose logging"),
 ) -> None:
     """Build the feature matrix from the features configuration and save to disk."""
+    if verbose:
+        logging.basicConfig(level=logging.INFO)
+
     typer.echo(f"Building feature matrix using config: {config_path}")
     builder = FeatureMatrixBuilder(config_path=str(config_path))
     matrix = builder.build_matrix()
@@ -57,8 +62,12 @@ def train(
         help="Path to the Quarto report template to render (training runs inside the report).",
         resolve_path=True,
     ),
+    verbose: bool = typer.Option(False, "--verbose", "-v", help="Enable verbose logging"),
 ) -> None:
     """Render the training report (training runs inside it) and log artifacts to MLflow."""
+    if verbose:
+        logging.basicConfig(level=logging.INFO)
+
     with mlflow.start_run():
         mlflow_wrapper.log_param("config_path", str(config_path))
         mlflow_wrapper.log_param("input_path", str(input_path))
