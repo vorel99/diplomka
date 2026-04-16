@@ -26,11 +26,11 @@ class TrainingResult:
     evaluate, plot diagnostics, and log artifacts without going back to ``Trainer``.
     """
 
-    X_train_: pd.DataFrame
-    y_train_: pd.Series
+    X_train: pd.DataFrame
+    y_train: pd.Series
 
-    X_val_: pd.DataFrame | None
-    y_val_: pd.Series | None
+    X_val: pd.DataFrame | None
+    y_val: pd.Series | None
 
     X_test: pd.DataFrame
     y_test: pd.Series

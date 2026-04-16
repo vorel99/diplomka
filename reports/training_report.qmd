@@ -196,7 +196,7 @@ except AttributeError:
 
 
 # Use the best trained model from the earlier section
-# convert category features to object for SHAP compatibility
+# Exclude categorical features so SHAP runs on the non-categorical feature subset.
 X_test_shap = result.X_test.select_dtypes(exclude=['category'])
 explainer = shap.Explainer(result.best_estimator, X_test_shap)
 shap_values = explainer(X_test_shap)
