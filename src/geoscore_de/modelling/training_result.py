@@ -26,21 +26,37 @@ class TrainingResult:
     evaluate, plot diagnostics, and log artifacts without going back to ``Trainer``.
     """
 
+    X_train_: pd.DataFrame
+    y_train_: pd.Series
+
+    X_val_: pd.DataFrame | None
+    y_val_: pd.Series | None
+
+    X_test: pd.DataFrame
+    y_test: pd.Series
+
     def __init__(
         self,
         grid_search: Any,
-        X_train_val: pd.DataFrame,
+        X_train: pd.DataFrame,
+        y_train: pd.Series,
         X_test: pd.DataFrame,
-        y_train_val: pd.Series,
         y_test: pd.Series,
+        X_val: pd.DataFrame | None = None,
+        y_val: pd.Series | None = None,
         test_indices: pd.Index | None = None,
         best_estimator_override: Any | None = None,
     ):
         self.grid_search = grid_search
-        self.X_train_val = X_train_val
+
+        self.X_train = X_train
+        self.X_val = X_val
         self.X_test = X_test
-        self.y_train_val = y_train_val
+
+        self.y_train = y_train
+        self.y_val = y_val
         self.y_test = y_test
+
         self.test_indices = test_indices if test_indices is not None else X_test.index
         self._best_estimator_override = best_estimator_override
         self.metrics: dict[str, float | None] | None = None
@@ -210,7 +226,3 @@ class TrainingResult:
 
         except Exception as e:
             print(f"Warning: Could not create diagnostic plots: {e}")
-
-    def __getattr__(self, name: str) -> Any:
-        """Delegate unknown attributes to wrapped sklearn search object for compatibility."""
-        return getattr(self.grid_search, name)
