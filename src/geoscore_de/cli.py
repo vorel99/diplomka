@@ -92,6 +92,7 @@ def _render_and_log_report(report_path: Path, config_path: Path, input_path: Pat
                 "training_config_path": str(config_path),
                 "input_path": str(input_path),
             },
+            cache=False,
         )
     except Exception as exc:
         typer.echo(f"Warning: Quarto rendering failed: {exc}", err=True)

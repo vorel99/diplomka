@@ -64,6 +64,12 @@ features:
       tform_data_path: data/tform/features/road_accidents.csv
       municipality_data_path: data/raw/municipalities_2022.csv
 
+  - name: migration
+    class: MigrationFeature
+    params:
+      raw_data_path: data/raw/features/12711-91-01-5-migration.csv
+      tform_data_path: data/tform/features/migration.csv
+
   # Unemployment feature for 2025
   - name: unemployment_25
     class: UnemploymentFeature
