@@ -70,6 +70,16 @@ features:
       raw_data_path: data/raw/features/12711-91-01-5-migration.csv
       tform_data_path: data/tform/features/migration.csv
 
+  # OSM hospitals feature
+  - name: osm_hospitals
+    class: OSMHospitalsFeature
+    params:
+      raw_data_path: data/raw/osm/hospitals.geojson
+      tform_data_path: data/tform/features/osm_hospitals.csv
+      municipality_geo_data_path: data/georef-germany-gemeinde.csv
+      country_column: addr:country
+      country_value: DE
+
   # Unemployment feature for 2025
   - name: unemployment_25
     class: UnemploymentFeature
