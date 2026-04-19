@@ -8,8 +8,10 @@ import geopandas as gpd
 import pandas as pd
 from shapely.geometry import shape
 
+DEFAULT_MUNICIPALITY_GEO_DATA_PATH = "data/georef-germany-gemeinde.csv"
 
-def load_geo_data(path: str) -> gpd.GeoDataFrame:
+
+def load_geo_data(path: str = DEFAULT_MUNICIPALITY_GEO_DATA_PATH) -> gpd.GeoDataFrame:
     """Load geospatial data from a file into a GeoDataFrame.
     Supported format is csv from OpenDataSoft
     """
