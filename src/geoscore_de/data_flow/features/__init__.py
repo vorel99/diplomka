@@ -4,6 +4,7 @@ from geoscore_de.data_flow.features.birth import BirthFeature
 from geoscore_de.data_flow.features.election_21 import Election21Feature
 from geoscore_de.data_flow.features.election_25 import Election25Feature
 from geoscore_de.data_flow.features.migration import MigrationFeature
+from geoscore_de.data_flow.features.osm_atm import OSMATMFeature
 from geoscore_de.data_flow.features.osm_hospitals import OSMHospitalsFeature
 from geoscore_de.data_flow.features.population import PopulationFeature
 from geoscore_de.data_flow.features.road_accidents import RoadAccidentsFeature
@@ -17,6 +18,7 @@ __all__ = [
     "Election21Feature",
     "Election25Feature",
     "MigrationFeature",
+    "OSMATMFeature",
     "OSMHospitalsFeature",
     "PopulationFeature",
     "RoadAccidentsFeature",

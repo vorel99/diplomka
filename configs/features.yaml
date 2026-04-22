@@ -80,6 +80,15 @@ features:
       country_column: addr:country
       country_value: DE
 
+  # OSM ATM feature
+  - name: osm_atm
+    class: OSMATMFeature
+    params:
+      raw_data_path: data/raw/osm/atms_full.geojson
+      tform_data_path: data/tform/features/osm_atm.csv
+      municipality_geo_data_path: data/georef-germany-gemeinde.csv
+      municipality_data_path: data/raw/municipalities_2022.csv
+
   # Unemployment feature for 2025
   - name: unemployment_25
     class: UnemploymentFeature
