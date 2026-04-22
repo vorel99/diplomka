@@ -34,7 +34,7 @@ class OSMATMFeature(BaseFeature):
         self.municipality_data_path = municipality_data_path
 
     def load(self) -> pd.DataFrame:
-        """Load ATM points from GeoJSON and optionally filter by country tag."""
+        """Load ATM points from the configured GeoJSON file."""
         gdf_atm = gpd.read_file(self.raw_data_path)
 
         return gdf_atm
