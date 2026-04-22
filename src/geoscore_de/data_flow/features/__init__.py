@@ -7,6 +7,7 @@ from geoscore_de.data_flow.features.migration import MigrationFeature
 from geoscore_de.data_flow.features.osm_atm import OSMATMFeature
 from geoscore_de.data_flow.features.osm_hospitals import OSMHospitalsFeature
 from geoscore_de.data_flow.features.osm_tourist import OSMTouristFeature
+from geoscore_de.data_flow.features.osm_university import OSMUniversityFeature
 from geoscore_de.data_flow.features.population import PopulationFeature
 from geoscore_de.data_flow.features.road_accidents import RoadAccidentsFeature
 from geoscore_de.data_flow.features.unemployment import UnemploymentFeature
@@ -22,6 +23,7 @@ __all__ = [
     "OSMATMFeature",
     "OSMHospitalsFeature",
     "OSMTouristFeature",
+    "OSMUniversityFeature",
     "PopulationFeature",
     "RoadAccidentsFeature",
     "UnemploymentFeature",

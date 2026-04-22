@@ -98,6 +98,15 @@ features:
       municipality_geo_data_path: data/georef-germany-gemeinde.csv
       municipality_data_path: data/raw/municipalities_2022.csv
 
+  # OSM university feature
+  - name: osm_university
+    class: OSMUniversityFeature
+    params:
+      raw_data_path: data/raw/osm/universities.geojson
+      tform_data_path: data/tform/features/osm_university.csv
+      municipality_geo_data_path: data/georef-germany-gemeinde.csv
+      deduplicate_by_name: true
+
   # Unemployment feature for 2025
   - name: unemployment_25
     class: UnemploymentFeature
