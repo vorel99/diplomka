@@ -109,13 +109,20 @@ class Election21Feature(BaseFeature):
         # group by municipality (AGS)
         df = df.groupby("AGS").sum().reset_index()
 
-        df["eligible_voters"] = df["eligible_voters"].replace(0, pd.NA)
-        df["election_participation"] = df["total_voters"] / df["eligible_voters"]
-
-        # # relative votes per party in each municipality
         vote_columns = [col for col in df.columns if col.startswith(("E_", "Z_"))]
-        for col in vote_columns:
-            df[col] = df[col] / df["total_voters"].replace(0, pd.NA)
+        numeric_columns = ["eligible_voters", "total_voters", *vote_columns]
+
+        # Ensure numeric dtypes before ratio calculations
+        df[numeric_columns] = df[numeric_columns].apply(pd.to_numeric, errors="coerce")
+
+        # Use NaN (float-compatible) instead of pd.NA to keep float dtypes
+        df["eligible_voters"] = df["eligible_voters"].replace(0, float("nan"))
+        df["total_voters"] = df["total_voters"].replace(0, float("nan"))
+
+        df["election_participation"] = (df["total_voters"] / df["eligible_voters"]).astype(float)
+
+        # Relative votes per party in each municipality
+        df[vote_columns] = df[vote_columns].div(df["total_voters"], axis=0).astype(float)
 
         # Save the transformed DataFrame to CSV
         df.to_csv(self.tform_data_path, index=False)
