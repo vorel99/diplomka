@@ -44,7 +44,13 @@ class OSMHospitalsFeature(BaseFeature):
         return gdf_hospital
 
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Aggregate hospitals into municipality features using centroid-based proximity."""
+        """Aggregate hospitals into municipality features using centroid-based proximity.
+        Create features:
+        - dist_nearest_hospital_km: Distance to nearest hospital in kilometers.
+        - dist_mean_3_hospitals_km: Mean distance to 3 nearest hospitals in kilometers.
+        - hospital_count_10km: Count of hospitals within 10 km radius.
+        - hospital_count_30km: Count of hospitals within 30 km radius.
+        """
         gdf_hospital = gpd.GeoDataFrame(df, geometry="geometry", crs=getattr(df, "crs", None) or "EPSG:4326")
 
         gdf_muni = load_geo_data(self.municipality_geo_data_path)[["AGS", "geometry"]]

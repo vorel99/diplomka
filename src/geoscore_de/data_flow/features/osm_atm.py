@@ -40,7 +40,11 @@ class OSMATMFeature(BaseFeature):
         return gdf_atm
 
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Aggregate ATM counts by municipality polygons and derive normalized ATM indicators."""
+        """Aggregate ATM counts by municipality polygons and derive normalized ATM indicators.
+        Create features:
+        - atms_per_1000_residents: Number of ATMs per 1000 residents, using municipality population data.
+        - atm_density_per_km2: Number of ATMs per square kilometer, using municipality area data.
+        """
         gdf_atm = gpd.GeoDataFrame(df, geometry="geometry", crs=getattr(df, "crs", None) or "EPSG:4326")
         gdf_muni_geo = load_geo_data(self.municipality_geo_data_path)[["AGS", "geometry"]]
 
@@ -79,7 +83,7 @@ class OSMATMFeature(BaseFeature):
             result["Area"] > 0, result["atm_count_within"] / result["Area"], np.nan
         )
 
-        result = result[["AGS", "atm_count_within", "atms_per_1000_residents", "atm_density_per_km2"]]
+        result = result[["AGS", "atms_per_1000_residents", "atm_density_per_km2"]]
 
         self._save(result)
         return result
