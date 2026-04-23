@@ -105,10 +105,10 @@ def test_transform_election_25_data_structure(tmp_path, mock_raw_election_csv_fi
     assert "Z_invalid_votes" in df.columns
 
     # Check that vote columns still exist (now as proportions)
-    assert "CDU - Erststimmen" in df.columns
-    assert "CDU - Zweitstimmen" in df.columns
-    assert "SPD - Erststimmen" in df.columns
-    assert "SPD - Zweitstimmen" in df.columns
+    assert "E_CDU" in df.columns
+    assert "Z_CDU" in df.columns
+    assert "E_SPD" in df.columns
+    assert "Z_SPD" in df.columns
 
 
 def test_transform_election_25_data_grouping(tmp_path, mock_raw_election_csv_file):
@@ -203,7 +203,7 @@ def test_transform_election_25_column_selection(tmp_path, mock_raw_election_csv_
     for col in df.columns:
         assert (
             col in ["AGS", "eligible_voters", "total_voters", "election_participation"]
-            or col.endswith(("Erststimmen", "Zweitstimmen"))
+            or col.startswith(("E_", "Z_"))
             or col
             in [
                 "E_invalid_votes",
