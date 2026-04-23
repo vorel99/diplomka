@@ -179,3 +179,32 @@ def test_transform_election_21_saves_to_file(tmp_path, mock_raw_election_csv_fil
     assert "AGS" in saved_df.columns
     assert "eligible_voters" in saved_df.columns
     assert "election_participation" in saved_df.columns
+
+
+def test_transform_election_21_merges_berlin_hamburg_districts(tmp_path):
+    """Test Berlin/Hamburg district AGS are merged to city-level AGS."""
+    csv_content = """Land;Regierungsbezirk;Kreis;Gemeinde;Wahlberechtigte (A);Wählende (B);E_Ungültige;E_Gültige;E_CDU;E_SPD;Z_Ungültige;Z_Gültige;Z_CDU;Z_SPD
+02;0;01;000;1000;800;10;790;300;250;8;792;310;240
+02;0;02;000;1500;1200;12;1188;400;380;10;1190;420;360
+11;1;01;000;2000;1500;15;1485;500;450;12;1488;520;430
+11;2;12;000;1800;1400;14;1386;450;420;11;1389;460;410
+12;0;73;032;900;700;7;693;220;210;6;694;230;200"""  # noqa: E501
+
+    csv_file = tmp_path / "btw21_wbz_ergebnisse.csv"
+    csv_file.write_text(csv_content)
+    out_path = tmp_path / "output.csv"
+
+    feature = Election21Feature(raw_data_path=str(tmp_path), tform_data_path=str(out_path))
+    with patch("geoscore_de.data_flow.features.election_21.load_election_zip"):
+        with patch("geoscore_de.data_flow.features.election_21.move_extracted_file"):
+            transformed_df = feature.transform(feature.load())
+
+    assert "02000000" in transformed_df["AGS"].values
+    assert "11000000" in transformed_df["AGS"].values
+    assert "02001000" not in transformed_df["AGS"].values
+    assert "02002000" not in transformed_df["AGS"].values
+    assert "11101000" not in transformed_df["AGS"].values
+    assert "11212000" not in transformed_df["AGS"].values
+
+    # Non-Berlin/Hamburg AGS must remain untouched.
+    assert "12073032" in transformed_df["AGS"].values
