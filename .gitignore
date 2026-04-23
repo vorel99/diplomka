@@ -17,6 +17,7 @@ mlflow.db
 mlruns/
 
 # data files
+data/**/*.pbf
 data/**/*.csv
 data/**/*.parquet
 data/**/*.pdf

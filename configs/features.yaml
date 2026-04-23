@@ -70,6 +70,43 @@ features:
       raw_data_path: data/raw/features/12711-91-01-5-migration.csv
       tform_data_path: data/tform/features/migration.csv
 
+  # OSM hospitals feature
+  - name: osm_hospitals
+    class: OSMHospitalsFeature
+    params:
+      raw_data_path: data/raw/osm/hospitals.geojson
+      tform_data_path: data/tform/features/osm_hospitals.csv
+      municipality_geo_data_path: data/georef-germany-gemeinde.csv
+      country_column: addr:country
+      country_value: DE
+
+  # OSM ATM feature
+  - name: osm_atm
+    class: OSMATMFeature
+    params:
+      raw_data_path: data/raw/osm/atms_full.geojson
+      tform_data_path: data/tform/features/osm_atm.csv
+      municipality_geo_data_path: data/georef-germany-gemeinde.csv
+      municipality_data_path: data/raw/municipalities_2022.csv
+
+  # OSM tourist attractions feature
+  - name: osm_tourist
+    class: OSMTouristFeature
+    params:
+      raw_data_path: data/raw/osm/tourism.geojson
+      tform_data_path: data/tform/features/osm_tourist.csv
+      municipality_geo_data_path: data/georef-germany-gemeinde.csv
+      municipality_data_path: data/raw/municipalities_2022.csv
+
+  # OSM university feature
+  - name: osm_university
+    class: OSMUniversityFeature
+    params:
+      raw_data_path: data/raw/osm/universities.geojson
+      tform_data_path: data/tform/features/osm_university.csv
+      municipality_geo_data_path: data/georef-germany-gemeinde.csv
+      deduplicate_by_name: true
+
   # Unemployment feature for 2025
   - name: unemployment_25
     class: UnemploymentFeature
