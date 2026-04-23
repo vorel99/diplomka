@@ -45,7 +45,7 @@ features:
     params:
       url: https://www.bundeswahlleiterin.de/en/dam/jcr/e79a7bd3-0607-4e87-9752-8e601e299e00/btw25_wbz.zip
       raw_data_path: data/raw/features/election_2025
-      tform_data_path: data/tform/features/election_25.csv
+      tform_data_path: data/tform/features/federal_election_25.csv
     before_transforms:
       - name: election_2025_homogeneity
         class: HomogeneityFeatureEngineering
