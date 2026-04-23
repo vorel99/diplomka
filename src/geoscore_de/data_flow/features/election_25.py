@@ -9,7 +9,9 @@ from geoscore_de.data_flow.features.utils import load_election_zip, move_extract
 ZIP_URL = "https://www.bundeswahlleiterin.de/en/dam/jcr/e79a7bd3-0607-4e87-9752-8e601e299e00/btw25_wbz.zip"
 
 DEFAULT_RAW_DATA_PATH = "data/raw/features/election_2025"
-DEFAULT_TFORM_DATA_PATH = "data/tform/features/election_25.csv"
+DEFAULT_TFORM_DATA_PATH = "data/tform/features/federal_election_25.csv"
+HAMBURG_CITY_AGS = "02000000"
+BERLIN_CITY_AGS = "11000000"
 
 
 class Election25Feature(BaseFeature):
@@ -81,6 +83,17 @@ class Election25Feature(BaseFeature):
         df = df.dropna(subset=["Land", "Regierungsbezirk", "Kreis", "Gemeinde"])
         return df
 
+    @staticmethod
+    def _normalize_city_state_ags(ags: pd.Series) -> pd.Series:
+        """Map city-state district AGS to official municipality-level AGS codes."""
+
+        hamburg_district_mask = ags.str.match(r"^0200[1-7]000$", na=False)
+        berlin_district_mask = ags.str.match(r"^11[12]\d{5}$", na=False)
+
+        normalized_ags = ags.where(~hamburg_district_mask, HAMBURG_CITY_AGS)
+        normalized_ags = normalized_ags.where(~berlin_district_mask, BERLIN_CITY_AGS)
+        return normalized_ags
+
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
         """Transform raw election 2025 data into aggregated, proportional metrics.
 
@@ -89,6 +102,9 @@ class Election25Feature(BaseFeature):
         - aggregates all vote counts by AGS via summation, and
         - computes election participation and converts vote counts to proportions of total voters.
         """
+        # Merge city-state district records to one municipality per city.
+        df["AGS"] = self._normalize_city_state_ags(df["AGS"].astype("string"))
+
         # select only columns ending with "Erststimmen" or "Zweitstimmen" or AGS or Wahlberechtigte (A) or Wählende (B)
         df = df[
             [
