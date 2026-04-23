@@ -124,16 +124,28 @@ class Election25Feature(BaseFeature):
             ]
         ]
 
+        # rename Erststimmen and Zweitstimmen columns to start with E_ and Z_ respectively
+        df = df.rename(
+            columns={
+                col: "E_" + col.replace(" - Erststimmen", "")
+                if col.endswith("Erststimmen")
+                else "Z_" + col.replace(" - Zweitstimmen", "")
+                if col.endswith("Zweitstimmen")
+                else col
+                for col in df.columns
+            }
+        )
+
         # group by AGS and sum all other columns
         df = df.groupby("AGS").sum().reset_index()
 
         # Change all columns from absolute counts to proportions of the total voters
-        df["eligible_voters"] = df["eligible_voters"].replace(0, pd.NA)
+        df["eligible_voters"] = df["eligible_voters"].replace(0, float("nan"))
         df["election_participation"] = df["total_voters"] / df["eligible_voters"]
 
         for col in df.columns:
             if col not in ["AGS", "eligible_voters", "total_voters", "election_participation"]:
-                df[col] = df[col] / df["total_voters"].replace(0, pd.NA)
+                df[col] = df[col] / df["total_voters"].replace(0, float("nan"))
 
         df.to_csv(self.tform_data_path, index=False)
         return df
