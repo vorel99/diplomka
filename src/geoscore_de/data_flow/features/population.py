@@ -96,11 +96,16 @@ class PopulationFeature(BaseFeature):
 
         # Change all columns from absolute counts to proportions of the total population.
         # Replace 0 with NaN to avoid division by zero (inf values).
-        total_pop = tform_df["total_population"].replace(0, np.nan)
+        tform_df["total_population"] = tform_df["total_population"].replace(0, np.nan)
 
         for col in tform_df.columns:
             if col != "AGS" and col != "total_population":
-                tform_df[col] = tform_df[col] / total_pop
+                tform_df[col] = tform_df[col] / tform_df["total_population"]
+
+        # create male proportion column
+        male_proportion_df = df[df["age_group"] == "Insgesamt"][["AGS", "male_count", "people_count"]].copy()
+        male_proportion_df["male_proportion"] = male_proportion_df["male_count"] / male_proportion_df["people_count"]
+        tform_df = tform_df.merge(male_proportion_df[["AGS", "male_proportion"]], on="AGS", how="left")
 
         tform_df.to_csv(self.tform_data_path, index=False)
         return tform_df
