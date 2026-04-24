@@ -244,6 +244,7 @@ def test_transform_population_data_all_columns_renamed(tmp_path, mock_raw_csv_fi
         "age_65_to_74",
         "age_75_and_over",
         "total_population",
+        "male_proportion",
     ]
 
     # Check that expected columns exist (if they're in the data)
