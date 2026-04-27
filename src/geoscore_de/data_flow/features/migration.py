@@ -102,6 +102,8 @@ class MigrationFeature(BaseFeature):
 
         output_path = Path(self.tform_data_path)
         output_path.parent.mkdir(parents=True, exist_ok=True)
+
+        merged_df = merged_df.drop(columns=["Persons"])
         merged_df.to_csv(output_path, index=False)
 
         return merged_df
