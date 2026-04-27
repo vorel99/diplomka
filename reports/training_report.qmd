@@ -197,9 +197,7 @@ except AttributeError:
 
 # Use the best trained model from the earlier section
 # Exclude categorical features so SHAP runs on the non-categorical feature subset.
-X_test_shap = result.X_test.select_dtypes(exclude=['category'])
-explainer = shap.Explainer(result.best_estimator, X_test_shap)
-shap_values = explainer(X_test_shap)
+shap_values = result.get_shaps()
 ```
 
 ### SHAP Feature Importance
@@ -208,7 +206,7 @@ shap_values = explainer(X_test_shap)
 #| label: shap-analysis-fig
 
 # Plot feature importance (summary plot) inline (do not save to disk)
-shap.summary_plot(shap_values, X_test_shap, show=True)
+shap.summary_plot(shap_values, result.X_test, show=True)
 plt.tight_layout()
 plt.show()
 plt.close()

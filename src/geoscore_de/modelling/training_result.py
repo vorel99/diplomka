@@ -1,8 +1,11 @@
 from pathlib import Path
 from typing import Any
 
+import numpy as np
 import pandas as pd
 import plotnine as gg
+import shap
+from catboost import CatBoostRegressor, Pool
 from sklearn.metrics import (
     explained_variance_score,
     max_error,
@@ -196,6 +199,32 @@ class TrainingResult:
             f"{metric_prefix}_max_error": max_err,
             f"{metric_prefix}_explained_variance": explained_var,
         }
+
+    def get_shaps(self) -> np.ndarray | None:
+        """Get SHAP values for the test set if supported by the model."""
+        # CatBoost
+        if isinstance(self.best_estimator, CatBoostRegressor):
+            cat_features = list(self.X_test.select_dtypes(include=["category", "object", "string"]).columns)
+
+            shap_values = self.best_estimator.get_feature_importance(
+                Pool(self.X_test, cat_features=cat_features), type="ShapValues"
+            )
+
+            # 2D -> [sample, feature], 3D -> [sample, class, feature]; last column is the base prediction (removed)
+            if shap_values.ndim == 2:
+                shap_values = shap_values[:, :-1]
+            else:
+                shap_values = shap_values[:, :, :-1]
+
+            return shap_values
+
+        # everything else supported by the SHAP library
+
+        # Exclude categorical features so SHAP runs on the non-categorical feature subset.
+        X_test_shap = self.X_test.select_dtypes(exclude=["category"])
+        explainer = shap.Explainer(self.best_estimator, X_test_shap)
+        shap_values = explainer(X_test_shap)
+        return shap_values
 
     def plot_diagnostics(self, save_path: str | None = None) -> None | gg.ggplot:
         """Plot predicted-vs-actual and residual diagnostics for holdout set.
