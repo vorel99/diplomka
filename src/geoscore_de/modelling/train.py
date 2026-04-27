@@ -141,7 +141,7 @@ class Trainer:
             random_state=self.config.random_state,
         )
 
-    def _get_catboost_fit_params(self, X_train_val: pd.DataFrame) -> dict[str, list[str]]:
+    def _get_catboost_fit_params(self, X_train_val: pd.DataFrame) -> dict[str, list[int]]:
         """Return CatBoost-specific fit parameters derived from the training frame."""
         if self.config.model.model_type != "catboost":
             return {}
