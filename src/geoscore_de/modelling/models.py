@@ -4,7 +4,7 @@ Supported model types:
 - ``"lightgbm"``      → :class:`lightgbm.LGBMRegressor`
 - ``"random_forest"`` → :class:`sklearn.ensemble.RandomForestRegressor`
 - ``"gradient_boosting"`` → :class:`sklearn.ensemble.GradientBoostingRegressor`
-- ``"xgboost"``       → :class:`xgboost.XGBRegressor`  (optional – requires ``pip install xgboost``)
+- ``"xgboost"``       → :class:`xgboost.XGBRegressor`  (optional - requires ``pip install xgboost``)
 """
 
 from __future__ import annotations
