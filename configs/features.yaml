@@ -140,6 +140,10 @@ after_transforms:
     class: DeltaFeatureEngineering
     input_columns: ["unemployment_25_total", "unemployment_20_total"]
     output_column: unemployment_25_20_delta
+  - name: age_65_over
+    class: SumFeatureEngineering
+    input_columns: ["population_age_65_to_74", "population_age_75_and_over"]
+    output_column: population_65_over
 
 # Matrix building configuration
 matrix:
