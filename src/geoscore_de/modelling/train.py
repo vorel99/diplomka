@@ -141,6 +141,18 @@ class Trainer:
             random_state=self.config.random_state,
         )
 
+    def _get_catboost_fit_params(self, X_train_val: pd.DataFrame) -> dict[str, list[str]]:
+        """Return CatBoost-specific fit parameters derived from the training frame."""
+        if self.config.model.model_type != "catboost":
+            return {}
+
+        cat_features = list(X_train_val.select_dtypes(include=["category", "object", "string"]).columns)
+        cat_cols_indices = [i for i, x in enumerate(X_train_val.columns) if x in cat_features]
+        if not cat_cols_indices:
+            return {}
+
+        return {"cat_features": cat_cols_indices}
+
     def _build_search(self, model, scoring: dict):
         """Build configured hyperparameter search object."""
         search_config = self.config.search
@@ -232,6 +244,7 @@ class Trainer:
 
         # Train with configured hyperparameter search
         model = self._get_model()
+        fit_params = self._get_catboost_fit_params(X_train_val)
         scoring = {
             "r2": "r2",
             "mae": make_scorer(mean_absolute_error, greater_is_better=False),
@@ -243,7 +256,7 @@ class Trainer:
             "explained_variance": make_scorer(explained_variance_score),
         }
         grid_search = self._build_search(model, scoring)
-        grid_search.fit(X_train_val, y_train_val)
+        grid_search.fit(X_train_val, y_train_val, **fit_params)
 
         best_estimator = grid_search.best_estimator_
         try:

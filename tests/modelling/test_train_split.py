@@ -63,6 +63,32 @@ def test_prepare_data_random_split_as_default_without_state_columns():
     assert len(y_test) == 20
 
 
+def test_catboost_model_receives_categorical_feature_names():
+    data = pd.DataFrame(
+        {
+            "AGS": [f"0100{i:04d}" for i in range(4)],
+            "category_feature": pd.Series(["a", "b", "a", "c"], dtype="category"),
+            "text_feature": ["x", "y", "x", "z"],
+            "numeric_feature": [1.0, 2.0, 3.0, 4.0],
+            "unemployment_unemployment_per_capita": [0.1, 0.2, 0.3, 0.4],
+        }
+    )
+    trainer = Trainer(
+        TrainingConfig(
+            target_variable="unemployment_unemployment_per_capita",
+            model=ModelConfig(model_type="catboost"),
+            search=SearchConfig(param_grid={"depth": [2]}),
+        )
+    )
+
+    X_train_val = data.drop(columns=["AGS", "unemployment_unemployment_per_capita"])
+    model = trainer._get_model()
+
+    # index 0 and 1 correspond to "category_feature" and "text_feature"
+    assert trainer._get_catboost_fit_params(X_train_val)["cat_features"] == [0, 1]
+    assert "cat_features" not in model.get_params()
+
+
 def test_prepare_data_stratified_falls_back_to_random_on_singleton_state():
     data = pd.DataFrame(
         {
