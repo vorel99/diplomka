@@ -3,7 +3,8 @@
 import pytest
 from pydantic import ValidationError
 
-from geoscore_de.data_flow.features.config import FeatureConfig, FeaturesYAMLConfig, MatrixConfig
+from geoscore_de.data_flow.config import FeaturesYAMLConfig, MatrixConfig
+from geoscore_de.data_flow.features.config import FeatureConfig
 
 
 class TestFeatureConfig:
