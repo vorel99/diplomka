@@ -1,7 +1,6 @@
 from pathlib import Path
 from typing import Any
 
-import numpy as np
 import pandas as pd
 import plotnine as gg
 import shap
@@ -200,14 +199,19 @@ class TrainingResult:
             f"{metric_prefix}_explained_variance": explained_var,
         }
 
-    def get_shaps(self) -> np.ndarray | None:
-        """Get SHAP values for the test set if supported by the model."""
-        # CatBoost
-        if isinstance(self.best_estimator, CatBoostRegressor):
-            cat_features = list(self.X_test.select_dtypes(include=["category", "object", "string"]).columns)
+    def get_shap_data(self, X: pd.DataFrame | None = None) -> tuple[Any, pd.DataFrame]:
+        """Return SHAP values together with the exact feature frame used for SHAP.
 
+        This keeps SHAP-specific filtering local while exposing the used matrix to callers,
+        so downstream code can safely plot or inspect with matching shapes.
+        """
+        X_input = self.X_test if X is None else X
+
+        # CatBoost handles categorical columns directly via Pool(cat_features=...).
+        if isinstance(self.best_estimator, CatBoostRegressor):
+            cat_features = list(X_input.select_dtypes(include=["category", "object", "string"]).columns)
             shap_values = self.best_estimator.get_feature_importance(
-                Pool(self.X_test, cat_features=cat_features), type="ShapValues"
+                Pool(X_input, cat_features=cat_features), type="ShapValues"
             )
 
             # 2D -> [sample, feature], 3D -> [sample, class, feature]; last column is the base prediction (removed)
@@ -216,14 +220,17 @@ class TrainingResult:
             else:
                 shap_values = shap_values[:, :, :-1]
 
-            return shap_values
+            return shap_values, X_input
 
-        # everything else supported by the SHAP library
+        # SHAP with non-CatBoost estimators can fail on non-numeric columns.
+        X_shap = X_input.select_dtypes(exclude=["category", "object", "string"])
+        explainer = shap.Explainer(self.best_estimator, X_shap)
+        shap_values = explainer(X_shap)
+        return shap_values, X_shap
 
-        # Exclude categorical features so SHAP runs on the non-categorical feature subset.
-        X_test_shap = self.X_test.select_dtypes(exclude=["category"])
-        explainer = shap.Explainer(self.best_estimator, X_test_shap)
-        shap_values = explainer(X_test_shap)
+    def get_shaps(self) -> Any:
+        """Backwards-compatible helper returning only SHAP values for the test set."""
+        shap_values, _ = self.get_shap_data()
         return shap_values
 
     def plot_diagnostics(self, save_path: str | None = None) -> None | gg.ggplot:

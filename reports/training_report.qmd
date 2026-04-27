@@ -195,9 +195,9 @@ except AttributeError:
 # SHAP analysis: Identify most relevant features for model predictions
 
 
-# Use the best trained model from the earlier section
-# Exclude categorical features so SHAP runs on the non-categorical feature subset.
-shap_values = result.get_shaps()
+# Use the best trained model from the earlier section.
+# Retrieve both SHAP values and the exact feature matrix used to compute them.
+shap_values, X_shap = result.get_shap_data()
 ```
 
 ### SHAP Feature Importance
@@ -206,7 +206,7 @@ shap_values = result.get_shaps()
 #| label: shap-analysis-fig
 
 # Plot feature importance (summary plot) inline (do not save to disk)
-shap.summary_plot(shap_values, result.X_test, show=True)
+shap.summary_plot(shap_values, X_shap, show=True)
 plt.tight_layout()
 plt.show()
 plt.close()
@@ -315,11 +315,8 @@ for item in state_eval_data:
     display(diag_plot)
 
     try:
-        X_test_shap = X_state.select_dtypes(exclude=["category"])
-
-        state_explainer = shap.Explainer(result.best_estimator, X_test_shap)
-        state_shap_values = state_explainer(X_test_shap)
-        shap.summary_plot(state_shap_values, X_test_shap, show=True)
+        state_shap_values, X_state_shap = result.get_shap_data(X_state)
+        shap.summary_plot(state_shap_values, X_state_shap, show=True)
         plt.tight_layout()
         plt.show()
         plt.close()
