@@ -1,4 +1,4 @@
-target_variable: unemployment_25_per_capita
+target_variable: unemployment_25_total
 
 feature_filtering:
   omit_features: [

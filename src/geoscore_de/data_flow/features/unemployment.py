@@ -78,7 +78,10 @@ class UnemploymentFeature(BaseFeature):
         df = df.merge(municipality_df, on="AGS", how="left")
 
         # Normalize unemployment by population
-        df["per_capita"] = (df["total"] / df["Persons"]).round(6)
+        data_cols = ["total", "foreigners", "disabled", "age_15_20", "age_15_25", "age_55_65", "long_term"]
+        df["Persons"] = df["Persons"].replace(0, pd.NA)  # Avoid division by zero
+        for col in data_cols:
+            df[col] = (df[col] / df["Persons"]).round(6)
 
         # Drop temporary columns
         df = df.drop(columns=["MU_ID", "Municipality", "Persons"])
