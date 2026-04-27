@@ -79,6 +79,7 @@ class UnemploymentFeature(BaseFeature):
 
         # Normalize unemployment by population
         data_cols = ["total", "foreigners", "disabled", "age_15_20", "age_15_25", "age_55_65", "long_term"]
+        df["Persons"] = df["Persons"].replace(0, pd.NA)  # Avoid division by zero
         for col in data_cols:
             df[col] = (df[col] / df["Persons"]).round(6)
 
