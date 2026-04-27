@@ -128,14 +128,18 @@ features:
       raw_data_path: data/raw/features/13211-01-03-5-unemployment-2020.csv
       tform_data_path: data/tform/features/unemployment-2020.csv
 
-# Post-merge delta transforms (trend features): delta = newer_column - older_column
-# after_transforms:
-
   - name: area
     class: AreaFeature
     params:
       raw_data_path: data/raw/features/33111-01-03-5-land-area.csv
       tform_data_path: data/tform/features/area.csv
+
+# Post-merge delta transforms (trend features): delta = newer_column - older_column
+after_transforms:
+  - name: unemployment_25_20_delta
+    class: DeltaFeatureEngineering
+    input_columns: ["unemployment_25_total", "unemployment_20_total"]
+    output_column: unemployment_25_20_delta
 
 # Matrix building configuration
 matrix:
