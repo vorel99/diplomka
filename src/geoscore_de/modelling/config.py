@@ -103,7 +103,7 @@ class TrainingConfig(BaseModel):
         ),
     )
     federal_state_column: str = Field(
-        default="federal_republic_id",
+        default="federal_state_id",
         description="Column used for state-level stratification when split_strategy is 'stratified_federal_state'.",
     )
     random_state: int = Field(default=42, description="Random state for reproducibility of train-test split.")

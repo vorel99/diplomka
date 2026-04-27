@@ -241,8 +241,8 @@ STATE_NAMES = {
     "16": "Thueringen",
 }
 
-train = result.X_train["federal_state_id"].value_counts()
-test = result.X_test["federal_state_id"].value_counts()
+train = result.X_train[training_config.federal_state_column].value_counts()
+test = result.X_test[training_config.federal_state_column].value_counts()
 # create df with count_train, count_test, state_name, train_pct
 df_info = train.to_frame().join(test, lsuffix="_train", rsuffix="_test").fillna(0)
 df_info["state_name"] = df_info.index.map(STATE_NAMES).fillna("Unknown")
@@ -252,7 +252,7 @@ state_eval_data = []
 for index, row in df_info.iterrows():
     state_code = index
     state_name = row["state_name"]
-    state_mask = result.X_test["federal_state_id"] == state_code
+    state_mask = result.X_test[training_config.federal_state_column] == state_code
     X_state = result.X_test.loc[state_mask.values]
     y_state = result.y_test.loc[state_mask.values]
     if X_state.empty:
