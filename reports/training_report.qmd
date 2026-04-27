@@ -257,7 +257,7 @@ state_eval_data = []
 for _, row in state_counts.iterrows():
     state_code = row["state_code"]
     state_name = row["state_name"]
-    state_mask = test_meta["state_code"] == state_code
+    state_mask = result.X_test["federal_state_id"] == state_code
     X_state = result.X_test.loc[state_mask.values]
     y_state = result.y_test.loc[state_mask.values]
     metrics_state = result.evaluate_subset(X_state, y_state, metric_prefix=f"state_{state_code}")
@@ -266,13 +266,15 @@ for _, row in state_counts.iterrows():
         {
             "state_code": state_code,
             "state_name": state_name,
-            "Municipalities in test set": row["Municipalities in test set"],
+            "# in test set": row["Municipalities in test set"],
             "metrics": metrics_state,
             "X_state": X_state,
             "y_state": y_state,
         }
     )
 
+
+# Build display table for state-level evaluation
 state_rows = []
 for item in state_eval_data:
     state_code = item["state_code"]
@@ -281,7 +283,7 @@ for item in state_eval_data:
         {
             "State Code": state_code,
             "State": item["state_name"],
-            "Municipalities in test set": item["Municipalities in test set"],
+            "# in test set": item["# in test set"],
             "R2": metrics_state[f"state_{state_code}_r2_score"],
         }
     )
