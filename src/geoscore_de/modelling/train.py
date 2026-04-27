@@ -198,7 +198,7 @@ class Trainer:
 
         # TODO: add support for early stopping with other model types if needed
         # like xgboost or catboost or gradient_boosting
-        if self.config.model.model_type.lower() not in ["lightgbm"]:
+        if self.config.model.model_type.lower() not in ["lightgbm", "catboost"]:
             return best_estimator
 
         X_train_fit, X_val_fit, y_train_fit, y_val_fit = train_test_split(
@@ -214,13 +214,25 @@ class Trainer:
         self.y_val_ = y_val_fit
 
         estimator = clone(best_estimator)
-        estimator.fit(
-            X_train_fit,
-            y_train_fit,
-            eval_set=[(X_val_fit, y_val_fit)],
-            eval_metric="l2",
-            callbacks=[early_stopping(stopping_rounds=rounds, verbose=False)],
-        )
+
+        if self.config.model.model_type.lower() == "catboost":
+            estimator.fit(
+                X_train_fit,
+                y_train_fit,
+                eval_set=(X_val_fit, y_val_fit),
+                early_stopping_rounds=rounds,
+                use_best_model=True,
+                verbose=False,
+                cat_features=self._get_catboost_fit_params(X_train_val).get("cat_features", []),
+            )
+        elif self.config.model.model_type.lower() == "lightgbm":
+            estimator.fit(
+                X_train_fit,
+                y_train_fit,
+                eval_set=[(X_val_fit, y_val_fit)],
+                eval_metric="l2",
+                callbacks=[early_stopping(stopping_rounds=rounds, verbose=False)],
+            )
         return estimator
 
     def train(self, data: pd.DataFrame) -> TrainingResult:
