@@ -12,6 +12,7 @@ from __future__ import annotations
 import inspect
 from typing import TYPE_CHECKING, Any
 
+from catboost import CatBoostRegressor
 from lightgbm import LGBMRegressor
 from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor
 
@@ -27,6 +28,10 @@ _LIGHTGBM_DEFAULTS: dict[str, Any] = {
     "min_child_samples": 20,
     "min_split_gain": 0.0,
     "n_jobs": -1,
+}
+
+_CATBOOST_DEFAULTS: dict[str, Any] = {
+    "min_data_in_leaf": 20,
 }
 
 _RANDOM_FOREST_DEFAULTS: dict[str, Any] = {
@@ -59,6 +64,7 @@ _XGBOOST_DEFAULTS: dict[str, Any] = {
 # Registry: model_type → (ModelClass, default_params)
 _REGISTRY: dict[str, tuple[type, dict[str, Any]]] = {
     "lightgbm": (LGBMRegressor, _LIGHTGBM_DEFAULTS),
+    "catboost": (CatBoostRegressor, _CATBOOST_DEFAULTS),
     "random_forest": (RandomForestRegressor, _RANDOM_FOREST_DEFAULTS),
     "gradient_boosting": (GradientBoostingRegressor, _GRADIENT_BOOSTING_DEFAULTS),
 }
