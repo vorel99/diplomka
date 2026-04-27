@@ -16,14 +16,6 @@ features:
       raw_data_path: data/raw/features/12411-02-03-5-population.csv
       tform_data_path: data/tform/features/population.csv
 
-  # Births feature
-  - name: births
-    class: BirthFeature
-    params:
-      raw_data_path: data/raw/features/12612-91-01-5-births.csv
-      tform_data_path: data/tform/features/births.csv
-      municipality_data_path: data/raw/municipalities_2022.csv
-
   # Federal election 2021 results
   - name: election_2021
     class: Election21Feature
@@ -55,6 +47,14 @@ features:
         output_column: homogeneity
         params:
           weight_column: eligible_voters
+
+  # Births feature
+  - name: births
+    class: BirthFeature
+    params:
+      raw_data_path: data/raw/features/12612-91-01-5-births.csv
+      tform_data_path: data/tform/features/births.csv
+      municipality_data_path: data/raw/municipalities_2022.csv
 
   # Road accidents feature
   - name: road_accidents
@@ -128,14 +128,22 @@ features:
       raw_data_path: data/raw/features/13211-01-03-5-unemployment-2020.csv
       tform_data_path: data/tform/features/unemployment-2020.csv
 
-# Post-merge delta transforms (trend features): delta = newer_column - older_column
-# after_transforms:
-
   - name: area
     class: AreaFeature
     params:
       raw_data_path: data/raw/features/33111-01-03-5-land-area.csv
       tform_data_path: data/tform/features/area.csv
+
+# Post-merge delta transforms 
+after_transforms:
+  - name: unemployment_25_20_delta
+    class: DeltaFeatureEngineering
+    input_columns: ["unemployment_25_total", "unemployment_20_total"]
+    output_column: unemployment_25_20_delta
+  - name: age_65_over
+    class: SumFeatureEngineering
+    input_columns: ["population_age_65_to_74", "population_age_75_and_over"]
+    output_column: population_65_over
 
 # Matrix building configuration
 matrix:

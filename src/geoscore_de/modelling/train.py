@@ -141,6 +141,18 @@ class Trainer:
             random_state=self.config.random_state,
         )
 
+    def _get_catboost_fit_params(self, X_train_val: pd.DataFrame) -> dict[str, list[int]]:
+        """Return CatBoost-specific fit parameters derived from the training frame."""
+        if self.config.model.model_type != "catboost":
+            return {}
+
+        cat_features = list(X_train_val.select_dtypes(include=["category", "object", "string"]).columns)
+        cat_cols_indices = [i for i, x in enumerate(X_train_val.columns) if x in cat_features]
+        if not cat_cols_indices:
+            return {}
+
+        return {"cat_features": cat_cols_indices}
+
     def _build_search(self, model, scoring: dict):
         """Build configured hyperparameter search object."""
         search_config = self.config.search
@@ -186,7 +198,7 @@ class Trainer:
 
         # TODO: add support for early stopping with other model types if needed
         # like xgboost or catboost or gradient_boosting
-        if self.config.model.model_type.lower() not in ["lightgbm"]:
+        if self.config.model.model_type.lower() not in ["lightgbm", "catboost"]:
             return best_estimator
 
         X_train_fit, X_val_fit, y_train_fit, y_val_fit = train_test_split(
@@ -202,13 +214,25 @@ class Trainer:
         self.y_val_ = y_val_fit
 
         estimator = clone(best_estimator)
-        estimator.fit(
-            X_train_fit,
-            y_train_fit,
-            eval_set=[(X_val_fit, y_val_fit)],
-            eval_metric="l2",
-            callbacks=[early_stopping(stopping_rounds=rounds, verbose=False)],
-        )
+
+        if self.config.model.model_type.lower() == "catboost":
+            estimator.fit(
+                X_train_fit,
+                y_train_fit,
+                eval_set=(X_val_fit, y_val_fit),
+                early_stopping_rounds=rounds,
+                use_best_model=True,
+                verbose=False,
+                cat_features=self._get_catboost_fit_params(X_train_val).get("cat_features", []),
+            )
+        elif self.config.model.model_type.lower() == "lightgbm":
+            estimator.fit(
+                X_train_fit,
+                y_train_fit,
+                eval_set=[(X_val_fit, y_val_fit)],
+                eval_metric="l2",
+                callbacks=[early_stopping(stopping_rounds=rounds, verbose=False)],
+            )
         return estimator
 
     def train(self, data: pd.DataFrame) -> TrainingResult:
@@ -232,6 +256,7 @@ class Trainer:
 
         # Train with configured hyperparameter search
         model = self._get_model()
+        fit_params = self._get_catboost_fit_params(X_train_val)
         scoring = {
             "r2": "r2",
             "mae": make_scorer(mean_absolute_error, greater_is_better=False),
@@ -243,7 +268,7 @@ class Trainer:
             "explained_variance": make_scorer(explained_variance_score),
         }
         grid_search = self._build_search(model, scoring)
-        grid_search.fit(X_train_val, y_train_val)
+        grid_search.fit(X_train_val, y_train_val, **fit_params)
 
         best_estimator = grid_search.best_estimator_
         try:

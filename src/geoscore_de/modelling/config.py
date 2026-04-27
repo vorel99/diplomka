@@ -34,7 +34,7 @@ class RowFilteringConfig(BaseModel):
 class ModelConfig(BaseModel):
     """Configuration for the model."""
 
-    model_type: Literal["lightgbm", "random_forest", "gradient_boosting", "xgboost"] = Field(
+    model_type: Literal["lightgbm", "random_forest", "gradient_boosting", "xgboost", "catboost"] = Field(
         "lightgbm", description="Type of model to use for training (e.g., 'lightgbm', 'random_forest')."
     )
 
@@ -103,7 +103,7 @@ class TrainingConfig(BaseModel):
         ),
     )
     federal_state_column: str = Field(
-        default="federal_republic_id",
+        default="federal_state_id",
         description="Column used for state-level stratification when split_strategy is 'stratified_federal_state'.",
     )
     random_state: int = Field(default=42, description="Random state for reproducibility of train-test split.")

@@ -195,11 +195,9 @@ except AttributeError:
 # SHAP analysis: Identify most relevant features for model predictions
 
 
-# Use the best trained model from the earlier section
-# Exclude categorical features so SHAP runs on the non-categorical feature subset.
-X_test_shap = result.X_test.select_dtypes(exclude=['category'])
-explainer = shap.Explainer(result.best_estimator, X_test_shap)
-shap_values = explainer(X_test_shap)
+# Use the best trained model from the earlier section.
+# Retrieve both SHAP values and the exact feature matrix used to compute them.
+shap_values, X_shap = result.get_shap_data()
 ```
 
 ### SHAP Feature Importance
@@ -208,7 +206,7 @@ shap_values = explainer(X_test_shap)
 #| label: shap-analysis-fig
 
 # Plot feature importance (summary plot) inline (do not save to disk)
-shap.summary_plot(shap_values, X_test_shap, show=True)
+shap.summary_plot(shap_values, X_shap, show=True)
 plt.tight_layout()
 plt.show()
 plt.close()
@@ -243,38 +241,38 @@ STATE_NAMES = {
     "16": "Thueringen",
 }
 
-test_meta = df.loc[result.test_indices, [training_config.id_column]].copy()
-test_meta[training_config.id_column] = test_meta[training_config.id_column].astype(str).str.zfill(8)
-test_meta["state_code"] = test_meta[training_config.id_column].str.slice(0, 2)
-test_meta["state_name"] = test_meta["state_code"].map(STATE_NAMES).fillna("Unknown")
-
-state_counts = (
-    test_meta.groupby(["state_code", "state_name"])
-    .size()
-    .reset_index(name="Municipalities in test set")
-    .sort_values("state_code")
-)
+train = result.X_train[training_config.federal_state_column].value_counts()
+test = result.X_test[training_config.federal_state_column].value_counts()
+# create df with count_train, count_test, state_name, train_pct
+df_info = train.to_frame().join(test, how="outer", lsuffix="_train", rsuffix="_test").fillna(0)
+df_info["state_name"] = df_info.index.map(STATE_NAMES).fillna("Unknown")
+df_info["train_pct"] = df_info["count_train"] / (df_info["count_train"] + df_info["count_test"])
 
 state_eval_data = []
-for _, row in state_counts.iterrows():
-    state_code = row["state_code"]
+for index, row in df_info.iterrows():
+    state_code = index
     state_name = row["state_name"]
-    state_mask = test_meta["state_code"] == state_code
+    state_mask = result.X_test[training_config.federal_state_column] == state_code
     X_state = result.X_test.loc[state_mask.values]
     y_state = result.y_test.loc[state_mask.values]
+    if X_state.empty:
+        continue
     metrics_state = result.evaluate_subset(X_state, y_state, metric_prefix=f"state_{state_code}")
 
     state_eval_data.append(
         {
             "state_code": state_code,
             "state_name": state_name,
-            "Municipalities in test set": row["Municipalities in test set"],
+            "count_train": row["count_train"],
+            "count_test": row["count_test"],
             "metrics": metrics_state,
             "X_state": X_state,
             "y_state": y_state,
         }
     )
 
+
+# Build display table for state-level evaluation
 state_rows = []
 for item in state_eval_data:
     state_code = item["state_code"]
@@ -283,7 +281,8 @@ for item in state_eval_data:
         {
             "State Code": state_code,
             "State": item["state_name"],
-            "Municipalities in test set": item["Municipalities in test set"],
+            "# train": item["count_train"],
+            "# test": item["count_test"],
             "R2": metrics_state[f"state_{state_code}_r2_score"],
         }
     )
@@ -317,11 +316,8 @@ for item in state_eval_data:
     display(diag_plot)
 
     try:
-        X_test_shap = X_state.select_dtypes(exclude=["category"])
-
-        state_explainer = shap.Explainer(result.best_estimator, X_test_shap)
-        state_shap_values = state_explainer(X_test_shap)
-        shap.summary_plot(state_shap_values, X_test_shap, show=True)
+        state_shap_values, X_state_shap = result.get_shap_data(X_state)
+        shap.summary_plot(state_shap_values, X_state_shap, show=True)
         plt.tight_layout()
         plt.show()
         plt.close()

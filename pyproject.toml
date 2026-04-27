@@ -28,6 +28,7 @@ dependencies = [
     # modelling
     "scikit-learn",
     "lightgbm",
+    "catboost",
     # reporting
     "shap",
     "papermill==2.7.0",

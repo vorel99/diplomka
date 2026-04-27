@@ -8,9 +8,9 @@ import yaml
 from pydantic import ValidationError
 
 from geoscore_de import mlflow_wrapper
+from geoscore_de.data_flow.config import FeaturesYAMLConfig
 from geoscore_de.data_flow.feature_engineering.base import instantiate_feature_engineering_class
 from geoscore_de.data_flow.features.base import BaseFeature, instantiate_feature
-from geoscore_de.data_flow.features.config import FeaturesYAMLConfig
 from geoscore_de.filtering import filter_features
 
 logger = logging.getLogger(__name__)
