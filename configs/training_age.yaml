@@ -11,7 +11,7 @@ federal_state_column: federal_state_id
 
 random_state: 42
 
-# model_type options: lightgbm (default), random_forest, gradient_boosting, xgboost
+# model_type options: lightgbm (default), random_forest, gradient_boosting, xgboost, catboost
 model:
   model_type: catboost
 
