@@ -244,7 +244,7 @@ STATE_NAMES = {
 train = result.X_train[training_config.federal_state_column].value_counts()
 test = result.X_test[training_config.federal_state_column].value_counts()
 # create df with count_train, count_test, state_name, train_pct
-df_info = train.to_frame().join(test, lsuffix="_train", rsuffix="_test").fillna(0)
+df_info = train.to_frame().join(test, how="outer", lsuffix="_train", rsuffix="_test").fillna(0)
 df_info["state_name"] = df_info.index.map(STATE_NAMES).fillna("Unknown")
 df_info["train_pct"] = df_info["count_train"] / (df_info["count_train"] + df_info["count_test"])
 
