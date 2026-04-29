@@ -3,7 +3,7 @@ from unittest.mock import patch
 import pandas as pd
 import pytest
 
-from geoscore_de.data_flow.features.election_21 import Election21Feature
+from geoscore_de.data_flow.features import Election21Feature
 
 
 class TestFixMissing:
