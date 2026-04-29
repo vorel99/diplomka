@@ -30,6 +30,7 @@ class BaseElectionFeature(BaseFeature):
 
         missing_munis = df_merged[df_merged["_merge"] == "right_only"]
         einschl_munis = df_merged[df_merged[muni_name_col].str.contains("einschl.", na=False)]
+        rows_to_add: list[pd.DataFrame] = []
 
         # iterate over missing municipalities and check if their name is included in any of the einschl. municipalities
         for _, missing_row in missing_munis.iterrows():
@@ -43,6 +44,8 @@ class BaseElectionFeature(BaseFeature):
                     # except for AGS
                     new_row = df[df["AGS"] == einschl_row["AGS"]].copy()
                     new_row["AGS"] = missing_row["AGS"]
-                    df = pd.concat([df, new_row], ignore_index=True)
+                    rows_to_add.append(new_row)
                     break
+
+        df = pd.concat([df, *rows_to_add], ignore_index=True)
         return df
