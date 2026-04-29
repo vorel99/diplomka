@@ -29,7 +29,7 @@ class BaseElectionFeature(BaseFeature):
         df_merged = df.merge(df_muni, on="AGS", how="outer", indicator=True)
 
         missing_munis = df_merged[df_merged["_merge"] == "right_only"]
-        einschl_munis = df_merged[df_merged[muni_name_col].str.contains("einschl.", na=False)]
+        einschl_munis = df_merged[df_merged[muni_name_col].str.contains("einschl.", na=False, regex=False)]
         rows_to_add: list[pd.DataFrame] = []
 
         # iterate over missing municipalities and check if their name is included in any of the einschl. municipalities
