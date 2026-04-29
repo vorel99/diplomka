@@ -144,6 +144,9 @@ class Election25Feature(BaseElectionFeature):
         # group by AGS and sum all other columns
         df = df.groupby("AGS").sum().reset_index()
 
+        if self.fix_missing:
+            df = self._fix_missing(df)
+
         df = df.drop(columns=["Gemeindename"], errors="ignore")
 
         # Change all columns from absolute counts to proportions of the total voters
