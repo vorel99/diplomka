@@ -30,8 +30,8 @@ def test_load_election_21_data(mock_raw_election_csv_file):
     feature = Election21Feature(raw_data_path=str(mock_raw_election_csv_file))
 
     # Patch load_election_zip to avoid actual download
-    with patch("geoscore_de.data_flow.features.election_21.load_election_zip"):
-        with patch("geoscore_de.data_flow.features.election_21.move_extracted_file"):
+    with patch("geoscore_de.data_flow.features.election.election_21.load_election_zip"):
+        with patch("geoscore_de.data_flow.features.election.election_21.move_extracted_file"):
             df = feature.load()
 
     # Check required columns exist
@@ -51,8 +51,8 @@ def test_load_election_21_data_ags_format(mock_raw_election_csv_file):
     feature = Election21Feature(raw_data_path=str(mock_raw_election_csv_file))
 
     # Patch load_election_zip to avoid actual download
-    with patch("geoscore_de.data_flow.features.election_21.load_election_zip"):
-        with patch("geoscore_de.data_flow.features.election_21.move_extracted_file"):
+    with patch("geoscore_de.data_flow.features.election.election_21.load_election_zip"):
+        with patch("geoscore_de.data_flow.features.election.election_21.move_extracted_file"):
             df = feature.load()
 
     # Check AGS format: Land (2) + Regierungsbezirk (1) + Kreis (3) + Gemeinde (3)
@@ -69,8 +69,8 @@ def test_transform_election_21_data_structure(tmp_path, mock_raw_election_csv_fi
     out_path = tmp_path / "output.csv"
 
     feature = Election21Feature(raw_data_path=str(mock_raw_election_csv_file), tform_data_path=str(out_path))
-    with patch("geoscore_de.data_flow.features.election_21.load_election_zip"):
-        with patch("geoscore_de.data_flow.features.election_21.move_extracted_file"):
+    with patch("geoscore_de.data_flow.features.election.election_21.load_election_zip"):
+        with patch("geoscore_de.data_flow.features.election.election_21.move_extracted_file"):
             df = feature.transform(feature.load())
 
     # Check that AGS column exists
@@ -95,8 +95,8 @@ def test_transform_election_21_data_grouping(tmp_path, mock_raw_election_csv_fil
     out_path = tmp_path / "output.csv"
 
     feature = Election21Feature(raw_data_path=str(mock_raw_election_csv_file), tform_data_path=str(out_path))
-    with patch("geoscore_de.data_flow.features.election_21.load_election_zip"):
-        with patch("geoscore_de.data_flow.features.election_21.move_extracted_file"):
+    with patch("geoscore_de.data_flow.features.election.election_21.load_election_zip"):
+        with patch("geoscore_de.data_flow.features.election.election_21.move_extracted_file"):
             raw_df = feature.load()
             transformed_df = feature.transform(raw_df)
 
@@ -113,8 +113,8 @@ def test_transform_election_21_proportions(tmp_path, mock_raw_election_csv_file)
     out_path = tmp_path / "output.csv"
 
     feature = Election21Feature(raw_data_path=str(mock_raw_election_csv_file), tform_data_path=str(out_path))
-    with patch("geoscore_de.data_flow.features.election_21.load_election_zip"):
-        with patch("geoscore_de.data_flow.features.election_21.move_extracted_file"):
+    with patch("geoscore_de.data_flow.features.election.election_21.load_election_zip"):
+        with patch("geoscore_de.data_flow.features.election.election_21.move_extracted_file"):
             df = feature.transform(feature.load())
 
     # Check that vote proportions are between 0 and 1 (excluding NaN)
@@ -132,8 +132,8 @@ def test_transform_election_21_participation(tmp_path, mock_raw_election_csv_fil
     out_path = tmp_path / "output.csv"
 
     feature = Election21Feature(raw_data_path=str(mock_raw_election_csv_file), tform_data_path=str(out_path))
-    with patch("geoscore_de.data_flow.features.election_21.load_election_zip"):
-        with patch("geoscore_de.data_flow.features.election_21.move_extracted_file"):
+    with patch("geoscore_de.data_flow.features.election.election_21.load_election_zip"):
+        with patch("geoscore_de.data_flow.features.election.election_21.move_extracted_file"):
             df = feature.transform(feature.load())
 
     # Check that participation is between 0 and 1
@@ -152,8 +152,8 @@ Flensburg;01;0;01;000;1000;0;0;0;0;0;0;0;0;0"""  # noqa: E501
     out_path = tmp_path / "output.csv"
 
     feature = Election21Feature(raw_data_path=str(tmp_path), tform_data_path=str(out_path))
-    with patch("geoscore_de.data_flow.features.election_21.load_election_zip"):
-        with patch("geoscore_de.data_flow.features.election_21.move_extracted_file"):
+    with patch("geoscore_de.data_flow.features.election.election_21.load_election_zip"):
+        with patch("geoscore_de.data_flow.features.election.election_21.move_extracted_file"):
             df = feature.transform(feature.load())
 
     # Should have NaN for proportions when total_voters is 0, not infinity
@@ -167,8 +167,8 @@ def test_transform_election_21_saves_to_file(tmp_path, mock_raw_election_csv_fil
     out_path = tmp_path / "output.csv"
 
     feature = Election21Feature(raw_data_path=str(mock_raw_election_csv_file), tform_data_path=str(out_path))
-    with patch("geoscore_de.data_flow.features.election_21.load_election_zip"):
-        with patch("geoscore_de.data_flow.features.election_21.move_extracted_file"):
+    with patch("geoscore_de.data_flow.features.election.election_21.load_election_zip"):
+        with patch("geoscore_de.data_flow.features.election.election_21.move_extracted_file"):
             feature.transform(feature.load())
 
     # Check that output file exists
@@ -195,8 +195,8 @@ def test_transform_election_21_merges_berlin_hamburg_districts(tmp_path):
     out_path = tmp_path / "output.csv"
 
     feature = Election21Feature(raw_data_path=str(tmp_path), tform_data_path=str(out_path), fix_missing=False)
-    with patch("geoscore_de.data_flow.features.election_21.load_election_zip"):
-        with patch("geoscore_de.data_flow.features.election_21.move_extracted_file"):
+    with patch("geoscore_de.data_flow.features.election.election_21.load_election_zip"):
+        with patch("geoscore_de.data_flow.features.election.election_21.move_extracted_file"):
             transformed_df = feature.transform(feature.load())
 
     assert "02000000" in transformed_df["AGS"].values
