@@ -4,6 +4,8 @@ from pathlib import Path
 import pandas as pd
 
 from geoscore_de.data_flow.features.base import BaseFeature
+from geoscore_de.data_flow.features.municipality import DEFAULT_RAW_DATA_PATH as MUNICIPALITY_RAW_DATA_PATH
+from geoscore_de.data_flow.features.municipality import MunicipalityFeature
 from geoscore_de.data_flow.features.utils import load_election_zip, move_extracted_file
 
 ZIP_URL = "https://www.bundeswahlleiterin.de/en/dam/jcr/c2cd99e6-064e-4ebc-b634-f86b5c0e14b3/btw21_wbz.zip"
@@ -22,12 +24,16 @@ class Election21Feature(BaseFeature):
         url: str = ZIP_URL,
         raw_data_path: str = DEFAULT_RAW_DATA_PATH,
         tform_data_path: str = DEFAULT_TFORM_DATA_PATH,
+        municipality_data_path: str = MUNICIPALITY_RAW_DATA_PATH,
+        fix_missing: bool = True,
         **kwargs,
     ):
         super().__init__(**kwargs)
         self.url = url
         self.raw_data_path = raw_data_path
         self.tform_data_path = tform_data_path
+        self.municipality_data_path = municipality_data_path
+        self.fix_missing = fix_missing
 
     def load(self) -> pd.DataFrame:
         """Load and extract election 21 data from a ZIP file.
@@ -97,6 +103,42 @@ class Election21Feature(BaseFeature):
         normalized_ags = normalized_ags.where(~berlin_district_mask, BERLIN_CITY_AGS)
         return normalized_ags
 
+    def _fix_missing(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Municipalities that are missing in the election data but present in the municipality data
+        are filled using einschl. keyword in the municipality name. If a municipality is missing
+        but is included in another municipality's data add the missing municipality with the same values
+        as the including municipality.
+
+        Args:
+            df (pd.DataFrame): DataFrame containing the election data.
+
+        Returns:
+            pd.DataFrame: DataFrame with added rows for missing municipalities.
+        """
+        municipality_feature = MunicipalityFeature(self.municipality_data_path)
+        df_muni = municipality_feature.load()[["AGS", "Municipality"]]
+
+        df_merged = df.merge(df_muni, on="AGS", how="outer", indicator=True)
+
+        missing_munis = df_merged[df_merged["_merge"] == "right_only"]
+        einschl_munis = df_merged[df_merged["Gemeinde Name"].str.contains("einschl.", na=False)]
+
+        # iterate over missing municipalities and check if their name is included in any of the einschl. municipalities
+        for _, missing_row in missing_munis.iterrows():
+            missing_name = missing_row["Municipality"]
+            # Find first matching einschl. municipality
+            for _, einschl_row in einschl_munis.iterrows():
+                einschl_name = einschl_row["Gemeinde Name"]
+                if missing_name in einschl_name:
+                    # If the missing municipality is included in the einschl. municipality
+                    # add row to original df with the same values as the einschl. municipality
+                    # except for AGS
+                    new_row = df[df["AGS"] == einschl_row["AGS"]].copy()
+                    new_row["AGS"] = missing_row["AGS"]
+                    df = pd.concat([df, new_row], ignore_index=True)
+                    break
+        return df
+
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
         """Transform raw election 21 data to include only relevant columns.
 
@@ -118,12 +160,18 @@ class Election21Feature(BaseFeature):
             [
                 col
                 for col in df.columns
-                if col.startswith(("E_", "Z_")) or col in ("AGS", "eligible_voters", "total_voters")
+                if col.startswith(("E_", "Z_")) or col in ("AGS", "eligible_voters", "total_voters", "Gemeinde Name")
             ]
         ]
 
         # group by municipality (AGS)
         df = df.groupby("AGS").sum().reset_index()
+
+        # fix einschl.
+        if self.fix_missing:
+            df = self._fix_missing(df)
+
+        df = df.drop(columns=["Gemeinde Name"], errors="ignore")
 
         vote_columns = [col for col in df.columns if col.startswith(("E_", "Z_"))]
         numeric_columns = ["eligible_voters", "total_voters", *vote_columns]
