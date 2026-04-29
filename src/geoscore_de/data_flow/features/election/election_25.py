@@ -3,7 +3,8 @@ from pathlib import Path
 
 import pandas as pd
 
-from geoscore_de.data_flow.features.base import BaseFeature
+from geoscore_de.data_flow.features.election import BaseElectionFeature
+from geoscore_de.data_flow.features.municipality import DEFAULT_RAW_DATA_PATH as MUNICIPALITY_RAW_DATA_PATH
 from geoscore_de.data_flow.features.utils import load_election_zip, move_extracted_file
 
 ZIP_URL = "https://www.bundeswahlleiterin.de/en/dam/jcr/e79a7bd3-0607-4e87-9752-8e601e299e00/btw25_wbz.zip"
@@ -14,7 +15,7 @@ HAMBURG_CITY_AGS = "02000000"
 BERLIN_CITY_AGS = "11000000"
 
 
-class Election25Feature(BaseFeature):
+class Election25Feature(BaseElectionFeature):
     """Feature class for election 2025 data."""
 
     def __init__(
@@ -22,12 +23,15 @@ class Election25Feature(BaseFeature):
         url: str = ZIP_URL,
         raw_data_path: str = DEFAULT_RAW_DATA_PATH,
         tform_data_path: str = DEFAULT_TFORM_DATA_PATH,
+        municipality_data_path: str = MUNICIPALITY_RAW_DATA_PATH,
+        fix_missing: bool = True,
         **kwargs,
     ):
-        super().__init__(**kwargs)
+        super().__init__(municipality_data_path=municipality_data_path, **kwargs)
         self.url = url
         self.raw_data_path = raw_data_path
         self.tform_data_path = tform_data_path
+        self.fix_missing = fix_missing
 
     def load(self) -> pd.DataFrame:
         """Load and extract election 25 data from a ZIP file.
@@ -120,6 +124,7 @@ class Election25Feature(BaseFeature):
                     "E_valid_votes",
                     "Z_invalid_votes",
                     "Z_valid_votes",
+                    "Gemeindename",
                 )
             ]
         ]
@@ -138,6 +143,11 @@ class Election25Feature(BaseFeature):
 
         # group by AGS and sum all other columns
         df = df.groupby("AGS").sum().reset_index()
+
+        if self.fix_missing:
+            df = self._fix_missing(df)
+
+        df = df.drop(columns=["Gemeindename"], errors="ignore")
 
         # Change all columns from absolute counts to proportions of the total voters
         df["eligible_voters"] = df["eligible_voters"].replace(0, float("nan"))

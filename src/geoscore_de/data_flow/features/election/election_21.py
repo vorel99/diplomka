@@ -3,7 +3,8 @@ from pathlib import Path
 
 import pandas as pd
 
-from geoscore_de.data_flow.features.base import BaseFeature
+from geoscore_de.data_flow.features.election import BaseElectionFeature
+from geoscore_de.data_flow.features.municipality import DEFAULT_RAW_DATA_PATH as MUNICIPALITY_RAW_DATA_PATH
 from geoscore_de.data_flow.features.utils import load_election_zip, move_extracted_file
 
 ZIP_URL = "https://www.bundeswahlleiterin.de/en/dam/jcr/c2cd99e6-064e-4ebc-b634-f86b5c0e14b3/btw21_wbz.zip"
@@ -14,7 +15,7 @@ HAMBURG_CITY_AGS = "02000000"
 BERLIN_CITY_AGS = "11000000"
 
 
-class Election21Feature(BaseFeature):
+class Election21Feature(BaseElectionFeature):
     """Feature class for election 2021 data."""
 
     def __init__(
@@ -22,12 +23,16 @@ class Election21Feature(BaseFeature):
         url: str = ZIP_URL,
         raw_data_path: str = DEFAULT_RAW_DATA_PATH,
         tform_data_path: str = DEFAULT_TFORM_DATA_PATH,
+        municipality_data_path: str = MUNICIPALITY_RAW_DATA_PATH,
+        fix_missing: bool = True,
         **kwargs,
     ):
-        super().__init__(**kwargs)
+        super().__init__(municipality_data_path=municipality_data_path, **kwargs)
         self.url = url
         self.raw_data_path = raw_data_path
         self.tform_data_path = tform_data_path
+        self.municipality_data_path = municipality_data_path
+        self.fix_missing = fix_missing
 
     def load(self) -> pd.DataFrame:
         """Load and extract election 21 data from a ZIP file.
@@ -118,12 +123,18 @@ class Election21Feature(BaseFeature):
             [
                 col
                 for col in df.columns
-                if col.startswith(("E_", "Z_")) or col in ("AGS", "eligible_voters", "total_voters")
+                if col.startswith(("E_", "Z_")) or col in ("AGS", "eligible_voters", "total_voters", "Gemeinde Name")
             ]
         ]
 
         # group by municipality (AGS)
         df = df.groupby("AGS").sum().reset_index()
+
+        # fix einschl.
+        if self.fix_missing:
+            df = self._fix_missing(df, muni_name_col="Gemeinde Name")
+
+        df = df.drop(columns=["Gemeinde Name"], errors="ignore")
 
         vote_columns = [col for col in df.columns if col.startswith(("E_", "Z_"))]
         numeric_columns = ["eligible_voters", "total_voters", *vote_columns]

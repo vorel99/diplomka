@@ -5,7 +5,7 @@ from unittest.mock import patch
 import pandas as pd
 import pytest
 
-from geoscore_de.data_flow.features.election_25 import Election25Feature
+from geoscore_de.data_flow.features import Election25Feature
 
 
 @pytest.fixture
@@ -34,11 +34,11 @@ def mock_raw_election_csv_file(tmp_path, mock_raw_election_csv_content):
 
 def test_load_election_25_data(mock_raw_election_csv_file):
     """Test loading raw election 25 data from CSV."""
-    feature = Election25Feature(raw_data_path=str(mock_raw_election_csv_file))
+    feature = Election25Feature(raw_data_path=str(mock_raw_election_csv_file), fix_missing=False)
 
     # Patch load_election_zip to avoid actual download
-    with patch("geoscore_de.data_flow.features.election_25.load_election_zip"):
-        with patch("geoscore_de.data_flow.features.election_25.move_extracted_file"):
+    with patch("geoscore_de.data_flow.features.election.election_25.load_election_zip"):
+        with patch("geoscore_de.data_flow.features.election.election_25.move_extracted_file"):
             df = feature.load()
 
     # Check required columns exist
@@ -55,11 +55,11 @@ def test_load_election_25_data(mock_raw_election_csv_file):
 
 def test_load_election_25_data_ags_format(mock_raw_election_csv_file):
     """Test that AGS codes are properly formatted."""
-    feature = Election25Feature(raw_data_path=str(mock_raw_election_csv_file))
+    feature = Election25Feature(raw_data_path=str(mock_raw_election_csv_file), fix_missing=False)
 
     # Patch load_election_zip to avoid actual download
-    with patch("geoscore_de.data_flow.features.election_25.load_election_zip"):
-        with patch("geoscore_de.data_flow.features.election_25.move_extracted_file"):
+    with patch("geoscore_de.data_flow.features.election.election_25.load_election_zip"):
+        with patch("geoscore_de.data_flow.features.election.election_25.move_extracted_file"):
             df = feature.load()
 
     # Check AGS format: Land (2) + Regierungsbezirk (1) + Kreis (3) + Gemeinde (3)
@@ -73,11 +73,11 @@ def test_load_election_25_data_ags_format(mock_raw_election_csv_file):
 
 def test_load_election_25_data_skips_header_rows(mock_raw_election_csv_file):
     """Test that the first 4 header rows are properly skipped."""
-    feature = Election25Feature(raw_data_path=str(mock_raw_election_csv_file))
+    feature = Election25Feature(raw_data_path=str(mock_raw_election_csv_file), fix_missing=False)
 
     # Patch load_election_zip to avoid actual download
-    with patch("geoscore_de.data_flow.features.election_25.load_election_zip"):
-        with patch("geoscore_de.data_flow.features.election_25.move_extracted_file"):
+    with patch("geoscore_de.data_flow.features.election.election_25.load_election_zip"):
+        with patch("geoscore_de.data_flow.features.election.election_25.move_extracted_file"):
             df = feature.load()
 
     # Check that we don't have header rows in the data
@@ -89,9 +89,11 @@ def test_transform_election_25_data_structure(tmp_path, mock_raw_election_csv_fi
     """Test the structure of transformed election data."""
     out_path = tmp_path / "output.csv"
 
-    feature = Election25Feature(raw_data_path=str(mock_raw_election_csv_file), tform_data_path=str(out_path))
-    with patch("geoscore_de.data_flow.features.election_25.load_election_zip"):
-        with patch("geoscore_de.data_flow.features.election_25.move_extracted_file"):
+    feature = Election25Feature(
+        raw_data_path=str(mock_raw_election_csv_file), tform_data_path=str(out_path), fix_missing=False
+    )
+    with patch("geoscore_de.data_flow.features.election.election_25.load_election_zip"):
+        with patch("geoscore_de.data_flow.features.election.election_25.move_extracted_file"):
             df = feature.transform(feature.load())
 
     # Check that AGS column exists
@@ -115,9 +117,11 @@ def test_transform_election_25_data_grouping(tmp_path, mock_raw_election_csv_fil
     """Test that data is properly grouped by AGS."""
     out_path = tmp_path / "output.csv"
 
-    feature = Election25Feature(raw_data_path=str(mock_raw_election_csv_file), tform_data_path=str(out_path))
-    with patch("geoscore_de.data_flow.features.election_25.load_election_zip"):
-        with patch("geoscore_de.data_flow.features.election_25.move_extracted_file"):
+    feature = Election25Feature(
+        raw_data_path=str(mock_raw_election_csv_file), tform_data_path=str(out_path), fix_missing=False
+    )
+    with patch("geoscore_de.data_flow.features.election.election_25.load_election_zip"):
+        with patch("geoscore_de.data_flow.features.election.election_25.move_extracted_file"):
             raw_df = feature.load()
             transformed_df = feature.transform(raw_df)
 
@@ -132,9 +136,11 @@ def test_transform_election_25_proportions(tmp_path, mock_raw_election_csv_file)
     """Test that vote counts are converted to proportions."""
     out_path = tmp_path / "output.csv"
 
-    feature = Election25Feature(raw_data_path=str(mock_raw_election_csv_file), tform_data_path=str(out_path))
-    with patch("geoscore_de.data_flow.features.election_25.load_election_zip"):
-        with patch("geoscore_de.data_flow.features.election_25.move_extracted_file"):
+    feature = Election25Feature(
+        raw_data_path=str(mock_raw_election_csv_file), tform_data_path=str(out_path), fix_missing=False
+    )
+    with patch("geoscore_de.data_flow.features.election.election_25.load_election_zip"):
+        with patch("geoscore_de.data_flow.features.election.election_25.move_extracted_file"):
             df = feature.transform(feature.load())
 
     # Check that vote proportions are between 0 and 1 (excluding NaN)
@@ -151,9 +157,11 @@ def test_transform_election_25_participation(tmp_path, mock_raw_election_csv_fil
     """Test that election participation is calculated correctly."""
     out_path = tmp_path / "output.csv"
 
-    feature = Election25Feature(raw_data_path=str(mock_raw_election_csv_file), tform_data_path=str(out_path))
-    with patch("geoscore_de.data_flow.features.election_25.load_election_zip"):
-        with patch("geoscore_de.data_flow.features.election_25.move_extracted_file"):
+    feature = Election25Feature(
+        raw_data_path=str(mock_raw_election_csv_file), tform_data_path=str(out_path), fix_missing=False
+    )
+    with patch("geoscore_de.data_flow.features.election.election_25.load_election_zip"):
+        with patch("geoscore_de.data_flow.features.election.election_25.move_extracted_file"):
             df = feature.transform(feature.load())
 
     # Check that participation is between 0 and 1
@@ -178,9 +186,9 @@ Ungültige - Zweitstimmen;Gültige - Zweitstimmen;CDU - Zweitstimmen;SPD - Zweit
     csv_file.write_text(csv_content)
     out_path = tmp_path / "output.csv"
 
-    feature = Election25Feature(raw_data_path=str(tmp_path), tform_data_path=str(out_path))
-    with patch("geoscore_de.data_flow.features.election_25.load_election_zip"):
-        with patch("geoscore_de.data_flow.features.election_25.move_extracted_file"):
+    feature = Election25Feature(raw_data_path=str(tmp_path), tform_data_path=str(out_path), fix_missing=False)
+    with patch("geoscore_de.data_flow.features.election.election_25.load_election_zip"):
+        with patch("geoscore_de.data_flow.features.election.election_25.move_extracted_file"):
             df = feature.transform(feature.load())
 
     # Should have NaN for proportions when total_voters is 0, not infinity
@@ -193,9 +201,11 @@ def test_transform_election_25_column_selection(tmp_path, mock_raw_election_csv_
     """Test that only relevant columns are selected in transformation."""
     out_path = tmp_path / "output.csv"
 
-    feature = Election25Feature(raw_data_path=str(mock_raw_election_csv_file), tform_data_path=str(out_path))
-    with patch("geoscore_de.data_flow.features.election_25.load_election_zip"):
-        with patch("geoscore_de.data_flow.features.election_25.move_extracted_file"):
+    feature = Election25Feature(
+        raw_data_path=str(mock_raw_election_csv_file), tform_data_path=str(out_path), fix_missing=False
+    )
+    with patch("geoscore_de.data_flow.features.election.election_25.load_election_zip"):
+        with patch("geoscore_de.data_flow.features.election.election_25.move_extracted_file"):
             df = feature.transform(feature.load())
 
     # All remaining columns should either be AGS, eligible_voters, total_voters, election_participation,
@@ -218,9 +228,11 @@ def test_transform_election_25_saves_to_file(tmp_path, mock_raw_election_csv_fil
     """Test that transformed data is saved to CSV file."""
     out_path = tmp_path / "output.csv"
 
-    feature = Election25Feature(raw_data_path=str(mock_raw_election_csv_file), tform_data_path=str(out_path))
-    with patch("geoscore_de.data_flow.features.election_25.load_election_zip"):
-        with patch("geoscore_de.data_flow.features.election_25.move_extracted_file"):
+    feature = Election25Feature(
+        raw_data_path=str(mock_raw_election_csv_file), tform_data_path=str(out_path), fix_missing=False
+    )
+    with patch("geoscore_de.data_flow.features.election.election_25.load_election_zip"):
+        with patch("geoscore_de.data_flow.features.election.election_25.move_extracted_file"):
             feature.transform(feature.load())
 
     # Check that output file exists
