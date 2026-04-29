@@ -5,7 +5,7 @@ from unittest.mock import patch
 import pandas as pd
 import pytest
 
-from geoscore_de.data_flow.features.election_25 import Election25Feature
+from geoscore_de.data_flow.features import Election25Feature
 
 
 @pytest.fixture
