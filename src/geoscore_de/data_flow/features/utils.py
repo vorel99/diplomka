@@ -62,6 +62,5 @@ def move_extracted_file(temp_dir: str, dest_path: str) -> None:
         if src_file.exists():
             # Use copy2 to preserve metadata, then remove source
             shutil.copy2(src_file, dest_file)
-            print(f"Successfully moved {src_file.name} to {dest_file}")
         else:
             print(f"Warning: {src_file.name} not found in extracted files")

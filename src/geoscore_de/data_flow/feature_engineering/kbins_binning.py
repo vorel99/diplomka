@@ -73,7 +73,7 @@ class KBinsDiscretizerBinning(StatefulFeatureEngineering):
             self
         """
         if not self.validate(X):
-            raise ValueError("Input dataframe failed validation checks.")
+            raise ValueError(f"Input dataframe failed validation checks. for column '{self.input_columns[0]}'")
 
         col = self.input_columns[0]
         col_data = X[[col]].dropna()
