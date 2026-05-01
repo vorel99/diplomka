@@ -1,6 +1,7 @@
 import pandas as pd
 import pytest
 
+from geoscore_de.data_flow.feature_engineering.base import StatefulFeatureEngineering
 from geoscore_de.data_flow.feature_engineering.config import FeatureEngineeringConfig
 from geoscore_de.modelling.config import EarlyStoppingConfig, ModelConfig, SearchConfig, TrainingConfig
 from geoscore_de.modelling.train import Trainer
@@ -64,7 +65,7 @@ def test_prepare_data_random_split_as_default_without_state_columns():
     assert len(y_test) == 20
 
 
-def test_stateful_transform_fits_on_training_split_only():
+def test_stateful_transform_fits_on_training_split_only(monkeypatch: pytest.MonkeyPatch):
     data = pd.DataFrame(
         {
             "AGS": [f"0100{i:04d}" for i in range(8)],
@@ -72,6 +73,36 @@ def test_stateful_transform_fits_on_training_split_only():
             "unemployment_unemployment_per_capita": [0.1, 0.2, 0.3, 0.4, 1.0, 1.1, 1.2, 1.3],
         }
     )
+
+    class SpyStatefulTransform(StatefulFeatureEngineering):
+        def __init__(self, input_columns: list[str], output_column: str, **kwargs):
+            super().__init__(input_columns, output_column)
+            self.fit_inputs: list[pd.DataFrame] = []
+            self.transform_inputs: list[pd.DataFrame] = []
+            self.fitted_mean: float | None = None
+
+        def _validate(self, df: pd.DataFrame) -> bool:
+            return True
+
+        def fit(self, X, y=None):
+            self.fit_inputs.append(X.copy())
+            self.fitted_mean = float(X[self.input_columns[0]].mean())
+            return self
+
+        def transform(self, X):
+            self.transform_inputs.append(X.copy())
+            return super().transform(X)
+
+        def _apply(self, df: pd.DataFrame) -> pd.DataFrame:
+            df[self.output_column] = self.fitted_mean
+            return df
+
+    spy_transform = SpyStatefulTransform(["feature_one"], "feature_one_binned")
+    monkeypatch.setattr(
+        "geoscore_de.modelling.train.instantiate_feature_engineering_class",
+        lambda config: spy_transform,
+    )
+
     trainer = Trainer(
         _build_config().model_copy(
             update={
@@ -94,8 +125,14 @@ def test_stateful_transform_fits_on_training_split_only():
 
     assert "feature_one_binned" in X_train_binned.columns
     assert "feature_one_binned" in X_test_binned.columns
-    assert X_train_binned["feature_one_binned"].notna().all()
-    assert X_test_binned["feature_one_binned"].notna().all()
+    # Check that fit was called only on training data and transform was called on both training and test data
+    assert len(spy_transform.fit_inputs) == 1
+    assert spy_transform.fit_inputs[0].equals(X_train_val)
+    assert len(spy_transform.transform_inputs) == 2
+    assert spy_transform.transform_inputs[0].equals(X_train_val)
+    assert spy_transform.transform_inputs[1].equals(X_test)
+    assert X_train_binned["feature_one_binned"].eq(spy_transform.fitted_mean).all()
+    assert X_test_binned["feature_one_binned"].eq(spy_transform.fitted_mean).all()
 
 
 def test_catboost_model_receives_categorical_feature_names():
