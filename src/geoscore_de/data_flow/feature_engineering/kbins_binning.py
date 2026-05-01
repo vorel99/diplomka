@@ -21,8 +21,7 @@ class KBinsDiscretizerBinning(StatefulFeatureEngineering):
     - 'quantile': Equal-frequency bins, fitted on training data.
     - 'uniform': Equal-width bins, fitted on training data.
 
-    The key difference from BinningFeatureEngineering is that this transformer
-    must be fitted on training data only to avoid leakage. It stores the fitted
+    This transformer must be fitted on training data only to avoid leakage. It stores the fitted
     discretizer state and applies it to test data.
 
     Output column contains integer labels 0, 1, 2, ..., n_bins-1.
