@@ -89,19 +89,6 @@ class BaseFeatureEngineering(BaseEstimator, TransformerMixin):
 
         return self._apply(X.copy())
 
-    def apply(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Backward compatibility wrapper for transform() method.
-
-        Deprecated: Use transform() instead.
-
-        Args:
-            df: Input dataframe to transform.
-
-        Returns:
-            Transformed dataframe.
-        """
-        return self.transform(df)
-
     @abstractmethod
     def _apply(self, df: pd.DataFrame) -> pd.DataFrame:
         """Abstract method to implement the actual feature engineering transformation.

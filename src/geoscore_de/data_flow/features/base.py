@@ -47,7 +47,7 @@ class BaseFeature(metaclass=ABCMeta):
         if self.before_transforms:
             logger.info("Applying before_transforms")
             for transform_instance in self.before_transforms:
-                result = transform_instance.apply(raw_data)
+                result = transform_instance.transform(raw_data)
                 engineered_features.append(result)
 
         transformed_data = self.transform(raw_data)

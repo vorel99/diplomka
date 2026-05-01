@@ -8,7 +8,7 @@ def test_kbins_binning_fits_without_ags_and_preserves_missing_values():
 
     transformer = KBinsDiscretizerBinning(input_columns=["value"], output_column="binned", n_bins=2)
     transformer.fit(df)
-    result = transformer.apply(df)
+    result = transformer.transform(df)
 
     assert "binned" in result.columns
     assert pd.isna(result.loc[2, "binned"])
@@ -20,6 +20,6 @@ def test_kbins_binning_constant_values_yield_missing_bins():
 
     transformer = KBinsDiscretizerBinning(input_columns=["value"], output_column="binned", n_bins=4)
     transformer.fit(df)
-    result = transformer.apply(df)
+    result = transformer.transform(df)
 
     assert pd.isna(result["binned"]).all()

@@ -163,7 +163,7 @@ class FeatureMatrixBuilder:
             for transform_config in self.config.after_transforms:
                 try:
                     transform = instantiate_feature_engineering_class(transform_config)
-                    result_df = transform.apply(result_df)
+                    result_df = transform.transform(result_df)
                     logger.info(f"Applied after-transform '{transform_config.name}', shape: {result_df.shape}")
                 except Exception as e:
                     logger.error(f"Failed to apply after-transform '{transform_config.name}': {e}")
