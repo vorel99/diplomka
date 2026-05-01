@@ -1,6 +1,7 @@
 import pandas as pd
 import pytest
 
+from geoscore_de.data_flow.feature_engineering.config import FeatureEngineeringConfig
 from geoscore_de.modelling.config import EarlyStoppingConfig, ModelConfig, SearchConfig, TrainingConfig
 from geoscore_de.modelling.train import Trainer
 
@@ -61,6 +62,40 @@ def test_prepare_data_random_split_as_default_without_state_columns():
     assert len(X_test) == 20
     assert len(y_train_val) == 80
     assert len(y_test) == 20
+
+
+def test_stateful_transform_fits_on_training_split_only():
+    data = pd.DataFrame(
+        {
+            "AGS": [f"0100{i:04d}" for i in range(8)],
+            "feature_one": [1.0, 2.0, 3.0, 4.0, 100.0, 101.0, 102.0, 103.0],
+            "unemployment_unemployment_per_capita": [0.1, 0.2, 0.3, 0.4, 1.0, 1.1, 1.2, 1.3],
+        }
+    )
+    trainer = Trainer(
+        _build_config().model_copy(
+            update={
+                "stateful_transforms": [
+                    FeatureEngineeringConfig(
+                        name="feature_one_bins",
+                        class_name="KBinsDiscretizerBinning",
+                        module="geoscore_de.data_flow.feature_engineering.kbins_binning",
+                        input_columns=["feature_one"],
+                        output_column="feature_one_binned",
+                        params={"strategy": "quantile", "n_bins": 2},
+                    )
+                ]
+            }
+        )
+    )
+
+    X_train_val, X_test, _, _ = trainer._prepare_data(data)
+    X_train_binned, X_test_binned = trainer._apply_stateful_transforms(X_train_val, X_test)
+
+    assert "feature_one_binned" in X_train_binned.columns
+    assert "feature_one_binned" in X_test_binned.columns
+    assert X_train_binned["feature_one_binned"].notna().all()
+    assert X_test_binned["feature_one_binned"].notna().all()
 
 
 def test_catboost_model_receives_categorical_feature_names():
