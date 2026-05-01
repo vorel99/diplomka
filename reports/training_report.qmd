@@ -7,6 +7,7 @@ format:
     embed-resources: true
 execute:
   echo: false
+  engine: python
 ---
 
 ```{python}
@@ -21,11 +22,25 @@ training_config_path: str = "configs/training.yaml"
 ```{python}
 #| label: libraries-setup
 
+import os
+import sys
 import matplotlib.pyplot as plt
 import pandas as pd
 import shap
 import yaml
 from IPython.display import display, Markdown
+
+# Workaround for plotnine/Quarto temp file race condition
+# Patch is_knitr_engine to avoid FileNotFoundError
+import plotnine._utils.quarto as quarto_utils
+def patched_is_knitr_engine():
+    try:
+        return quarto_utils._original_is_knitr_engine()
+    except (FileNotFoundError, KeyError):
+        return False
+
+quarto_utils._original_is_knitr_engine = quarto_utils.is_knitr_engine
+quarto_utils.is_knitr_engine = patched_is_knitr_engine
 from geoscore_de.modelling.plots.diagnostic_plots import build_predicted_vs_actual_plot, build_residual_plot
 from geoscore_de.modelling.plots.grid_search_plots import build_grid_search_results_plot
 from geoscore_de.modelling.config import TrainingConfig

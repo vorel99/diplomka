@@ -3,6 +3,7 @@ from typing import Literal
 from pydantic import BaseModel, Field, model_validator
 
 from geoscore_de.config import FeatureFilteringConfig
+from geoscore_de.data_flow.feature_engineering.config import FeatureEngineeringConfig
 
 __all__ = [
     "FeatureFilteringConfig",
@@ -111,6 +112,13 @@ class TrainingConfig(BaseModel):
     search: SearchConfig = Field(default_factory=SearchConfig, description="Configuration for hyperparameter search.")
     early_stopping: EarlyStoppingConfig = Field(
         default_factory=EarlyStoppingConfig, description="Configuration for LightGBM early stopping."
+    )
+    stateful_transforms: list[FeatureEngineeringConfig] = Field(
+        default_factory=list,
+        description=(
+            "Transformations that learn from training data distribution (e.g., binning, scaling). "
+            "These are fitted on training data only and applied to test data to avoid data leakage."
+        ),
     )
 
     @model_validator(mode="after")

@@ -7,8 +7,9 @@ The GeoScore concept is to transform heterogeneous, location-based open data int
 This diploma assignment focuses on building a generalizable framework that ingests open geospatial and statistical data for German municipalities and predicts an arbitrary target variable defined at the municipal level.
 
 The detailed steps of the assignment are the following:
-1.	Identify and collect relevant open data for German municipalities from reliable public sources.
-2.	Perform the proper preprocessing of each collected dataset, including spatial aggregation, smoothing, normalization, and handling of missing values.
-3.	Design a reusable framework that integrates and transforms these location-based open data into a structured feature representation.
-4.	Demonstrate the benefits of the framework using suitable machine learning models for the prediction of at least one reasonable target variable at the municipality level.
-5.	Analyze and interpret model results, including spatial patterns and feature importance. Focus on the benefits of the framework.
+
+1. Identify and collect relevant open data for German municipalities from reliable public sources.
+2. Perform the proper preprocessing of each collected dataset, including spatial aggregation, smoothing, normalization, and handling of missing values.
+3. Design a reusable framework that integrates and transforms these location-based open data into a structured feature representation.
+4. Demonstrate the benefits of the framework using suitable machine learning models for the prediction of at least one reasonable target variable at the municipality level.
+5. Analyze and interpret model results, including spatial patterns and feature importance. Focus on the benefits of the framework.
