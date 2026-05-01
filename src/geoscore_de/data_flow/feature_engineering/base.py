@@ -1,16 +1,17 @@
 import importlib
 import logging
-from abc import ABCMeta, abstractmethod
+from abc import abstractmethod
 
 import pandas as pd
+from sklearn.base import BaseEstimator, TransformerMixin
 
 from geoscore_de.data_flow.feature_engineering.config import FeatureEngineeringConfig
 
 logger = logging.getLogger(__name__)
 
 
-class BaseFeatureEngineering(metaclass=ABCMeta):
-    """Abstract base class for feature engineering."""
+class BaseFeatureEngineering(BaseEstimator, TransformerMixin):
+    """Abstract base class for feature engineering (sklearn-compatible)."""
 
     requires_join_key: bool = True
 
@@ -56,11 +57,25 @@ class BaseFeatureEngineering(metaclass=ABCMeta):
 
         return True
 
-    def apply(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Apply the feature engineering transformation to the input dataframe.
+    def fit(self, X, y=None):
+        """Fit step for stateless transformers (no-op by default).
+
+        Subclasses that are stateful should override this method.
 
         Args:
-            df: Input dataframe to transform.
+            X: Input dataframe or array to fit on.
+            y: Target values (unused, for sklearn compatibility).
+
+        Returns:
+            self
+        """
+        return self
+
+    def transform(self, X: pd.DataFrame) -> pd.DataFrame:
+        """Transform the input dataframe using the feature engineering transformation.
+
+        Args:
+            X: Input dataframe to transform.
 
         Returns:
             DataFrame containing one or more engineered feature columns.
@@ -69,10 +84,23 @@ class BaseFeatureEngineering(metaclass=ABCMeta):
             ValueError: If the input dataframe fails validation checks.
         """
         logger.info(f"Applying transformation '{self.__class__.__name__}'")
-        if not self.validate(df):
+        if not self.validate(X):
             raise ValueError("Input dataframe failed validation checks.")
 
-        return self._apply(df.copy())
+        return self._apply(X.copy())
+
+    def apply(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Backward compatibility wrapper for transform() method.
+
+        Deprecated: Use transform() instead.
+
+        Args:
+            df: Input dataframe to transform.
+
+        Returns:
+            Transformed dataframe.
+        """
+        return self.transform(df)
 
     @abstractmethod
     def _apply(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -87,18 +115,25 @@ class BaseFeatureEngineering(metaclass=ABCMeta):
 
 
 class StatefulFeatureEngineering(BaseFeatureEngineering):
-    """Base class for stateful feature engineering transformations that require fitting on training data."""
+    """Base class for stateful feature engineering transformations that require fitting on training data.
+
+    Subclasses must implement fit() method with sklearn-compatible signature: fit(X, y=None)
+    """
 
     requires_join_key = False
 
     @abstractmethod
-    def fit(self, df: pd.DataFrame) -> None:
+    def fit(self, X, y=None):
         """Fit the transformation on the provided data.
 
         This method should be called on training data only to avoid leakage.
 
         Args:
-            df: Training DataFrame containing the input columns to fit on.
+            X: Training DataFrame containing the input columns to fit on.
+            y: Target values (unused, for sklearn compatibility).
+
+        Returns:
+            self
         """
 
 

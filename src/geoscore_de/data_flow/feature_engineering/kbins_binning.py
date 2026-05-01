@@ -57,28 +57,32 @@ class KBinsDiscretizerBinning(StatefulFeatureEngineering):
             return False
         return True
 
-    def fit(self, df: pd.DataFrame) -> None:
+    def fit(self, X, y=None):
         """Fit the discretizer on the provided data.
 
         This method should be called on training data only to avoid leakage.
 
         Args:
-            df: Training DataFrame containing the input column to fit on.
+            X: Training DataFrame containing the input column to fit on.
+            y: Target values (unused, for sklearn compatibility).
 
         Raises:
             ValueError: If the input column is not numeric or missing.
+
+        Returns:
+            self
         """
-        if not self.validate(df):
+        if not self.validate(X):
             raise ValueError("Input dataframe failed validation checks.")
 
         col = self.input_columns[0]
-        col_data = df[[col]].dropna()
+        col_data = X[[col]].dropna()
 
         if col_data.empty or col_data[col].nunique(dropna=True) < 2:
             self.discretizer = None
             self._constant_output = True
             logger.info(f"Skipping KBins fit for column '{col}' because there are not enough distinct values")
-            return
+            return self
 
         self.discretizer = KBinsDiscretizer(
             n_bins=self.n_bins, encode="ordinal", strategy=self.strategy, subsample=None
@@ -86,6 +90,7 @@ class KBinsDiscretizerBinning(StatefulFeatureEngineering):
         self.discretizer.fit(col_data)
         self._constant_output = False
         logger.info(f"Fitted KBinsDiscretizerBinning on column '{col}' with strategy '{self.strategy}'")
+        return self
 
     def _apply(self, df: pd.DataFrame) -> pd.DataFrame:
         """Apply the fitted discretizer to the dataframe.

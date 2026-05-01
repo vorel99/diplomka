@@ -160,17 +160,19 @@ class Trainer:
 
         for transform_config in self.config.stateful_transforms:
             try:
-                transform = instantiate_feature_engineering_class(transform_config)
+                transformer = instantiate_feature_engineering_class(transform_config)
 
-                if not isinstance(transform, StatefulFeatureEngineering):
+                if not isinstance(transformer, StatefulFeatureEngineering):
                     raise TypeError(
                         f"Transform '{transform_config.name}' does not extend StatefulFeatureEngineering "
                         f"and cannot be used as a stateful transform."
                     )
 
-                transform.fit(X_train)
-                X_train = transform.apply(X_train)
-                X_test = transform.apply(X_test)
+                # Fit on training data only to avoid leakage
+                transformer.fit(X_train)
+                # Transform both train and test using the fitted transformer
+                X_train = transformer.transform(X_train)
+                X_test = transformer.transform(X_test)
                 logger.info(
                     f"Fitted and applied stateful transform '{transform_config.name}' "
                     f"(fit on train only, applied to both train and test)"
