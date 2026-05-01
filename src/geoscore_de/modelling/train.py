@@ -179,7 +179,7 @@ class Trainer:
                 )
 
             except Exception as e:
-                logger.error(f"Failed to apply stateful transform '{transform_config.name}': {e}")
+                logger.exception(f"Failed to apply stateful transform '{transform_config.name}': {e}")
                 raise
 
         return X_train, X_test
