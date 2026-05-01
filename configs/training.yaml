@@ -58,3 +58,29 @@ search:
 early_stopping:
   early_stopping_rounds: 100
   early_stopping_validation_fraction: 0.15
+
+# Stateful transforms: fitted on training data only, then applied to test data to avoid leakage
+# These transforms learn from the data distribution (e.g., bin edges from quantiles)
+stateful_transforms:
+  - name: osm_atm_bin_per_capita
+    class: KBinsDiscretizerBinning
+    module: geoscore_de.data_flow.feature_engineering.kbins_binning
+    input_columns: [osm_atm_atms_per_1000_residents]
+    output_column: osm_atm_atms_per_1000_residents
+    params:
+      strategy: quantile
+      n_bins: 10
+  - name: osm_atm_bin_per_area
+    class: KBinsDiscretizerBinning
+    input_columns: [osm_atm_atm_density_per_km2]
+    output_column: osm_atm_atm_density_per_km2
+    params:
+      strategy: quantile
+      n_bins: 10
+  - name: osm_tourist_bin_per_capita
+    class: KBinsDiscretizerBinning
+    input_columns: [osm_tourist_tourist_poi_per_1000_residents]
+    output_column: osm_tourist_tourist_poi_per_1000_residents
+    params:
+      strategy: quantile
+      n_bins: 10

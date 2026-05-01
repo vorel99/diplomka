@@ -12,6 +12,8 @@ logger = logging.getLogger(__name__)
 class BaseFeatureEngineering(metaclass=ABCMeta):
     """Abstract base class for feature engineering."""
 
+    requires_join_key: bool = True
+
     def __init__(self, input_columns: list[str], output_column: str):
         self.input_columns = input_columns
         self.output_column = output_column
@@ -45,7 +47,7 @@ class BaseFeatureEngineering(metaclass=ABCMeta):
             )
             return False
 
-        if "AGS" not in df.columns:
+        if self.requires_join_key and "AGS" not in df.columns:
             logger.error(f"Missing required 'AGS' column for transformation '{self.__class__.__name__}'")
             return False
 
@@ -81,6 +83,22 @@ class BaseFeatureEngineering(metaclass=ABCMeta):
 
         Returns:
             DataFrame containing one or more engineered feature columns.
+        """
+
+
+class StatefulFeatureEngineering(BaseFeatureEngineering):
+    """Base class for stateful feature engineering transformations that require fitting on training data."""
+
+    requires_join_key = False
+
+    @abstractmethod
+    def fit(self, df: pd.DataFrame) -> None:
+        """Fit the transformation on the provided data.
+
+        This method should be called on training data only to avoid leakage.
+
+        Args:
+            df: Training DataFrame containing the input columns to fit on.
         """
 
 

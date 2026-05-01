@@ -33,7 +33,4 @@ class FeaturesYAMLConfig(BaseModel):
     after_transforms: list[FeatureEngineeringConfig] = Field(
         default_factory=list, description="Transformations on transformed features (delta features)"
     )
-    standalone_transforms: list[FeatureEngineeringConfig] = Field(
-        default_factory=list, description="Standalone feature engineering transformations"
-    )
     matrix: MatrixConfig = Field(default_factory=MatrixConfig, description="Matrix building configuration")

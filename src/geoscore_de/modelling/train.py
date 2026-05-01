@@ -1,3 +1,4 @@
+import logging
 import warnings
 from math import ceil
 
@@ -17,10 +18,16 @@ from sklearn.metrics import (
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV, train_test_split
 
 from geoscore_de import mlflow_wrapper
+from geoscore_de.data_flow.feature_engineering.base import (
+    StatefulFeatureEngineering,
+    instantiate_feature_engineering_class,
+)
 from geoscore_de.modelling.config import TrainingConfig
 from geoscore_de.modelling.data_filtering import filter_features, filter_rows
 from geoscore_de.modelling.models import get_model_instance
 from geoscore_de.modelling.training_result import TrainingResult
+
+logger = logging.getLogger(__name__)
 
 
 class Trainer:
@@ -128,6 +135,52 @@ class Trainer:
             X_train_val, X_test, y_train_val, y_test = train_test_split(X, y, **split_kwargs)
 
         return X_train_val, X_test, y_train_val, y_test
+
+    def _apply_stateful_transforms(
+        self, X_train: pd.DataFrame, X_test: pd.DataFrame
+    ) -> tuple[pd.DataFrame, pd.DataFrame]:
+        """Apply stateful transforms (fitted on training data only) to both train and test sets.
+
+        Stateful transforms learn from the training data distribution (e.g., bin edges, scaling parameters)
+        and must not see the test data to avoid leakage. This method:
+        1. Fits each transformer on X_train
+        2. Applies the fitted transformer to both X_train and X_test
+
+        Args:
+            X_train: Training features.
+            X_test: Test features.
+
+        Returns:
+            Tuple of transformed (X_train, X_test).
+        """
+        if not self.config.stateful_transforms:
+            return X_train, X_test
+
+        logger.info(f"Applying {len(self.config.stateful_transforms)} stateful transforms")
+
+        for transform_config in self.config.stateful_transforms:
+            try:
+                transform = instantiate_feature_engineering_class(transform_config)
+
+                if not isinstance(transform, StatefulFeatureEngineering):
+                    raise TypeError(
+                        f"Transform '{transform_config.name}' does not extend StatefulFeatureEngineering "
+                        f"and cannot be used as a stateful transform."
+                    )
+
+                transform.fit(X_train)
+                X_train = transform.apply(X_train)
+                X_test = transform.apply(X_test)
+                logger.info(
+                    f"Fitted and applied stateful transform '{transform_config.name}' "
+                    f"(fit on train only, applied to both train and test)"
+                )
+
+            except Exception as e:
+                logger.error(f"Failed to apply stateful transform '{transform_config.name}': {e}")
+                raise
+
+        return X_train, X_test
 
     def _get_model(self):
         """Instantiate the configured regression model with sensible defaults.
@@ -249,6 +302,9 @@ class Trainer:
         mlflow_wrapper.log_dict(config_dict, "config.json")
 
         X_train_val, X_test, y_train_val, y_test = self._prepare_data(data)
+
+        # Apply stateful transforms (fitted on training data only to avoid leakage)
+        X_train_val, X_test = self._apply_stateful_transforms(X_train_val, X_test)
 
         # Save first 100 rows for reference
         sample = X_train_val.head(100)
