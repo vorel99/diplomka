@@ -1,6 +1,6 @@
 import importlib
 import logging
-from abc import abstractmethod
+from abc import ABCMeta, abstractmethod
 
 import pandas as pd
 from sklearn.base import BaseEstimator, TransformerMixin
@@ -10,7 +10,7 @@ from geoscore_de.data_flow.feature_engineering.config import FeatureEngineeringC
 logger = logging.getLogger(__name__)
 
 
-class BaseFeatureEngineering(BaseEstimator, TransformerMixin):
+class BaseFeatureEngineering(BaseEstimator, TransformerMixin, metaclass=ABCMeta):
     """Abstract base class for feature engineering (sklearn-compatible)."""
 
     requires_join_key: bool = True
