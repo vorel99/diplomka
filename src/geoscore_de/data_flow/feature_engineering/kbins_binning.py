@@ -24,8 +24,8 @@ class KBinsDiscretizerBinning(StatefulFeatureEngineering):
     This transformer must be fitted on training data only to avoid leakage. It stores the fitted
     discretizer state and applies it to test data.
 
-    Output column contains integer labels 0, 1, 2, ..., n_bins-1.
-    Missing values in the input are preserved as NaN in the output.
+    Output column contains ordinal bin labels in the range 0..n_bins-1, stored as floats
+    (for example, 0.0, 1.0, ..., n_bins-1.0) so missing values can be preserved as NaN.
     """
 
     def __init__(
